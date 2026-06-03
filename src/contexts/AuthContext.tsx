@@ -30,6 +30,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const createProfileFromMetadata = useCallback(async (user: User) => {
     const nome = String(user.user_metadata.nome ?? '').trim()
     const empresa = String(user.user_metadata.empresa ?? '').trim()
+    const telefone = String(user.user_metadata.telefone ?? '').trim()
     const papelMetadata = String(user.user_metadata.papel ?? 'administrador')
     const papel = roles.includes(papelMetadata as UserRole)
       ? (papelMetadata as UserRole)
@@ -43,7 +44,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return await createCompanyUser({
         nomeEmpresa: empresa,
         nomeUsuario: nome,
-        telefoneUsuario: null,
+        telefoneUsuario: telefone || null,
         papelUsuario: papel,
       })
     } catch (error) {
@@ -66,24 +67,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
       .maybeSingle()
 
     if (error) {
-      console.error(error.message)
+      console.error('Erro ao carregar perfil do usuario:', error.message)
       setProfile(null)
-      return
+      return null
     }
 
     if (data) {
-      setProfile(data as unknown as UserProfile)
-      return
+      const loadedProfile = data as unknown as UserProfile
+      setProfile(loadedProfile)
+      return loadedProfile
     }
 
     const createdProfile = await createProfileFromMetadata(user)
 
     if (!createdProfile) {
       setProfile(null)
-      return
+      return null
     }
 
-    const { data: profileData } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('usuarios')
       .select(
         `
@@ -94,7 +96,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       .eq('id', createdProfile.id)
       .maybeSingle()
 
-    setProfile((profileData as unknown as UserProfile | null) ?? null)
+    if (profileError) {
+      console.error(
+        'Erro ao carregar perfil criado no cadastro:',
+        profileError.message,
+      )
+      setProfile(null)
+      return null
+    }
+
+    const loadedProfile = (profileData as unknown as UserProfile | null) ?? null
+    setProfile(loadedProfile)
+    return loadedProfile
   }, [createProfileFromMetadata])
 
   const refreshProfile = useCallback(async () => {
@@ -105,11 +118,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setSession(currentSession)
 
     if (currentSession?.user) {
-      await loadProfile(currentSession.user)
-      return
+      return loadProfile(currentSession.user)
     }
 
     setProfile(null)
+    return null
   }, [loadProfile])
 
   useEffect(() => {

@@ -13,7 +13,7 @@ export const registerSchema = z
     empresa: z.string().min(2, 'Informe o nome da empresa.'),
     email: z.string().email('Informe um e-mail valido.'),
     telefone: z.string().optional(),
-    papel: userRoleSchema,
+    papel: userRoleSchema.default('administrador'),
     password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres.'),
     confirmPassword: z.string().min(6, 'Confirme sua senha.'),
   })
@@ -27,5 +27,6 @@ export const forgotPasswordSchema = z.object({
 })
 
 export type LoginFormData = z.infer<typeof loginSchema>
+export type RegisterFormInput = z.input<typeof registerSchema>
 export type RegisterFormData = z.infer<typeof registerSchema>
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>

@@ -3,7 +3,7 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
 export function PublicOnlyRoute() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, profile } = useAuth()
 
   if (isLoading) {
     return (
@@ -13,8 +13,8 @@ export function PublicOnlyRoute() {
     )
   }
 
-  if (isAuthenticated) {
-    return <Navigate replace to="/perfil" />
+  if (isAuthenticated && profile?.empresa_id) {
+    return <Navigate replace to="/app/dashboard" />
   }
 
   return <Outlet />

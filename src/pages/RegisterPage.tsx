@@ -4,19 +4,25 @@ import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { AuthFormMessage } from '../components/AuthFormMessage'
+import { useAuth } from '../hooks/useAuth'
 import { signUpWithCompany } from '../services/authService'
-import { registerSchema, type RegisterFormData } from '../types/auth'
+import {
+  registerSchema,
+  type RegisterFormData,
+  type RegisterFormInput,
+} from '../types/auth'
 
 export function RegisterPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const navigate = useNavigate()
+  const { refreshProfile } = useAuth()
 
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
     register,
-  } = useForm<RegisterFormData>({
+  } = useForm<RegisterFormInput, unknown, RegisterFormData>({
     defaultValues: {
       papel: 'administrador',
     },
@@ -32,13 +38,22 @@ export function RegisterPage() {
 
       if (result.needsEmailConfirmation) {
         setSuccessMessage(
-          'Cadastro recebido. Confirme seu e-mail antes de acessar o BarberFlow.',
+          'Cadastro recebido. A empresa e o usuario administrador serao vinculados automaticamente apos confirmar seu e-mail.',
         )
         return
       }
 
-      navigate('/perfil', { replace: true })
+      const profile = await refreshProfile()
+
+      if (!profile?.empresa_id) {
+        throw new Error(
+          'Conta criada no Auth, mas o vinculo com empresa nao foi encontrado. Verifique se a migration de cadastro foi aplicada no Supabase.',
+        )
+      }
+
+      navigate('/app/dashboard', { replace: true })
     } catch (error) {
+      console.error('Erro no cadastro do BarberFlow:', error)
       setFormError(
         error instanceof Error ? error.message : 'Nao foi possivel cadastrar.',
       )
@@ -106,19 +121,7 @@ export function RegisterPage() {
           />
         </label>
 
-        <label className="block">
-          <span className="text-sm font-medium text-ink-700">
-            Tipo de usuario
-          </span>
-          <select
-            className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-            {...register('papel')}
-          >
-            <option value="administrador">Administrador</option>
-            <option value="gerente">Gerente</option>
-            <option value="barbeiro">Barbeiro</option>
-          </select>
-        </label>
+        <input type="hidden" value="administrador" {...register('papel')} />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">

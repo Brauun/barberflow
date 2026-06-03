@@ -14,7 +14,7 @@ type SignUpInput = {
   email: string
   telefone?: string
   password: string
-  papel: UserRole
+  papel?: UserRole
 }
 
 type CreateCompanyUserInput = {
@@ -51,6 +51,10 @@ export async function signInWithPassword({ email, password }: SignInInput) {
 }
 
 export async function signUpWithCompany(input: SignUpInput) {
+  const papel: UserRole = 'administrador'
+
+  console.info('Iniciando cadastro BarberFlow: criando usuario no Supabase Auth.')
+
   const { data, error } = await supabase.auth.signUp({
     email: input.email,
     password: input.password,
@@ -58,13 +62,19 @@ export async function signUpWithCompany(input: SignUpInput) {
       data: {
         nome: input.nome,
         empresa: input.empresa,
-        papel: input.papel,
+        telefone: input.telefone ?? null,
+        papel,
       },
     },
   })
 
   if (error) {
-    throw new Error(error.message)
+    console.error('Falha ao criar usuario no Supabase Auth:', error.message)
+    throw new Error(`Falha ao criar usuario no Supabase Auth: ${error.message}`)
+  }
+
+  if (!data.user?.id) {
+    throw new Error('Supabase Auth nao retornou o id do usuario criado.')
   }
 
   if (!data.session) {
@@ -73,12 +83,22 @@ export async function signUpWithCompany(input: SignUpInput) {
     }
   }
 
-  await createCompanyUser({
+  console.info(
+    'Usuario criado no Auth. Criando empresa e vinculo em public.usuarios.',
+  )
+
+  const usuario = await createCompanyUser({
     nomeEmpresa: input.empresa,
     nomeUsuario: input.nome,
     telefoneUsuario: input.telefone || null,
-    papelUsuario: input.papel,
+    papelUsuario: papel,
   })
+
+  if (!usuario?.empresa_id || usuario.auth_user_id !== data.user.id) {
+    throw new Error(
+      'O cadastro criou o usuario no Auth, mas nao retornou um vinculo valido em public.usuarios.',
+    )
+  }
 
   return {
     needsEmailConfirmation: false,
@@ -97,7 +117,14 @@ export async function createCompanyUser(input: CreateCompanyUserInput) {
   )
 
   if (error) {
-    throw new Error(error.message)
+    console.error('Falha ao criar empresa/usuario no banco:', error)
+    throw new Error(
+      `Falha ao criar empresa e usuario no banco: ${error.message}`,
+    )
+  }
+
+  if (!data) {
+    throw new Error('A funcao de cadastro nao retornou o usuario criado.')
   }
 
   return data

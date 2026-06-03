@@ -13,7 +13,7 @@ export type AuthContextValue = {
   profile: UserProfile | null
   isAuthenticated: boolean
   isLoading: boolean
-  refreshProfile: () => Promise<void>
+  refreshProfile: () => Promise<UserProfile | null>
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(

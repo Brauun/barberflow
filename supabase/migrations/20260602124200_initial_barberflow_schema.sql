@@ -359,6 +359,16 @@ begin
     raise exception 'Papel de usuario invalido.';
   end if;
 
+  select *
+  into novo_usuario
+  from public.usuarios
+  where auth_user_id = auth.uid()
+  limit 1;
+
+  if novo_usuario.id is not null then
+    return novo_usuario;
+  end if;
+
   select email into email_usuario
   from auth.users
   where id = auth.uid();
@@ -388,6 +398,65 @@ begin
   return novo_usuario;
 end;
 $$;
+
+create or replace function public.criar_empresa_usuario_auth_trigger()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  nova_empresa public.empresas;
+  nome_empresa text;
+  nome_usuario text;
+  telefone_usuario text;
+begin
+  if exists (
+    select 1
+    from public.usuarios
+    where auth_user_id = new.id
+  ) then
+    return new;
+  end if;
+
+  nome_empresa := nullif(trim(coalesce(new.raw_user_meta_data ->> 'empresa', '')), '');
+  nome_usuario := nullif(trim(coalesce(new.raw_user_meta_data ->> 'nome', '')), '');
+  telefone_usuario := nullif(trim(coalesce(new.raw_user_meta_data ->> 'telefone', '')), '');
+
+  if nome_empresa is null or nome_usuario is null then
+    return new;
+  end if;
+
+  insert into public.empresas (nome, email)
+  values (nome_empresa, new.email)
+  returning * into nova_empresa;
+
+  insert into public.usuarios (
+    empresa_id,
+    auth_user_id,
+    nome,
+    email,
+    telefone,
+    papel
+  )
+  values (
+    nova_empresa.id,
+    new.id,
+    nome_usuario,
+    new.email,
+    telefone_usuario,
+    'administrador'
+  );
+
+  return new;
+end;
+$$;
+
+drop trigger if exists criar_empresa_usuario_apos_auth_insert on auth.users;
+
+create trigger criar_empresa_usuario_apos_auth_insert
+after insert on auth.users
+for each row execute function public.criar_empresa_usuario_auth_trigger();
 
 revoke all on function public.criar_empresa_com_usuario(text, text, text, text)
 from public;
