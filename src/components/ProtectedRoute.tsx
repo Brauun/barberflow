@@ -9,7 +9,9 @@ export function ProtectedRoute() {
   if (isLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-surface px-6">
-        <p className="text-sm font-medium text-ink-700">Carregando...</p>
+        <p className="text-sm font-medium text-ink-700">
+          Entrando no BW Barber...
+        </p>
       </main>
     )
   }

@@ -5,11 +5,17 @@ import { ProtectedRoute } from '../components/ProtectedRoute'
 import { PublicOnlyRoute } from '../components/PublicOnlyRoute'
 import { AppLayout } from '../layouts/AppLayout'
 import { AuthLayout } from '../layouts/AuthLayout'
+import { ClientLayout } from '../layouts/ClientLayout'
 import { RootLayout } from '../layouts/RootLayout'
 
 const AtendimentosPage = lazy(() =>
   import('../pages/AtendimentosPage').then(({ AtendimentosPage }) => ({
     default: AtendimentosPage,
+  })),
+)
+const AssinaturaPage = lazy(() =>
+  import('../pages/AssinaturaPage').then(({ AssinaturaPage }) => ({
+    default: AssinaturaPage,
   })),
 )
 const BarbeirosPage = lazy(() =>
@@ -20,6 +26,38 @@ const BarbeirosPage = lazy(() =>
 const ClientesPage = lazy(() =>
   import('../pages/ClientesPage').then(({ ClientesPage }) => ({
     default: ClientesPage,
+  })),
+)
+const ClientAppointmentsPage = lazy(() =>
+  import('../pages/ClientAppointmentsPage').then(({ ClientAppointmentsPage }) => ({
+    default: ClientAppointmentsPage,
+  })),
+)
+const ClientBarbershopPage = lazy(() =>
+  import('../pages/ClientBarbershopPage').then(({ ClientBarbershopPage }) => ({
+    default: ClientBarbershopPage,
+  })),
+)
+const ClientBarbershopSearchPage = lazy(() =>
+  import('../pages/ClientBarbershopSearchPage').then(
+    ({ ClientBarbershopSearchPage }) => ({
+      default: ClientBarbershopSearchPage,
+    }),
+  ),
+)
+const ClientBookingPage = lazy(() =>
+  import('../pages/ClientBookingPage').then(({ ClientBookingPage }) => ({
+    default: ClientBookingPage,
+  })),
+)
+const ClientHomePage = lazy(() =>
+  import('../pages/ClientHomePage').then(({ ClientHomePage }) => ({
+    default: ClientHomePage,
+  })),
+)
+const ClientProfilePage = lazy(() =>
+  import('../pages/ClientProfilePage').then(({ ClientProfilePage }) => ({
+    default: ClientProfilePage,
   })),
 )
 const ConfiguracoesPage = lazy(() =>
@@ -35,6 +73,11 @@ const ContasPagarPage = lazy(() =>
 const DashboardPage = lazy(() =>
   import('../pages/DashboardPage').then(({ DashboardPage }) => ({
     default: DashboardPage,
+  })),
+)
+const EmployeeInvitePage = lazy(() =>
+  import('../pages/EmployeeInvitePage').then(({ EmployeeInvitePage }) => ({
+    default: EmployeeInvitePage,
   })),
 )
 const FluxoCaixaPage = lazy(() =>
@@ -63,6 +106,11 @@ const NotFoundPage = lazy(() =>
     default: NotFoundPage,
   })),
 )
+const PlanosFidelidadePage = lazy(() =>
+  import('../pages/PlanosFidelidadePage').then(({ PlanosFidelidadePage }) => ({
+    default: PlanosFidelidadePage,
+  })),
+)
 const ProfilePage = lazy(() =>
   import('../pages/ProfilePage').then(({ ProfilePage }) => ({
     default: ProfilePage,
@@ -82,6 +130,13 @@ const RelatoriosPage = lazy(() =>
   import('../pages/RelatoriosPage').then(({ RelatoriosPage }) => ({
     default: RelatoriosPage,
   })),
+)
+const RelatoriosExecutivosPage = lazy(() =>
+  import('../pages/RelatoriosExecutivosPage').then(
+    ({ RelatoriosExecutivosPage }) => ({
+      default: RelatoriosExecutivosPage,
+    }),
+  ),
 )
 const ServicosPage = lazy(() =>
   import('../pages/ServicosPage').then(({ ServicosPage }) => ({
@@ -113,6 +168,10 @@ const router = createBrowserRouter([
         element: withSuspense(<HomePage />),
       },
       {
+        path: 'convite/:token',
+        element: withSuspense(<EmployeeInvitePage />),
+      },
+      {
         element: <PublicOnlyRoute />,
         children: [
           {
@@ -137,6 +196,36 @@ const router = createBrowserRouter([
       {
         element: <ProtectedRoute />,
         children: [
+          {
+            path: 'cliente',
+            element: <ClientLayout />,
+            children: [
+              {
+                index: true,
+                element: withSuspense(<ClientHomePage />),
+              },
+              {
+                path: 'selecionar-barbearia',
+                element: withSuspense(<ClientBarbershopSearchPage />),
+              },
+              {
+                path: 'agendar',
+                element: withSuspense(<ClientBookingPage />),
+              },
+              {
+                path: 'agendamentos',
+                element: withSuspense(<ClientAppointmentsPage />),
+              },
+              {
+                path: 'minha-barbearia',
+                element: withSuspense(<ClientBarbershopPage />),
+              },
+              {
+                path: 'perfil',
+                element: withSuspense(<ClientProfilePage />),
+              },
+            ],
+          },
           {
             path: 'perfil',
             element: <Navigate replace to="/app/perfil" />,
@@ -174,6 +263,10 @@ const router = createBrowserRouter([
                 element: withSuspense(<ProdutosPage />),
               },
               {
+                path: 'planos-fidelidade',
+                element: withSuspense(<PlanosFidelidadePage />),
+              },
+              {
                 path: 'fluxo-de-caixa',
                 element: withSuspense(<FluxoCaixaPage />),
               },
@@ -186,8 +279,16 @@ const router = createBrowserRouter([
                 element: withSuspense(<RelatoriosPage />),
               },
               {
+                path: 'relatorios-executivos',
+                element: withSuspense(<RelatoriosExecutivosPage />),
+              },
+              {
                 path: 'configuracoes',
                 element: withSuspense(<ConfiguracoesPage />),
+              },
+              {
+                path: 'assinatura',
+                element: withSuspense(<AssinaturaPage />),
               },
               {
                 path: 'perfil',

@@ -8,6 +8,15 @@ export const atendimentoSchema = z.object({
   hora: z.string().min(1, 'Informe a hora.'),
   servico_id: z.string().uuid('Selecione um serviço.'),
   valor: z.coerce.number().min(0, 'O valor não pode ser negativo.'),
+  desconto_tipo: z.enum(['valor', 'percentual']).default('valor'),
+  valor_desconto: z.coerce
+    .number()
+    .min(0, 'O desconto nao pode ser negativo.')
+    .default(0),
+  motivo_desconto: z
+    .enum(['Promoção', 'Cliente fiel', 'Cupom', 'Cortesia', 'Outro'])
+    .optional(),
+  comissao_base: z.enum(['cheio', 'liquido']).default('liquido'),
 })
 
 export type AtendimentoFormInput = z.input<typeof atendimentoSchema>

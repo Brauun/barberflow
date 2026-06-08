@@ -1,6 +1,6 @@
-# BarberFlow SaaS
+# BW Barber
 
-Arquitetura inicial do BarberFlow, preparada para evoluir como SaaS com React,
+Sistema BW Barber, preparado para evoluir como SaaS com React,
 TypeScript, Vite, Tailwind CSS, React Router, React Hook Form, Zod, TanStack
 Query e Supabase.
 

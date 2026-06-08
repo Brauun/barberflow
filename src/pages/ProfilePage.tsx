@@ -7,6 +7,7 @@ const roleLabels = {
   administrador: 'Administrador',
   gerente: 'Gerente',
   barbeiro: 'Barbeiro',
+  recepcao: 'Recepcao',
 }
 
 export function ProfilePage() {

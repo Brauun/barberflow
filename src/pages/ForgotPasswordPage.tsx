@@ -39,37 +39,38 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <div>
-      <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">
+    <div className="mx-auto w-full max-w-md">
+      <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#12C6F3]">
         Recuperacao
       </p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-normal">
+      <h1 className="mt-2 text-[1.85rem] font-black leading-[1.08] tracking-normal text-white sm:mt-3 sm:text-3xl">
         Recuperar senha
       </h1>
-      <p className="mt-3 text-sm leading-6 text-ink-700">
+      <p className="mt-2 text-sm leading-6 text-[#A5B4CB] sm:text-[0.95rem]">
         Informe o e-mail da conta para receber o link de redefinicao.
       </p>
 
-      <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
+      <form className="mt-5 space-y-4 sm:mt-8 sm:space-y-5" onSubmit={handleSubmit(onSubmit)}>
         <AuthFormMessage message={formError} />
         <AuthFormMessage message={successMessage} tone="success" />
 
         <label className="block">
-          <span className="text-sm font-medium text-ink-700">E-mail</span>
+          <span className="text-sm font-semibold text-white">Email</span>
           <input
-            className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+            placeholder="exemplo@exemplo.com"
             type="email"
             {...register('email')}
           />
           {errors.email && (
-            <span className="mt-1 block text-sm text-red-600">
+            <span className="mt-2 block text-sm text-rose-200">
               {errors.email.message}
             </span>
           )}
         </label>
 
         <button
-          className="w-full rounded-md bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-70"
+          className="min-h-11 h-12 w-full rounded-2xl bg-[#12C6F3] px-4 text-sm font-black text-[#071426] shadow-[0_16px_40px_rgb(18_198_243/0.22)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#4EDCFF] hover:shadow-[0_20px_48px_rgb(18_198_243/0.30)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-70 sm:h-14 sm:rounded-[18px]"
           disabled={isSubmitting}
           type="submit"
         >
@@ -77,7 +78,7 @@ export function ForgotPasswordPage() {
         </button>
       </form>
 
-      <Link className="mt-6 inline-flex text-sm font-medium text-brand-600" to="/login">
+      <Link className="mt-5 inline-flex text-sm font-bold text-[#12C6F3] transition hover:text-white sm:mt-7" to="/login">
         Voltar para login
       </Link>
     </div>

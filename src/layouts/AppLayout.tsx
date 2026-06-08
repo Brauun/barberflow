@@ -1,122 +1,331 @@
 import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
+import {
+  Activity,
   BarChart3,
+  BadgeCheck,
   Bell,
   CalendarDays,
-  ChevronRight,
   CreditCard,
   DollarSign,
+  Gift,
   LayoutDashboard,
+  LogOut,
   Menu,
-  Moon,
   Package,
+  PanelLeftClose,
+  PanelLeftOpen,
   Scissors,
   Search,
   Settings,
   Sparkles,
-  Sun,
+  UserRound,
   Users,
   X,
+  type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { Button } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
+import { useSubscription } from '../hooks/useSubscription'
+import { resolveAssetUrl } from '../services/assetsService'
+import {
+  listNotifications,
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+  type InternalNotification,
+} from '../services/notificationsService'
 import { cn } from '../utils/cn'
 
-const navigationItems = [
+type NavigationItem = {
+  icon: LucideIcon
+  label: string
+  path: string
+}
+
+const navigationItems: NavigationItem[] = [
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/app/dashboard' },
+]
+
+const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
   {
-    label: 'Dashboard',
-    path: '/app/dashboard',
-    icon: LayoutDashboard,
+    items: [
+      { icon: Users, label: 'Clientes', path: '/app/clientes' },
+      { icon: Scissors, label: 'Barbeiros', path: '/app/barbeiros' },
+      { icon: Sparkles, label: 'Servicos', path: '/app/servicos' },
+      { icon: CalendarDays, label: 'Atendimentos', path: '/app/atendimentos' },
+    ],
+    label: 'OPERAÇÃO',
   },
   {
-    label: 'Clientes',
-    path: '/app/clientes',
-    icon: Users,
+    items: [
+      { icon: Package, label: 'Produtos', path: '/app/produtos' },
+      { icon: Gift, label: 'Planos e Fidelidade', path: '/app/planos-fidelidade' },
+      { icon: DollarSign, label: 'Fluxo de Caixa', path: '/app/fluxo-de-caixa' },
+      { icon: CreditCard, label: 'Contas a Pagar', path: '/app/contas-a-pagar' },
+    ],
+    label: 'GESTÃO',
   },
   {
-    label: 'Barbeiros',
-    path: '/app/barbeiros',
-    icon: Scissors,
-  },
-  {
-    label: 'Serviços',
-    path: '/app/servicos',
-    icon: Sparkles,
-  },
-  {
-    label: 'Atendimentos',
-    path: '/app/atendimentos',
-    icon: CalendarDays,
-  },
-  {
-    label: 'Produtos',
-    path: '/app/produtos',
-    icon: Package,
-  },
-  {
-    label: 'Fluxo de Caixa',
-    path: '/app/fluxo-de-caixa',
-    icon: DollarSign,
-  },
-  {
-    label: 'Contas a Pagar',
-    path: '/app/contas-a-pagar',
-    icon: CreditCard,
-  },
-  {
-    label: 'Relatórios',
-    path: '/app/relatorios',
-    icon: BarChart3,
-  },
-  {
-    label: 'Configurações',
-    path: '/app/configuracoes',
-    icon: Settings,
+    items: [
+      { icon: BarChart3, label: 'Relatorios', path: '/app/relatorios' },
+      {
+        icon: Activity,
+        label: 'Relatorios Executivos',
+        path: '/app/relatorios-executivos',
+      },
+    ],
+    label: 'INTELIGÊNCIA',
   },
 ]
 
+const allNavigationItems = [
+  ...navigationItems,
+  ...navigationGroups.flatMap((group) => group.items),
+]
+
+const settingsItem: NavigationItem[] = [
+  { icon: BadgeCheck, label: 'Assinatura', path: '/app/assinatura' },
+  { icon: Settings, label: 'Configuracoes', path: '/app/configuracoes' },
+]
+
 export function AppLayout() {
-  const { profile, user } = useAuth()
+  const { isLoading, profile, user, userType } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const storedTheme = localStorage.getItem('barberflow-theme')
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [companyLogoSrc, setCompanyLogoSrc] = useState<string | null>(null)
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(null)
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(() => {
+    const storedState = localStorage.getItem('bw-barber-sidebar')
 
-    if (storedTheme === 'dark') {
-      return true
-    }
-
-    if (storedTheme === 'light') {
-      return false
-    }
-
-    return document.documentElement.classList.contains('dark')
+    return storedState !== 'compact'
   })
 
   const currentItem = useMemo(
     () =>
       navigationItems.find((item) =>
         location.pathname.startsWith(item.path),
-      ) ?? navigationItems[0],
+      ) ??
+      allNavigationItems.find((item) =>
+        location.pathname.startsWith(item.path),
+      ) ??
+      settingsItem.find((item) => location.pathname.startsWith(item.path)) ??
+      navigationItems[0],
     [location.pathname],
   )
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDarkMode)
-    localStorage.setItem('barberflow-theme', isDarkMode ? 'dark' : 'light')
-  }, [isDarkMode])
+  const companyName = profile?.empresa?.nome ?? user?.user_metadata.empresa ?? 'BW Barber'
+  const userName = profile?.nome ?? user?.user_metadata.nome ?? 'Usuario'
+  const sidebarWidthClass = isSidebarExpanded ? 'lg:w-[13.75rem]' : 'lg:w-[4.75rem]'
+  const contentPaddingClass = isSidebarExpanded ? 'lg:pl-[13.75rem]' : 'lg:pl-[4.75rem]'
+  const subscriptionQuery = useSubscription()
+  const isSubscriptionExpired = subscriptionQuery.isExpired
+  const trialDaysRemaining = subscriptionQuery.daysRemaining
+  const allowedExpiredPaths = [
+    '/app/dashboard',
+    '/app/assinatura',
+    '/app/configuracoes',
+    '/app/perfil',
+  ]
 
-  const userName = profile?.nome ?? user?.user_metadata.nome ?? 'Usuário'
-  const companyName = profile?.empresa?.nome ?? user?.user_metadata.empresa ?? 'BarberFlow'
+  const companyInitials = useMemo(
+    () =>
+      String(companyName)
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join('')
+        .toUpperCase() || 'BW',
+    [companyName],
+  )
+  const notificationsQuery = useQuery({
+    enabled: Boolean(profile?.empresa_id && profile?.id && profile?.papel),
+    queryFn: () =>
+      listNotifications({
+        empresaId: profile?.empresa_id as string,
+        papel: profile?.papel as NonNullable<typeof profile>['papel'],
+        usuarioId: profile?.id as string,
+      }),
+    queryKey: ['notifications', profile?.empresa_id, profile?.id, profile?.papel],
+    refetchInterval: 30000,
+  })
+  const notifications = notificationsQuery.data ?? []
+  const unreadCount = notifications.filter((notification) => !notification.read_at).length
+
+  const markReadMutation = useMutation({
+    mutationFn: markNotificationAsRead,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    },
+  })
+
+  const markAllReadMutation = useMutation({
+    mutationFn: markAllNotificationsAsRead,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    },
+  })
+
+  useEffect(() => {
+    let active = true
+
+    void resolveAssetUrl('company-assets', profile?.empresa?.logo_url).then((url) => {
+      if (active) {
+        setCompanyLogoSrc(url)
+      }
+    })
+
+    return () => {
+      active = false
+    }
+  }, [profile?.empresa?.logo_url])
+
+  useEffect(() => {
+    let active = true
+
+    void resolveAssetUrl('user-avatars', profile?.avatar_url).then((url) => {
+      if (active) {
+        setAvatarSrc(url)
+      }
+    })
+
+    return () => {
+      active = false
+    }
+  }, [profile?.avatar_url])
+
+  function toggleSidebar() {
+    setIsSidebarExpanded((current) => {
+      const nextState = !current
+      localStorage.setItem('bw-barber-sidebar', nextState ? 'expanded' : 'compact')
+
+      return nextState
+    })
+  }
+
+  function openNotification(notification: InternalNotification) {
+    if (!profile?.empresa_id) {
+      return
+    }
+
+    if (!notification.read_at) {
+      markReadMutation.mutate({
+        empresaId: profile.empresa_id,
+        notificationId: notification.id,
+      })
+    }
+
+    setIsNotificationsOpen(false)
+
+    if (
+      [
+        'appointment_created',
+        'appointment_cancelled',
+        'appointment_rescheduled',
+        'appointment_upcoming',
+      ].includes(notification.type)
+    ) {
+      navigate('/app/atendimentos')
+      return
+    }
+
+    if (['waitlist_joined', 'waitlist_vacancy'].includes(notification.type)) {
+      navigate('/app/atendimentos')
+    }
+  }
+
+  function notificationTime(value: string) {
+    const date = new Date(value)
+
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      month: '2-digit',
+    })
+  }
+
+  if (!isLoading && userType === 'cliente') {
+    return <Navigate replace to="/cliente" />
+  }
+
+  if (
+    isSubscriptionExpired &&
+    !allowedExpiredPaths.some((path) => location.pathname.startsWith(path))
+  ) {
+    return <Navigate replace to="/app/assinatura" />
+  }
+
+  function renderNavItem(item: NavigationItem) {
+    const Icon = item.icon
+
+    return (
+      <NavLink
+        aria-label={item.label}
+        className={({ isActive }) =>
+          cn(
+            'group relative flex h-11 w-full items-center rounded-2xl text-slate-600 transition duration-[180ms] hover:translate-x-1 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-800/80 dark:hover:text-white',
+            isSidebarExpanded ? 'justify-start gap-3 px-3.5' : 'justify-center px-0',
+            isActive &&
+              'bg-brand-50/70 text-brand-600 shadow-[0_10px_28px_rgb(6_182_212/0.10)] ring-1 ring-brand-100/80 dark:bg-brand-400/15 dark:text-white dark:ring-brand-400/25',
+          )
+        }
+        key={item.path}
+        onClick={() => setIsMobileMenuOpen(false)}
+        title={item.label}
+        to={item.path}
+      >
+        {({ isActive }) => (
+          <>
+            <span
+              className={cn(
+                'absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full transition duration-[180ms]',
+                isActive ? 'bg-brand-400 opacity-100' : 'bg-transparent opacity-0',
+              )}
+            />
+            <Icon
+              className={cn(
+                'shrink-0 transition duration-[180ms]',
+                isActive
+                  ? 'text-brand-600 dark:text-brand-300'
+                  : 'text-slate-500 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white',
+              )}
+              size={19}
+            />
+            <span
+              className={cn(
+                'min-w-0 truncate text-sm font-semibold transition duration-[180ms]',
+                isSidebarExpanded ? 'opacity-100' : 'hidden opacity-0',
+              )}
+            >
+              {item.label}
+            </span>
+            {!isSidebarExpanded && (
+              <span className="pointer-events-none absolute left-14 rounded-lg bg-slate-950 px-2.5 py-1.5 text-xs font-semibold text-white opacity-0 shadow-lg transition duration-[180ms] group-hover:translate-x-1 group-hover:opacity-100">
+                {item.label}
+              </span>
+            )}
+          </>
+        )}
+      </NavLink>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-zinc-100 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
+    <div className="min-h-screen bg-surface text-slate-950">
       {isMobileMenuOpen && (
         <button
           aria-label="Fechar menu"
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-950/20 backdrop-blur-sm lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
           type="button"
         />
@@ -124,125 +333,312 @@ export function AppLayout() {
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-zinc-200 bg-white transition-transform duration-200 dark:border-zinc-800 dark:bg-zinc-950 lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-[13.75rem] flex-col border-r border-slate-200 bg-white transition-[width,transform] duration-300 dark:border-slate-800 dark:bg-slate-950 lg:translate-x-0',
+          sidebarWidthClass,
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b border-zinc-200 px-5 dark:border-zinc-800">
-          <NavLink className="flex items-center gap-3" to="/app/dashboard">
-            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-charcoal text-brand-400 dark:bg-brand-400 dark:text-charcoal">
-              <Scissors size={20} />
+        <div
+          className={cn(
+            'flex h-20 w-full items-center border-b border-slate-100 px-4 dark:border-slate-800',
+            isSidebarExpanded ? 'justify-between' : 'justify-center',
+          )}
+        >
+          <NavLink
+            aria-label="BW Barber"
+            className="flex min-w-0 items-center gap-3"
+            to="/app/dashboard"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-sm font-black text-slate-950 ring-1 ring-brand-100 dark:bg-brand-400/12 dark:text-white dark:ring-brand-400/30">
+              {companyLogoSrc ? (
+                <img
+                  alt={String(companyName)}
+                  className="h-full w-full object-cover"
+                  src={companyLogoSrc}
+                />
+              ) : (
+                companyInitials
+              )}
             </span>
-            <span>
-              <span className="block text-base font-bold tracking-normal">
-                BarberFlow
+            <span
+              className={cn(
+                'min-w-0 transition duration-[180ms]',
+                isSidebarExpanded ? 'block opacity-100' : 'hidden opacity-0',
+              )}
+            >
+              <span className="block truncate text-sm font-black text-slate-950 dark:text-white">
+                {companyName}
               </span>
-              <span className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                SaaS
+              <span className="block truncate text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">
+                BW Barber
               </span>
             </span>
           </NavLink>
 
-          <Button
-            aria-label="Fechar menu"
-            className="h-9 w-9 px-0 lg:hidden"
-            onClick={() => setIsMobileMenuOpen(false)}
-            variant="ghost"
+          <button
+            aria-label={isSidebarExpanded ? 'Compactar sidebar' : 'Expandir sidebar'}
+            className={cn(
+              'hidden h-8 w-8 items-center justify-center rounded-xl text-slate-500 transition duration-[180ms] hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white lg:flex',
+              !isSidebarExpanded && 'lg:hidden',
+            )}
+            onClick={toggleSidebar}
+            type="button"
           >
-            <X size={18} />
-          </Button>
+            {isSidebarExpanded ? (
+              <PanelLeftClose size={17} />
+            ) : (
+              <PanelLeftOpen size={17} />
+            )}
+          </button>
         </div>
 
-        <div className="border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
-          <p className="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">
-            Empresa
-          </p>
-          <p className="mt-1 truncate text-sm font-semibold">{companyName}</p>
-        </div>
-
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-          {navigationItems.map((item) => {
-            const Icon = item.icon
-
-            return (
-              <NavLink
-                className={({ isActive }) =>
-                  cn(
-                    'flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium transition',
-                    isActive
-                      ? 'bg-charcoal text-white shadow-sm dark:bg-brand-400 dark:text-charcoal'
-                      : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white',
-                  )
-                }
-                key={item.path}
-                onClick={() => setIsMobileMenuOpen(false)}
-                to={item.path}
+        <nav
+          className={cn(
+            'flex flex-1 flex-col gap-2 overflow-y-auto py-7',
+            isSidebarExpanded ? 'px-3' : 'items-center px-3',
+          )}
+        >
+          <div className="mb-5 w-full space-y-2">
+            {navigationItems.map(renderNavItem)}
+          </div>
+          {navigationGroups.map((group) => (
+            <div className="w-full space-y-2" key={group.label}>
+              <p
+                className={cn(
+                  'px-3.5 text-[0.63rem] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300',
+                  !isSidebarExpanded && 'sr-only',
+                )}
               >
-                <Icon size={18} />
-                <span>{item.label}</span>
-              </NavLink>
-            )
-          })}
+                {group.label}
+              </p>
+              <div className="space-y-2">{group.items.map(renderNavItem)}</div>
+            </div>
+          ))}
         </nav>
 
-        <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
-          <div className="flex items-center gap-3 rounded-md bg-zinc-100 p-3 dark:bg-zinc-900">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-500 text-sm font-bold text-white dark:bg-brand-400 dark:text-charcoal">
-              {String(userName).slice(0, 1).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{userName}</p>
-              <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
-                {profile?.papel ?? 'perfil'}
-              </p>
-            </div>
-            <ChevronRight size={16} className="text-zinc-400" />
+        {!isSidebarExpanded && (
+          <button
+            aria-label="Expandir sidebar"
+            className="mx-auto mb-3 hidden h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition duration-[180ms] hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white lg:flex"
+            onClick={toggleSidebar}
+            type="button"
+          >
+            <PanelLeftOpen size={17} />
+          </button>
+        )}
+
+        <div
+          className={cn(
+            'w-full border-t border-slate-100 py-4 dark:border-slate-800',
+            isSidebarExpanded ? 'px-3' : 'px-3',
+          )}
+        >
+          <p
+            className={cn(
+              'mb-2 px-3.5 text-[0.63rem] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300',
+              !isSidebarExpanded && 'sr-only',
+            )}
+          >
+            SISTEMA
+          </p>
+          {settingsItem.map(renderNavItem)}
+        </div>
+
+        <div
+          className={cn(
+            'flex w-full items-center gap-3 border-t border-slate-100 py-5 dark:border-slate-800',
+            isSidebarExpanded ? 'px-4' : 'justify-center px-3',
+          )}
+        >
+          <div
+            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-sm font-black text-slate-700 ring-1 ring-slate-200 dark:bg-brand-400/12 dark:text-brand-100 dark:ring-brand-400/20"
+            title={String(userName)}
+          >
+            {avatarSrc ? (
+              <img
+                alt={String(userName)}
+                className="h-full w-full object-cover"
+                src={avatarSrc}
+              />
+            ) : (
+              <UserRound size={18} />
+            )}
           </div>
+          <div
+            className={cn(
+              'min-w-0 transition duration-[180ms]',
+              isSidebarExpanded ? 'block opacity-100' : 'hidden opacity-0',
+            )}
+          >
+            <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">
+              {userName}
+            </p>
+            <p className="truncate text-xs text-slate-500 dark:text-slate-300">
+              {profile?.papel ?? 'perfil'}
+            </p>
+          </div>
+          <NavLink
+            aria-label="Sair"
+            className={cn(
+              'ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-slate-500 transition duration-[180ms] hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
+              !isSidebarExpanded && 'absolute bottom-5 right-3',
+            )}
+            title="Sair"
+            to="/logout"
+          >
+            <LogOut size={17} />
+          </NavLink>
         </div>
       </aside>
 
-      <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
-          <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
+      <div className={cn('transition-[padding] duration-300', contentPaddingClass)}>
+        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/82 backdrop-blur-xl">
+          <div className="flex h-20 items-center gap-3 px-5 sm:px-10">
             <Button
               aria-label="Abrir menu"
-              className="h-10 w-10 px-0 lg:hidden"
+              className="lg:hidden"
               onClick={() => setIsMobileMenuOpen(true)}
+              size="icon-md"
               variant="ghost"
             >
               <Menu size={20} />
             </Button>
 
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold uppercase text-brand-600 dark:text-brand-400">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-600">
                 {currentItem.label}
               </p>
-              <h1 className="truncate text-lg font-semibold tracking-normal sm:text-xl">
-                Painel BarberFlow
+              <h1 className="truncate text-lg font-black tracking-normal text-slate-950 sm:text-xl">
+                BW Barber
               </h1>
             </div>
 
-            <div className="hidden h-10 w-full max-w-xs items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 md:flex">
+            <div className="hidden h-11 w-full max-w-xs items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500 md:flex">
               <Search size={16} />
               <span>Buscar</span>
             </div>
 
+            <div className="relative">
+              <Button
+                aria-label="Notificacoes"
+                onClick={() => setIsNotificationsOpen((current) => !current)}
+                size="icon-md"
+                tooltipPosition="bottom"
+                variant="ghost"
+              >
+                <Bell size={16} />
+              </Button>
+              {unreadCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1.5 text-[0.65rem] font-black text-slate-950 ring-2 ring-white dark:ring-slate-950">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+
+              {isNotificationsOpen && (
+                <div className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-[0_24px_80px_rgb(15_23_42/0.18)] dark:border-slate-800 dark:bg-slate-950">
+                  <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                    <div>
+                      <p className="text-sm font-black text-slate-950 dark:text-white">
+                        Notificacoes
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {unreadCount} nao lida{unreadCount === 1 ? '' : 's'}
+                      </p>
+                    </div>
+                    <button
+                      className="rounded-full px-3 py-1.5 text-xs font-bold text-brand-600 transition hover:bg-brand-50 dark:text-brand-300 dark:hover:bg-brand-400/10"
+                      disabled={markAllReadMutation.isPending || unreadCount === 0}
+                      onClick={() => {
+                        if (!profile?.empresa_id || !profile?.papel) {
+                          return
+                        }
+
+                        markAllReadMutation.mutate({
+                          empresaId: profile.empresa_id,
+                          papel: profile.papel,
+                          usuarioId: profile.id,
+                        })
+                      }}
+                      type="button"
+                    >
+                      Marcar todas
+                    </button>
+                  </div>
+
+                  <div className="max-h-[28rem] overflow-y-auto p-2">
+                    {notificationsQuery.isLoading ? (
+                      <p className="px-3 py-6 text-center text-sm text-slate-500">
+                        Carregando notificacoes...
+                      </p>
+                    ) : notifications.length === 0 ? (
+                      <p className="px-3 py-6 text-center text-sm text-slate-500">
+                        Nenhuma notificacao por enquanto.
+                      </p>
+                    ) : (
+                      notifications.map((notification) => (
+                        <button
+                          className={cn(
+                            'w-full rounded-2xl px-3 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-900',
+                            !notification.read_at &&
+                              'bg-brand-50/70 dark:bg-brand-400/10',
+                          )}
+                          key={notification.id}
+                          onClick={() => openNotification(notification)}
+                          type="button"
+                        >
+                          <div className="flex items-start gap-3">
+                            <span
+                              className={cn(
+                                'mt-1 h-2.5 w-2.5 shrink-0 rounded-full',
+                                notification.read_at
+                                  ? 'bg-slate-300 dark:bg-slate-700'
+                                  : 'bg-brand-500',
+                              )}
+                            />
+                            <span className="min-w-0">
+                              <span className="block text-sm font-black text-slate-950 dark:text-white">
+                                {notification.title}
+                              </span>
+                              <span className="mt-1 block text-sm leading-5 text-slate-600 dark:text-slate-300">
+                                {notification.message}
+                              </span>
+                              <span className="mt-2 block text-xs font-semibold text-slate-400">
+                                {notificationTime(notification.created_at)}
+                              </span>
+                            </span>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <Button
-              aria-label="Alternar tema"
-              className="h-10 w-10 px-0"
-              onClick={() => setIsDarkMode((current) => !current)}
+              aria-label="Fechar menu"
+              className="lg:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+              size="icon-md"
               variant="ghost"
             >
-              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </Button>
-
-            <Button aria-label="Notificações" className="h-10 w-10 px-0" variant="ghost">
-              <Bell size={18} />
+              <X size={16} />
             </Button>
           </div>
         </header>
 
-        <main className="px-4 py-6 sm:px-6 lg:px-8">
+        <main className="px-5 py-9 sm:px-10 lg:px-12">
+          {subscriptionQuery.subscription?.status === 'TRIAL' && (
+            <div className="mb-6 rounded-[1.35rem] border border-brand-100 bg-brand-50/80 px-5 py-4 text-sm font-semibold text-slate-700 dark:border-brand-400/20 dark:bg-brand-400/10 dark:text-brand-100">
+              Seu teste gratis termina em {trialDaysRemaining ?? 0} dias.
+            </div>
+          )}
+          {isSubscriptionExpired && (
+            <div className="mb-6 rounded-[1.35rem] border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-200">
+              Seu periodo de teste terminou. Escolha um plano para continuar
+              usando o BW Barber.
+            </div>
+          )}
           <Outlet />
         </main>
       </div>

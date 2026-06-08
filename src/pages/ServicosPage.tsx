@@ -115,6 +115,7 @@ export function ServicosPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['servicos'] })
+      reset(emptyFormValues())
       setIsFormOpen(false)
       setEditingServico(null)
       setFormError(null)
@@ -136,14 +137,23 @@ export function ServicosPage() {
 
   function openCreateModal() {
     setEditingServico(null)
+    reset(emptyFormValues())
     setFormError(null)
     setIsFormOpen(true)
   }
 
   function openEditModal(servico: Servico) {
     setEditingServico(servico)
+    reset(servicoToFormValues(servico))
     setFormError(null)
     setIsFormOpen(true)
+  }
+
+  function closeFormModal() {
+    setIsFormOpen(false)
+    setEditingServico(null)
+    setFormError(null)
+    reset(emptyFormValues())
   }
 
   async function onSubmit(data: ServicoFormData) {
@@ -287,7 +297,7 @@ export function ServicosPage() {
                       <div className="flex justify-end gap-2">
                         <Button
                           aria-label="Editar serviço"
-                          className="h-9 w-9 px-0"
+                          size="icon-sm"
                           onClick={() => openEditModal(servico)}
                           variant="ghost"
                         >
@@ -295,7 +305,7 @@ export function ServicosPage() {
                         </Button>
                         <Button
                           aria-label="Excluir serviço"
-                          className="h-9 w-9 px-0"
+                          size="icon-sm"
                           disabled={deleteMutation.isPending}
                           onClick={() => void handleDelete(servico)}
                           variant="ghost"
@@ -314,7 +324,7 @@ export function ServicosPage() {
 
       <Modal
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        onClose={closeFormModal}
         title={editingServico ? 'Editar serviço' : 'Cadastrar serviço'}
       >
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -358,9 +368,9 @@ export function ServicosPage() {
             {...register('ativo')}
           />
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="sticky bottom-0 -mx-5 flex justify-end gap-3 border-t border-slate-100 bg-white px-5 pb-[env(safe-area-inset-bottom)] pt-4">
             <Button
-              onClick={() => setIsFormOpen(false)}
+              onClick={closeFormModal}
               type="button"
               variant="secondary"
             >

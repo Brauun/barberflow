@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
+  <title id="title">BW Barber</title>
+  <desc id="desc">Logotipo vetorial BW Barber sem fundo.</desc>
+  <defs>
+    <linearGradient id="steel" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.45" stop-color="#c9ced7"/>
+      <stop offset="1" stop-color="#f8fafc"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#2b6fff"/>
+      <stop offset="1" stop-color="#12c6f3"/>
+    </linearGradient>
+  </defs>
+
+  <g fill="none" fill-rule="evenodd">
+    <text
+      x="192"
+      y="295"
+      fill="url(#steel)"
+      font-family="Georgia, 'Times New Roman', serif"
+      font-size="255"
+      font-weight="700"
+      letter-spacing="-18"
+    >B</text>
+    <text
+      x="470"
+      y="300"
+      fill="url(#blue)"
+      font-family="Georgia, 'Times New Roman', serif"
+      font-size="230"
+      font-weight="700"
+      letter-spacing="-10"
+    >W</text>
+
+    <g transform="translate(386 250) rotate(-34)">
+      <path
+        d="M22 28 L164 28 C174 28 181 36 177 45 L137 124 C132 134 118 132 116 121 L103 54 L20 54 C11 54 5 47 7 39 C9 32 15 28 22 28Z"
+        fill="url(#steel)"
+      />
+      <circle cx="45" cy="41" r="9" fill="#071426"/>
+      <path d="M111 55 L154 55 L133 101 Z" fill="#071426" opacity="0.9"/>
+    </g>
+
+    <g transform="translate(0 0)">
+      <path d="M190 390 H250" stroke="url(#blue)" stroke-width="6" stroke-linecap="round"/>
+      <text
+        x="290"
+        y="405"
+        fill="url(#steel)"
+        font-family="Montserrat, Inter, Arial, sans-serif"
+        font-size="43"
+        font-weight="600"
+        letter-spacing="34"
+      >BARBER</text>
+      <path d="M662 390 H722" stroke="url(#blue)" stroke-width="6" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

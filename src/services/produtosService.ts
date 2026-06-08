@@ -1,5 +1,3 @@
-import type { PostgrestError } from '@supabase/supabase-js'
-
 import { supabase } from '../lib/supabase'
 import type { Database } from '../types/database'
 import type {
@@ -9,21 +7,6 @@ import type {
 } from '../types/produtos'
 
 export type Produto = Database['public']['Tables']['produtos']['Row']
-
-type EntradaEstoqueArgs =
-  Database['public']['Functions']['registrar_entrada_estoque']['Args']
-type VendaProdutoArgs =
-  Database['public']['Functions']['registrar_venda_produto']['Args']
-
-const entradaEstoqueRpc = supabase.rpc as unknown as (
-  functionName: 'registrar_entrada_estoque',
-  args: EntradaEstoqueArgs,
-) => Promise<{ data: Produto | null; error: PostgrestError | null }>
-
-const vendaProdutoRpc = supabase.rpc as unknown as (
-  functionName: 'registrar_venda_produto',
-  args: VendaProdutoArgs,
-) => Promise<{ data: Produto | null; error: PostgrestError | null }>
 
 function normalizeProdutoInput(data: ProdutoFormData, empresaId: string) {
   return {
@@ -107,7 +90,7 @@ export async function registrarEntradaEstoque(
   produtoId: string,
   data: EstoqueFormData,
 ) {
-  const { error } = await entradaEstoqueRpc('registrar_entrada_estoque', {
+  const { error } = await supabase.rpc('registrar_entrada_estoque', {
     p_empresa_id: empresaId,
     p_produto_id: produtoId,
     p_quantidade: Number(data.quantidade),
@@ -123,7 +106,7 @@ export async function registrarVendaProduto(
   produtoId: string,
   data: VendaProdutoFormData,
 ) {
-  const { error } = await vendaProdutoRpc('registrar_venda_produto', {
+  const { error } = await supabase.rpc('registrar_venda_produto', {
     p_empresa_id: empresaId,
     p_forma_pagamento: data.forma_pagamento,
     p_produto_id: produtoId,

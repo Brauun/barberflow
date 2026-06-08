@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 type FinanceMovement = {
   categoria: string
   data_movimentacao: string
+  descricao: string | null
   tipo: 'entrada' | 'saida'
   valor: number
 }
@@ -31,6 +32,13 @@ type DueBill = {
   status: string
 }
 
+type PaidBill = {
+  data_pagamento: string | null
+  data_vencimento: string
+  descricao: string
+  valor: number
+}
+
 export type DashboardMetric = {
   label: string
   value: string
@@ -39,6 +47,7 @@ export type DashboardMetric = {
 
 export type MonthlyFinancePoint = {
   label: string
+  tooltipLabel: string
   entradas: number
   saidas: number
   lucro: number
@@ -127,9 +136,14 @@ function getMonthlyFinance(movements: FinanceMovement[]) {
     const to = toDateInputValue(nextMonth)
     const entradas = sumMovements(movements, 'entrada', from, to)
     const saidas = sumMovements(movements, 'saida', from, to)
+    const shortMonth = date
+      .toLocaleDateString('pt-BR', { month: 'short' })
+      .replace('.', '')
+    const fullMonth = date.toLocaleDateString('pt-BR', { month: 'long' })
 
     points.push({
-      label: date.toLocaleDateString('pt-BR', { month: 'short' }),
+      label: shortMonth.charAt(0).toUpperCase() + shortMonth.slice(1),
+      tooltipLabel: fullMonth.charAt(0).toUpperCase() + fullMonth.slice(1),
       entradas,
       saidas,
       lucro: entradas - saidas,
@@ -137,6 +151,32 @@ function getMonthlyFinance(movements: FinanceMovement[]) {
   }
 
   return points
+}
+
+function getMissingPaidBillMovements(
+  movements: FinanceMovement[],
+  paidBills: PaidBill[],
+) {
+  return paidBills
+    .filter((bill) => {
+      const paymentDate = bill.data_pagamento ?? bill.data_vencimento
+      const description = `Pagamento - ${bill.descricao}`
+
+      return !movements.some(
+        (movement) =>
+          movement.tipo === 'saida' &&
+          movement.data_movimentacao === paymentDate &&
+          Number(movement.valor) === Number(bill.valor) &&
+          movement.descricao === description,
+      )
+    })
+    .map((bill) => ({
+      categoria: 'Contas a Pagar',
+      data_movimentacao: bill.data_pagamento ?? bill.data_vencimento,
+      descricao: `Pagamento - ${bill.descricao}`,
+      tipo: 'saida' as const,
+      valor: Number(bill.valor),
+    }))
 }
 
 export async function getDashboardData(empresaId: string): Promise<DashboardData> {
@@ -156,10 +196,11 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
     completedServicesResponse,
     latestAppointmentsResponse,
     dueBillsResponse,
+    paidBillsResponse,
   ] = await Promise.all([
     supabase
       .from('movimentacoes_financeiras')
-      .select('categoria,data_movimentacao,tipo,valor')
+      .select('categoria,data_movimentacao,descricao,tipo,valor')
       .eq('empresa_id', empresaId)
       .eq('status', 'confirmada')
       .gte('data_movimentacao', toDateInputValue(sixMonthsStart))
@@ -200,6 +241,11 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
       .lte('data_vencimento', toDateInputValue(dueLimit))
       .order('data_vencimento', { ascending: true })
       .limit(6),
+    supabase
+      .from('contas_pagar')
+      .select('data_pagamento,data_vencimento,descricao,valor')
+      .eq('empresa_id', empresaId)
+      .eq('status', 'paga'),
   ])
 
   const responses = [
@@ -209,6 +255,7 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
     completedServicesResponse,
     latestAppointmentsResponse,
     dueBillsResponse,
+    paidBillsResponse,
   ]
 
   const failedResponse = responses.find((response) => response.error)
@@ -217,7 +264,20 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
     throw new Error(failedResponse.error.message)
   }
 
-  const movements = (movementsResponse.data ?? []) as FinanceMovement[]
+  const movementsFromDatabase = (movementsResponse.data ?? []) as FinanceMovement[]
+  const paidBills = ((paidBillsResponse.data ?? []) as PaidBill[]).filter(
+    (bill) => {
+      const paymentDate = bill.data_pagamento ?? bill.data_vencimento
+      const from = toDateInputValue(sixMonthsStart)
+      const to = toDateInputValue(nextMonth)
+
+      return paymentDate >= from && paymentDate < to
+    },
+  )
+  const movements = [
+    ...movementsFromDatabase,
+    ...getMissingPaidBillMovements(movementsFromDatabase, paidBills),
+  ]
   const commissions = (commissionsResponse.data ?? []) as Commission[]
   const monthFrom = toDateInputValue(monthStart)
   const monthTo = toDateInputValue(nextMonth)

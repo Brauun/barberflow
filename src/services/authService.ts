@@ -1,5 +1,3 @@
-import type { PostgrestError } from '@supabase/supabase-js'
-
 import { supabase } from '../lib/supabase'
 import type { UserRole, Usuario } from '../types/database'
 
@@ -9,10 +7,12 @@ type SignInInput = {
 }
 
 type SignUpInput = {
+  accountType?: 'barbearia' | 'cliente'
   nome: string
-  empresa: string
-  email: string
+  empresa?: string
+  email?: string
   telefone?: string
+  responsavel_cpf?: string
   password: string
   papel?: UserRole
 }
@@ -20,49 +20,130 @@ type SignUpInput = {
 type CreateCompanyUserInput = {
   nomeEmpresa: string
   nomeUsuario: string
+  responsavelCpf?: string | null
   telefoneUsuario?: string | null
   papelUsuario: UserRole
 }
 
-type CreateCompanyUserArgs = {
-  nome_empresa: string
-  nome_usuario: string
-  telefone_usuario: string | null
-  papel_usuario: UserRole
+function normalizePhone(value: string) {
+  return value.replace(/\D/g, '')
 }
 
-const createCompanyUserRpc = supabase.rpc as unknown as (
-  functionName: 'criar_empresa_com_usuario',
-  args: CreateCompanyUserArgs,
-) => Promise<{
-  data: Usuario | null
-  error: PostgrestError | null
-}>
+function normalizeDigits(value: string | null | undefined) {
+  return String(value ?? '').replace(/\D/g, '')
+}
 
-export async function signInWithPassword({ email, password }: SignInInput) {
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
+function clientPhoneAuthEmail(phone: string) {
+  return `cliente.${phone}@bwbarber.local`
+}
 
-  if (error) {
-    throw new Error(error.message)
+function legacyClientPhoneAuthEmail(phone: string) {
+  return `cliente.${phone}@${'barber' + 'flow'}.local`
+}
+
+function isMissingSchemaTableError(message: string) {
+  return (
+    message.includes("Could not find the table 'public.profiles'") ||
+    message.includes("Could not find the table 'public.barbershops'") ||
+    message.includes('schema cache')
+  )
+}
+
+function missingClientSchemaMessage() {
+  return [
+    'As tabelas do módulo Cliente ainda não existem no Supabase.',
+    'Aplique a migration supabase/migrations/20260605090000_client_booking_evolution.sql no banco e recarregue o schema cache antes de cadastrar clientes.',
+  ].join(' ')
+}
+
+async function assertClientSchemaReady() {
+  const { error: profilesError } = await supabase
+    .from('profiles')
+    .select('id')
+    .limit(1)
+
+  if (profilesError) {
+    if (isMissingSchemaTableError(profilesError.message)) {
+      throw new Error(missingClientSchemaMessage())
+    }
+
+    throw new Error(`Falha ao verificar tabela profiles: ${profilesError.message}`)
+  }
+
+  const { error: barbershopsError } = await supabase
+    .from('barbershops')
+    .select('id')
+    .limit(1)
+
+  if (barbershopsError) {
+    if (isMissingSchemaTableError(barbershopsError.message)) {
+      throw new Error(missingClientSchemaMessage())
+    }
+
+    throw new Error(
+      `Falha ao verificar tabela barbershops: ${barbershopsError.message}`,
+    )
   }
 }
 
-export async function signUpWithCompany(input: SignUpInput) {
-  const papel: UserRole = 'administrador'
+export async function signInWithPassword({ email, password }: SignInInput) {
+  const identifier = email.trim()
+  const phone = normalizePhone(identifier)
+  const isEmail = identifier.includes('@')
+  const credentials = isEmail
+    ? { email: identifier, password }
+    : { email: clientPhoneAuthEmail(phone), password }
 
-  console.info('Iniciando cadastro BarberFlow: criando usuario no Supabase Auth.')
+  const { data, error } = await supabase.auth.signInWithPassword(credentials)
+
+  if (error) {
+    if (!isEmail) {
+      const { data: legacyData, error: legacyError } =
+        await supabase.auth.signInWithPassword({
+        email: legacyClientPhoneAuthEmail(phone),
+        password,
+      })
+
+      if (!legacyError) {
+        return legacyData
+      }
+    }
+
+    throw new Error(error.message)
+  }
+
+  return data
+}
+
+export async function signUpWithCompany(input: SignUpInput) {
+  if (input.accountType === 'cliente') {
+    return signUpClient(input)
+  }
+
+  const papel: UserRole = 'administrador'
+  const nomeEmpresa = input.empresa?.trim()
+  const telefoneUsuario = normalizeDigits(input.telefone)
+  const responsavelCpf = normalizeDigits(input.responsavel_cpf)
+
+  if (!nomeEmpresa || !input.email) {
+    throw new Error('Informe empresa e e-mail para cadastrar uma barbearia.')
+  }
+
+  if (responsavelCpf.length !== 11) {
+    throw new Error('Informe o CPF do responsavel com 11 digitos.')
+  }
+
+  console.info('Iniciando cadastro BW Barber: criando usuario no Supabase Auth.')
 
   const { data, error } = await supabase.auth.signUp({
-    email: input.email,
+    email: input.email as string,
     password: input.password,
     options: {
       data: {
         nome: input.nome,
-        empresa: input.empresa,
-        telefone: input.telefone ?? null,
+        empresa: nomeEmpresa,
+        responsavel_cpf: responsavelCpf,
+        telefone: telefoneUsuario || null,
         papel,
       },
     },
@@ -88,9 +169,10 @@ export async function signUpWithCompany(input: SignUpInput) {
   )
 
   const usuario = await createCompanyUser({
-    nomeEmpresa: input.empresa,
+    nomeEmpresa,
     nomeUsuario: input.nome,
-    telefoneUsuario: input.telefone || null,
+    responsavelCpf,
+    telefoneUsuario: telefoneUsuario || null,
     papelUsuario: papel,
   })
 
@@ -105,16 +187,92 @@ export async function signUpWithCompany(input: SignUpInput) {
   }
 }
 
-export async function createCompanyUser(input: CreateCompanyUserInput) {
-  const { data, error } = await createCompanyUserRpc(
-    'criar_empresa_com_usuario',
+export async function signUpClient(input: SignUpInput) {
+  const telefone = normalizePhone(input.telefone ?? '')
+
+  if (!telefone) {
+    throw new Error('Informe um telefone valido para criar conta de cliente.')
+  }
+
+  const authEmail = input.email?.trim() || clientPhoneAuthEmail(telefone)
+
+  console.info('Iniciando cadastro de cliente BW Barber.')
+
+  await assertClientSchemaReady()
+
+  const { data, error } = await supabase.auth.signUp({
+    email: authEmail,
+    password: input.password,
+    options: {
+      data: {
+        auth_email_is_internal: !input.email,
+        nome: input.nome,
+        role: 'cliente',
+        telefone,
+      },
+    },
+  })
+
+  if (error) {
+    throw new Error(`Falha ao criar cliente no Supabase Auth: ${error.message}`)
+  }
+
+  if (!data.user?.id) {
+    throw new Error('Supabase Auth nao retornou o id do cliente criado.')
+  }
+
+  if (!data.session) {
+    return {
+      needsEmailConfirmation: true,
+    }
+  }
+
+  await createClientProfile({
+    authUserId: data.user.id,
+    email: input.email || null,
+    nome: input.nome,
+    telefone,
+  })
+
+  return {
+    needsEmailConfirmation: false,
+  }
+}
+
+export async function createClientProfile(input: {
+  authUserId: string
+  nome: string
+  telefone?: string | null
+  email?: string | null
+}) {
+  const { error } = await supabase.from('profiles').upsert(
     {
+      auth_user_id: input.authUserId,
+      email: input.email ?? null,
+      nome: input.nome.trim(),
+      role: 'cliente',
+      telefone: input.telefone || null,
+    },
+    { onConflict: 'auth_user_id' },
+  )
+
+  if (error) {
+    if (isMissingSchemaTableError(error.message)) {
+      throw new Error(missingClientSchemaMessage())
+    }
+
+    throw new Error(`Falha ao criar perfil de cliente: ${error.message}`)
+  }
+}
+
+export async function createCompanyUser(input: CreateCompanyUserInput) {
+  const { data, error } = await supabase.rpc('criar_empresa_com_usuario', {
       nome_empresa: input.nomeEmpresa,
       nome_usuario: input.nomeUsuario,
+      responsavel_cpf: input.responsavelCpf || null,
       telefone_usuario: input.telefoneUsuario || null,
       papel_usuario: input.papelUsuario,
-    },
-  )
+    })
 
   if (error) {
     console.error('Falha ao criar empresa/usuario no banco:', error)
@@ -127,7 +285,16 @@ export async function createCompanyUser(input: CreateCompanyUserInput) {
     throw new Error('A funcao de cadastro nao retornou o usuario criado.')
   }
 
-  return data
+  await supabase.from('barbershops').upsert(
+    {
+      empresa_id: (data as Usuario).empresa_id,
+      nome: input.nomeEmpresa.trim(),
+      telefone: input.telefoneUsuario || null,
+    },
+    { onConflict: 'empresa_id' },
+  )
+
+  return data as Usuario
 }
 
 export async function sendPasswordResetEmail(email: string) {

@@ -1,8 +1,15 @@
 import { supabase } from '../lib/supabase'
 import type { Database } from '../types/database'
 import type { ClienteFormData } from '../types/clientes'
+import { onlyDigits } from '../utils/masks'
 
 export type Cliente = Database['public']['Tables']['clientes']['Row']
+
+export type ClienteWithIndicators = Cliente & {
+  ultima_visita: string | null
+  total_gasto: number
+  visitas_count: number
+}
 
 export type ClienteAtendimento = {
   id: string
@@ -14,11 +21,17 @@ export type ClienteAtendimento = {
   servicos: { nome: string } | null
 }
 
+type ClienteIndicator = {
+  cliente_id: string
+  data_hora_inicio: string
+  valor: number
+}
+
 function normalizeClienteInput(data: ClienteFormData, empresaId: string) {
   return {
     empresa_id: empresaId,
     nome: data.nome.trim(),
-    telefone: data.telefone?.trim() || null,
+    telefone: onlyDigits(data.telefone) || null,
     data_nascimento: data.data_nascimento || null,
     observacoes: data.observacoes?.trim() || null,
   }
@@ -27,7 +40,7 @@ function normalizeClienteInput(data: ClienteFormData, empresaId: string) {
 export async function listClientes(
   empresaId: string,
   search: string,
-): Promise<Cliente[]> {
+): Promise<ClienteWithIndicators[]> {
   let query = supabase
     .from('clientes')
     .select('*')
@@ -42,13 +55,44 @@ export async function listClientes(
     )
   }
 
-  const { data, error } = await query
+  const [clientesResponse, atendimentosResponse] = await Promise.all([
+    query,
+    supabase
+      .from('atendimentos')
+      .select('cliente_id,data_hora_inicio,valor')
+      .eq('empresa_id', empresaId)
+      .eq('status', 'concluido'),
+  ])
 
-  if (error) {
-    throw new Error(error.message)
+  const failedResponse = [clientesResponse, atendimentosResponse].find(
+    (response) => response.error,
+  )
+
+  if (failedResponse?.error) {
+    throw new Error(failedResponse.error.message)
   }
 
-  return (data ?? []) as Cliente[]
+  const atendimentos = (atendimentosResponse.data ?? []) as ClienteIndicator[]
+
+  return ((clientesResponse.data ?? []) as Cliente[]).map((cliente) => {
+    const atendimentosDoCliente = atendimentos.filter(
+      (atendimento) => atendimento.cliente_id === cliente.id,
+    )
+    const ultimaVisita = atendimentosDoCliente
+      .map((atendimento) => atendimento.data_hora_inicio)
+      .sort()
+      .at(-1)
+
+    return {
+      ...cliente,
+      total_gasto: atendimentosDoCliente.reduce(
+        (total, atendimento) => total + Number(atendimento.valor),
+        0,
+      ),
+      ultima_visita: ultimaVisita ?? null,
+      visitas_count: atendimentosDoCliente.length,
+    }
+  })
 }
 
 export async function createCliente(empresaId: string, data: ClienteFormData) {

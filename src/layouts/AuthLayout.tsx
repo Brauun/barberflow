@@ -1,30 +1,26 @@
-import { Link, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 
 export function AuthLayout() {
   return (
-    <main className="grid min-h-screen bg-surface lg:grid-cols-[1fr_480px]">
-      <section className="hidden bg-ink-900 px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between">
-        <Link className="text-lg font-semibold" to="/">
-          BarberFlow
-        </Link>
-        <div className="max-w-xl">
-          <p className="text-sm font-medium uppercase tracking-wide text-brand-100">
-            SaaS Multi-Tenant
-          </p>
-          <h1 className="mt-4 text-5xl font-semibold tracking-normal">
-            Gestao profissional para barbearias modernas.
-          </h1>
-          <p className="mt-5 text-base leading-7 text-slate-300">
-            Acesso seguro por empresa, perfis de usuario e dados isolados no
-            Supabase.
-          </p>
-        </div>
-        <p className="text-sm text-slate-400">BarberFlow SaaS</p>
-      </section>
+    <main className="min-h-[100dvh] overflow-x-hidden bg-[#071426] text-white">
+      <section className="mx-auto flex min-h-[100dvh] w-full max-w-[31rem] items-start px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-[calc(0.75rem+env(safe-area-inset-top))] sm:items-center sm:px-6 sm:py-6 lg:max-w-5xl lg:py-8">
+        <div className="grid w-full max-w-full overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-[#0E1D32] shadow-[0_24px_80px_rgb(0_0_0/0.30)] sm:rounded-[2.25rem] lg:min-h-[42rem] lg:grid-cols-[1.05fr_0.95fr] lg:shadow-[0_30px_110px_rgb(0_0_0/0.35)]">
+          <div className="relative flex min-h-[8.75rem] items-center justify-center overflow-hidden bg-[#071426] px-6 py-4 sm:min-h-[13rem] sm:px-8 sm:py-8 lg:min-h-full">
+            <div className="absolute inset-x-[-12%] bottom-[-2.75rem] h-20 rounded-[50%] bg-[#0E1D32] sm:bottom-[-4.5rem] sm:h-32" />
+            <div className="absolute left-5 top-4 h-16 w-16 rounded-full border border-[#12C6F3]/15 bg-[#12C6F3]/5 blur-2xl sm:left-6 sm:top-6 sm:h-20 sm:w-20" />
+            <div className="absolute bottom-8 right-6 h-20 w-20 rounded-full border border-[#2B6FFF]/15 bg-[#2B6FFF]/10 blur-3xl sm:bottom-10 sm:right-8 sm:h-28 sm:w-28" />
+            <img
+              alt="BW Barber"
+              className="relative z-10 h-28 w-auto max-w-[92%] object-contain sm:h-[165px] lg:h-[300px]"
+              src="/brand/bw-barber-login-logo.png"
+            />
+          </div>
 
-      <section className="flex items-center justify-center px-6 py-10">
-        <div className="w-full max-w-sm">
-          <Outlet />
+          <div className="relative px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-5 sm:px-8 sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:pt-7 lg:flex lg:items-center lg:px-10 lg:py-10">
+            <div className="w-full">
+              <Outlet />
+            </div>
+          </div>
         </div>
       </section>
     </main>

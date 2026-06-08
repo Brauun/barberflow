@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowDownCircle, ArrowUpCircle, Loader2, Plus } from 'lucide-react'
+import { ArrowDownCircle, ArrowUpCircle, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
@@ -13,6 +13,7 @@ import {
   Input,
   Modal,
   Select,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -139,6 +140,7 @@ export function FluxoCaixaPage() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['fluxo-caixa'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['relatorios'] }),
       ])
       setFormError(null)
       setIsFormOpen(false)
@@ -174,13 +176,13 @@ export function FluxoCaixaPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="flex flex-wrap items-end justify-between gap-4">
+    <div className="space-y-8">
+      <section className="flex flex-wrap items-end justify-between gap-5">
         <div>
-          <p className="text-sm font-semibold uppercase text-brand-600 dark:text-brand-400">
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">
             Fluxo de Caixa
           </p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-normal text-zinc-950 dark:text-zinc-50">
+          <h2 className="mt-3 text-3xl font-black tracking-normal text-zinc-950 dark:text-zinc-50">
             Entradas e saídas
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
@@ -201,7 +203,7 @@ export function FluxoCaixaPage() {
         </Button>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-4">
+      <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr_0.75fr]">
         <Card>
           <CardContent>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -282,8 +284,10 @@ export function FluxoCaixaPage() {
           )}
 
           {isLoading ? (
-            <div className="flex min-h-56 items-center justify-center">
-              <Loader2 className="animate-spin text-brand-500" size={28} />
+            <div className="space-y-3 p-6">
+              <Skeleton className="h-12" />
+              <Skeleton className="h-12" />
+              <Skeleton className="h-12" />
             </div>
           ) : movimentacoes.length === 0 ? (
             <div className="p-5 text-sm text-zinc-500 dark:text-zinc-400">

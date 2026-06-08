@@ -151,6 +151,7 @@ export function ProdutosPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['produtos'] })
+      produtoForm.reset(emptyProdutoValues())
       setIsFormOpen(false)
       setEditingProduto(null)
       setFormError(null)
@@ -207,14 +208,23 @@ export function ProdutosPage() {
 
   function openCreateModal() {
     setEditingProduto(null)
+    produtoForm.reset(emptyProdutoValues())
     setFormError(null)
     setIsFormOpen(true)
   }
 
   function openEditModal(produto: Produto) {
     setEditingProduto(produto)
+    produtoForm.reset(produtoToFormValues(produto))
     setFormError(null)
     setIsFormOpen(true)
+  }
+
+  function closeFormModal() {
+    setIsFormOpen(false)
+    setEditingProduto(null)
+    setFormError(null)
+    produtoForm.reset(emptyProdutoValues())
   }
 
   async function onSubmitProduto(data: ProdutoFormData) {
@@ -404,7 +414,7 @@ export function ProdutosPage() {
                         </Button>
                         <Button
                           aria-label="Venda de produto"
-                          className="h-9 w-9 px-0"
+                          size="icon-sm"
                           onClick={() => {
                             vendaForm.reset({
                               forma_pagamento: 'Dinheiro',
@@ -419,7 +429,7 @@ export function ProdutosPage() {
                         </Button>
                         <Button
                           aria-label="Editar produto"
-                          className="h-9 w-9 px-0"
+                          size="icon-sm"
                           onClick={() => openEditModal(produto)}
                           variant="ghost"
                         >
@@ -427,7 +437,7 @@ export function ProdutosPage() {
                         </Button>
                         <Button
                           aria-label="Excluir produto"
-                          className="h-9 w-9 px-0"
+                          size="icon-sm"
                           disabled={deleteMutation.isPending}
                           onClick={() => void handleDelete(produto)}
                           variant="ghost"
@@ -446,7 +456,7 @@ export function ProdutosPage() {
 
       <Modal
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        onClose={closeFormModal}
         title={editingProduto ? 'Editar produto' : 'Cadastrar produto'}
       >
         <form
@@ -508,9 +518,9 @@ export function ProdutosPage() {
             {...produtoForm.register('ativo')}
           />
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="sticky bottom-0 -mx-5 flex justify-end gap-3 border-t border-slate-100 bg-white px-5 pb-[env(safe-area-inset-bottom)] pt-4">
             <Button
-              onClick={() => setIsFormOpen(false)}
+              onClick={closeFormModal}
               type="button"
               variant="secondary"
             >

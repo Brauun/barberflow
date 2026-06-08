@@ -8,8 +8,14 @@ type TableProps = HTMLAttributes<HTMLTableElement> & {
 
 export function Table({ children, className, ...props }: TableProps) {
   return (
-    <div className="w-full overflow-x-auto">
-      <table className={cn('w-full min-w-[640px] text-left text-sm', className)} {...props}>
+    <div className="w-full p-4 sm:p-5">
+      <table
+        className={cn(
+          'block w-full min-w-0 border-separate border-spacing-y-3 text-left text-sm',
+          className,
+        )}
+        {...props}
+      >
         {children}
       </table>
     </div>
@@ -18,7 +24,13 @@ export function Table({ children, className, ...props }: TableProps) {
 
 export function TableHead({ children, className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <thead className={cn('bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-950 dark:text-zinc-400', className)} {...props}>
+    <thead
+      className={cn(
+        'sr-only text-[0.68rem] uppercase tracking-[0.16em] text-slate-500',
+        className,
+      )}
+      {...props}
+    >
       {children}
     </thead>
   )
@@ -26,7 +38,7 @@ export function TableHead({ children, className, ...props }: HTMLAttributes<HTML
 
 export function TableBody({ children, className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <tbody className={cn('divide-y divide-zinc-200 dark:divide-zinc-800', className)} {...props}>
+    <tbody className={cn('block space-y-3', className)} {...props}>
       {children}
     </tbody>
   )
@@ -34,7 +46,13 @@ export function TableBody({ children, className, ...props }: HTMLAttributes<HTML
 
 export function TableRow({ children, className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr className={cn('transition hover:bg-zinc-50 dark:hover:bg-zinc-800/50', className)} {...props}>
+    <tr
+      className={cn(
+        'grid gap-3 rounded-[1.4rem] border border-slate-200/70 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] transition duration-200 hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-[0_22px_70px_rgb(15_23_42/0.045)] sm:p-5 lg:grid-flow-col lg:auto-cols-fr lg:items-center',
+        className,
+      )}
+      {...props}
+    >
       {children}
     </tr>
   )
@@ -50,7 +68,13 @@ export function TableHeaderCell({ children, className, ...props }: ThHTMLAttribu
 
 export function TableCell({ children, className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className={cn('px-4 py-3 text-zinc-700 dark:text-zinc-300', className)} {...props}>
+    <td
+      className={cn(
+        'block min-w-0 px-0 py-0 text-sm font-medium text-slate-600 first:text-base first:font-black first:text-slate-950 dark:text-slate-600',
+        className,
+      )}
+      {...props}
+    >
       {children}
     </td>
   )

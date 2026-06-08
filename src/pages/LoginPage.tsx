@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { AuthFormMessage } from '../components/AuthFormMessage'
+import { useAuth } from '../hooks/useAuth'
 import { signInWithPassword } from '../services/authService'
 import { loginSchema, type LoginFormData } from '../types/auth'
 
@@ -13,12 +14,27 @@ type LocationState = {
   }
 }
 
+function devAuthLog(message: string, details?: unknown) {
+  if (!import.meta.env.DEV) {
+    return
+  }
+
+  if (details === undefined) {
+    console.info(`[BW Barber Auth] ${message}`)
+    return
+  }
+
+  console.info(`[BW Barber Auth] ${message}`, details)
+}
+
 export function LoginPage() {
   const [formError, setFormError] = useState<string | null>(null)
+  const [isEntering, setIsEntering] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+  const { profileLoading, refreshProfile } = useAuth()
   const locationState = location.state as LocationState | null
-  const redirectTo = locationState?.from?.pathname ?? '/perfil'
+  const explicitRedirectTo = locationState?.from?.pathname
 
   const {
     formState: { errors, isSubmitting },
@@ -30,71 +46,112 @@ export function LoginPage() {
 
   async function onSubmit(data: LoginFormData) {
     setFormError(null)
+    setIsEntering(true)
+    devAuthLog('login iniciado')
 
     try {
-      await signInWithPassword(data)
+      const authData = await signInWithPassword(data)
+      if (!authData.session || !authData.user) {
+        throw new Error('Login realizado, mas a sessao nao foi retornada.')
+      }
+
+      devAuthLog('login sucesso', { userId: authData.user.id })
+      const profile = await refreshProfile(authData.session)
+      const isClient = authData.user?.user_metadata.role === 'cliente'
+      const redirectTo =
+        explicitRedirectTo ??
+        (isClient && !profile?.empresa_id ? '/cliente' : '/app/dashboard')
+
+      devAuthLog('redirect realizado', { redirectTo })
+
       navigate(redirectTo, { replace: true })
     } catch (error) {
       setFormError(
         error instanceof Error ? error.message : 'Nao foi possivel entrar.',
       )
+      setIsEntering(false)
     }
   }
 
+  const showEnteringState = isSubmitting || isEntering || profileLoading
+
   return (
-    <div>
-      <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">
+    <div className="mx-auto w-full max-w-md">
+      <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#12C6F3]">
         Acesso
       </p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-normal">
-        Entrar no BarberFlow
+      <h1 className="mt-2 text-[1.85rem] font-black leading-[1.08] tracking-normal text-white sm:mt-3 sm:text-3xl">
+        Bem vindo(a) ao BW Barber
       </h1>
+      <p className="mt-2 text-sm leading-6 text-[#A5B4CB] sm:text-[0.95rem]">
+        Acesse sua conta para gerenciar horarios, clientes e operacao.
+      </p>
 
-      <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
+      <form className="mt-5 space-y-4 sm:mt-8 sm:space-y-5" onSubmit={handleSubmit(onSubmit)}>
         <AuthFormMessage message={formError} />
+        {showEnteringState && (
+          <p className="rounded-2xl border border-[#12C6F3]/20 bg-[#12C6F3]/10 px-4 py-3 text-sm font-semibold text-[#B9F3FF]">
+            Entrando no BW Barber...
+          </p>
+        )}
 
         <label className="block">
-          <span className="text-sm font-medium text-ink-700">E-mail</span>
+          <span className="text-sm font-semibold text-white">
+            Telefone ou Email
+          </span>
           <input
-            className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-            type="email"
+            className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium sm:text-sm text-white outline-none transition duration-200 placeholder:text-[#A5B4CB]/60 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px]"
+            placeholder="exemplo@exemplo.com ou (51) 9 9999-9999"
+            type="text"
             {...register('email')}
           />
           {errors.email && (
-            <span className="mt-1 block text-sm text-red-600">
+            <span className="mt-2 block text-sm text-rose-200">
               {errors.email.message}
             </span>
           )}
         </label>
 
         <label className="block">
-          <span className="text-sm font-medium text-ink-700">Senha</span>
+          <span className="text-sm font-semibold text-white">Senha</span>
           <input
-            className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium sm:text-sm text-white outline-none transition duration-200 placeholder:text-[#A5B4CB]/60 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px]"
+            placeholder="Digite sua senha"
             type="password"
             {...register('password')}
           />
           {errors.password && (
-            <span className="mt-1 block text-sm text-red-600">
+            <span className="mt-2 block text-sm text-rose-200">
               {errors.password.message}
             </span>
           )}
         </label>
 
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+          <label className="flex cursor-pointer items-center gap-2 font-medium text-[#A5B4CB]">
+            <input
+              className="h-5 w-5 rounded border-white/10 bg-white/5 accent-[#12C6F3] sm:h-4 sm:w-4"
+              type="checkbox"
+            />
+            Lembrar acesso
+          </label>
+          <Link className="font-semibold text-[#12C6F3] transition hover:text-white" to="/recuperar-senha">
+            Esqueci minha senha
+          </Link>
+        </div>
+
         <button
-          className="w-full rounded-md bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-70"
-          disabled={isSubmitting}
+          className="min-h-11 h-12 w-full rounded-2xl bg-[#12C6F3] px-4 text-sm font-black text-[#071426] shadow-[0_16px_40px_rgb(18_198_243/0.22)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#4EDCFF] hover:shadow-[0_20px_48px_rgb(18_198_243/0.30)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-70 sm:h-14 sm:rounded-[18px]"
+          disabled={showEnteringState}
           type="submit"
         >
-          {isSubmitting ? 'Entrando...' : 'Entrar'}
+          {showEnteringState ? 'Entrando no BW Barber...' : 'Entrar'}
         </button>
       </form>
 
-      <div className="mt-6 flex items-center justify-between text-sm">
-        <Link className="font-medium text-brand-600" to="/recuperar-senha">
-          Esqueci minha senha
-        </Link>
-        <Link className="font-medium text-brand-600" to="/cadastro">
+      <div className="mt-5 text-center text-sm text-[#A5B4CB] sm:mt-7">
+        Ainda nao tem acesso?{' '}
+        <Link className="font-bold text-[#12C6F3] transition hover:text-white" to="/cadastro">
           Criar conta
         </Link>
       </div>

@@ -5,7 +5,6 @@ import {
   History,
   Loader2,
   Plus,
-  Search,
   Trash2,
   UserRound,
 } from 'lucide-react'
@@ -18,14 +17,14 @@ import {
   Card,
   CardContent,
   CardHeader,
+  EmptyState,
   Input,
   Modal,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
+  RecordAvatar,
+  RecordCard,
+  RecordMetric,
+  SearchInput,
+  Skeleton,
 } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import {
@@ -37,6 +36,7 @@ import {
 } from '../services/clientesService'
 import { updateCliente } from '../services/clientesService'
 import { clienteSchema, type ClienteFormData } from '../types/clientes'
+import { formatPhone, maskPhoneChange } from '../utils/masks'
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
   dateStyle: 'short',
@@ -66,7 +66,7 @@ function clienteToFormValues(cliente: Cliente): ClienteFormData {
     data_nascimento: cliente.data_nascimento ?? '',
     nome: cliente.nome,
     observacoes: cliente.observacoes ?? '',
-    telefone: cliente.telefone ?? '',
+    telefone: formatPhone(cliente.telefone),
   }
 }
 
@@ -80,6 +80,15 @@ function getStatusVariant(status: string) {
   }
 
   return 'warning'
+}
+
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
 }
 
 export function ClientesPage() {
@@ -219,13 +228,13 @@ export function ClientesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="flex flex-wrap items-end justify-between gap-4">
+    <div className="space-y-8">
+      <section className="flex flex-wrap items-end justify-between gap-5">
         <div>
-          <p className="text-sm font-semibold uppercase text-brand-600 dark:text-brand-400">
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">
             Clientes
           </p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-normal text-zinc-950 dark:text-zinc-50">
+          <h2 className="mt-3 text-3xl font-black tracking-normal text-zinc-950 dark:text-zinc-50">
             Base de clientes
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
@@ -252,13 +261,8 @@ export function ClientesPage() {
               </p>
             </div>
 
-            <div className="relative w-full lg:max-w-sm">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
-                size={16}
-              />
-              <input
-                className="h-10 w-full rounded-md border border-zinc-300 bg-white pl-9 pr-3 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:border-brand-400 dark:focus:ring-brand-500/20"
+            <div className="w-full lg:max-w-sm">
+              <SearchInput
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Pesquisar por nome ou telefone"
                 value={searchTerm}
@@ -275,56 +279,73 @@ export function ClientesPage() {
           )}
 
           {isLoadingClientes ? (
-            <div className="flex min-h-56 items-center justify-center">
-              <Loader2 className="animate-spin text-brand-500" size={28} />
+            <div className="space-y-3 p-6">
+              <Skeleton className="h-12" />
+              <Skeleton className="h-12" />
+              <Skeleton className="h-12" />
             </div>
           ) : clientes.length === 0 ? (
-            <div className="flex min-h-56 flex-col items-center justify-center px-5 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-md bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
-                <UserRound size={22} />
-              </span>
-              <p className="mt-4 font-semibold text-zinc-950 dark:text-zinc-50">
-                Nenhum cliente encontrado
-              </p>
-              <p className="mt-2 max-w-sm text-sm text-zinc-500 dark:text-zinc-400">
-                Cadastre o primeiro cliente ou ajuste a pesquisa.
-              </p>
-            </div>
+            <EmptyState
+              description="Cadastre o primeiro cliente ou ajuste a pesquisa para reencontrar alguem da base."
+              icon={<UserRound size={22} />}
+              title="Nenhum cliente encontrado"
+            />
           ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell>Nome</TableHeaderCell>
-                  <TableHeaderCell>Telefone</TableHeaderCell>
-                  <TableHeaderCell>Nascimento</TableHeaderCell>
-                  <TableHeaderCell>Status</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Ações</TableHeaderCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {clientes.map((cliente) => (
-                  <TableRow key={cliente.id}>
-                    <TableCell className="font-medium text-zinc-950 dark:text-zinc-50">
-                      {cliente.nome}
-                    </TableCell>
-                    <TableCell>{cliente.telefone ?? '-'}</TableCell>
-                    <TableCell>
-                      {cliente.data_nascimento
-                        ? dateFormatter.format(new Date(cliente.data_nascimento))
-                        : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={cliente.status === 'ativo' ? 'success' : 'default'}
-                      >
-                        {cliente.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end gap-2">
+            <div className="space-y-3 p-4 sm:p-5">
+              {clientes.map((cliente) => (
+                <RecordCard key={cliente.id}>
+                  <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex min-w-0 items-start gap-4">
+                      <RecordAvatar>{getInitials(cliente.nome)}</RecordAvatar>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="truncate text-base font-black text-slate-950">
+                            {cliente.nome}
+                          </h4>
+                          <Badge
+                            variant={
+                              cliente.status === 'ativo' ? 'success' : 'default'
+                            }
+                          >
+                            {cliente.status}
+                          </Badge>
+                        </div>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {cliente.telefone
+                            ? formatPhone(cliente.telefone)
+                            : 'Telefone nao informado'} ·{' '}
+                          {cliente.email ?? 'Email nao informado'}
+                        </p>
+                        <p className="mt-2 text-xs font-medium text-slate-400">
+                          Nascimento:{' '}
+                          {cliente.data_nascimento
+                            ? dateFormatter.format(
+                                new Date(cliente.data_nascimento),
+                              )
+                            : 'Nao informado'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
+                      <RecordMetric
+                        label="Ultima visita"
+                        value={
+                          cliente.ultima_visita
+                            ? dateFormatter.format(new Date(cliente.ultima_visita))
+                            : 'Sem visitas'
+                        }
+                      />
+                      <RecordMetric
+                        accent
+                        label="Total gasto"
+                        value={currencyFormatter.format(cliente.total_gasto)}
+                      />
+                      <RecordMetric label="Visitas" value={cliente.visitas_count} />
+                      <div className="flex gap-2 sm:justify-end">
                         <Button
                           aria-label="Ver histórico"
-                          className="h-9 w-9 px-0"
+                          size="icon-sm"
                           onClick={() => setHistoryCliente(cliente)}
                           variant="ghost"
                         >
@@ -332,7 +353,7 @@ export function ClientesPage() {
                         </Button>
                         <Button
                           aria-label="Editar cliente"
-                          className="h-9 w-9 px-0"
+                          size="icon-sm"
                           onClick={() => openEditModal(cliente)}
                           variant="ghost"
                         >
@@ -340,7 +361,7 @@ export function ClientesPage() {
                         </Button>
                         <Button
                           aria-label="Excluir cliente"
-                          className="h-9 w-9 px-0"
+                          size="icon-sm"
                           disabled={deleteMutation.isPending}
                           onClick={() => void handleDelete(cliente)}
                           variant="ghost"
@@ -348,11 +369,11 @@ export function ClientesPage() {
                           <Trash2 size={16} />
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                  </div>
+                </RecordCard>
                 ))}
-              </TableBody>
-            </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -372,13 +393,19 @@ export function ClientesPage() {
           <Input
             error={errors.nome?.message}
             label="Nome"
+            placeholder="Joao Silva"
             {...register('nome')}
           />
 
           <Input
             error={errors.telefone?.message}
+            inputMode="numeric"
             label="Telefone"
-            {...register('telefone')}
+            placeholder="(99) 9 9999-9999"
+            autoComplete="tel"
+            {...register('telefone', {
+              onChange: maskPhoneChange,
+            })}
           />
 
           <Input

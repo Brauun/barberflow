@@ -10,7 +10,7 @@ export function AppSectionPage({ description, title }: AppSectionPageProps) {
     <div className="space-y-6">
       <section>
         <p className="text-sm font-semibold uppercase text-brand-600 dark:text-brand-400">
-          BarberFlow
+          BW Barber
         </p>
         <h2 className="mt-2 text-2xl font-semibold tracking-normal text-zinc-950 dark:text-zinc-50">
           {title}
@@ -36,7 +36,7 @@ export function AppSectionPage({ description, title }: AppSectionPageProps) {
         <Card>
           <CardContent>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">Tema</p>
-            <p className="mt-2 text-2xl font-semibold">Premium</p>
+            <p className="mt-2 text-2xl font-semibold">Proprietario</p>
           </CardContent>
         </Card>
       </div>

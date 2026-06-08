@@ -4,25 +4,75 @@ import type {
   UserProfileFormData,
 } from '../types/configuracoes'
 import type { Empresa, Usuario } from '../types/database'
+import { onlyDigits } from '../utils/masks'
+
+function optionalText(value?: string | null) {
+  return value?.trim() || null
+}
+
+function optionalNumber(value?: number | null) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function buildAddress(data: EmpresaSettingsFormData) {
+  const streetLine = [optionalText(data.rua), optionalText(data.numero)]
+    .filter(Boolean)
+    .join(', ')
+  const cityLine = [
+    optionalText(data.bairro),
+    optionalText(data.cidade),
+    optionalText(data.estado)?.toUpperCase(),
+  ]
+    .filter(Boolean)
+    .join(' - ')
+
+  return (
+    [streetLine, cityLine].filter(Boolean).join(' — ') ||
+    optionalText(data.endereco)
+  )
+}
 
 export async function updateEmpresaSettings(
   empresaId: string,
   data: EmpresaSettingsFormData,
 ) {
+  const endereco = buildAddress(data)
+  const locationPayload = {
+    bairro: optionalText(data.bairro),
+    cep: onlyDigits(data.cep) || null,
+    cidade: optionalText(data.cidade),
+    complemento: optionalText(data.complemento),
+    email: data.email || null,
+    endereco,
+    estado: optionalText(data.estado)?.toUpperCase() || null,
+    latitude: optionalNumber(data.latitude),
+    logo_url: data.logo_url || null,
+    longitude: optionalNumber(data.longitude),
+    nome: data.nome.trim(),
+    numero: optionalText(data.numero),
+    rua: optionalText(data.rua),
+    telefone: onlyDigits(data.telefone) || null,
+  }
+
   const { error } = await supabase
     .from('empresas')
     .update({
-      email: data.email || null,
-      endereco: data.endereco?.trim() || null,
-      logo_url: data.logo_url || null,
-      nome: data.nome.trim(),
+      ...locationPayload,
       percentual_comissao_padrao: Number(data.percentual_comissao_padrao),
-      telefone: data.telefone?.trim() || null,
     })
     .eq('id', empresaId)
 
   if (error) {
     throw new Error(error.message)
+  }
+
+  const { error: barbershopError } = await supabase
+    .from('barbershops')
+    .update(locationPayload)
+    .eq('empresa_id', empresaId)
+
+  if (barbershopError) {
+    throw new Error(barbershopError.message)
   }
 }
 
@@ -35,7 +85,8 @@ export async function updateUserProfile(
     .from('usuarios')
     .update({
       nome: data.nome.trim(),
-      telefone: data.telefone?.trim() || null,
+      avatar_url: data.avatar_url || null,
+      telefone: onlyDigits(data.telefone) || null,
     })
     .eq('empresa_id', empresaId)
     .eq('id', usuarioId)

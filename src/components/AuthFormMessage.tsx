@@ -13,11 +13,11 @@ export function AuthFormMessage({
 
   const className =
     tone === 'success'
-      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-      : 'border-red-200 bg-red-50 text-red-700'
+      ? 'border-emerald-300/20 bg-emerald-400/10 text-emerald-100'
+      : 'border-rose-300/20 bg-rose-400/10 text-rose-100'
 
   return (
-    <p className={`rounded-md border px-3 py-2 text-sm ${className}`}>
+    <p className={`rounded-2xl border px-4 py-3 text-sm ${className}`}>
       {message}
     </p>
   )

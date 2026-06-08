@@ -167,7 +167,12 @@ export function ContasPagarPage() {
       await createContaPagar(empresaId, data)
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['contas-pagar'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['contas-pagar'] }),
+        queryClient.invalidateQueries({ queryKey: ['fluxo-caixa'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['relatorios'] }),
+      ])
       setIsFormOpen(false)
       setEditingConta(null)
       setFormError(null)
@@ -183,7 +188,12 @@ export function ContasPagarPage() {
       await deleteContaPagar(empresaId, conta.id)
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['contas-pagar'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['contas-pagar'] }),
+        queryClient.invalidateQueries({ queryKey: ['fluxo-caixa'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['relatorios'] }),
+      ])
     },
   })
 
@@ -200,6 +210,7 @@ export function ContasPagarPage() {
         queryClient.invalidateQueries({ queryKey: ['contas-pagar'] }),
         queryClient.invalidateQueries({ queryKey: ['fluxo-caixa'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['relatorios'] }),
       ])
     },
   })
@@ -380,7 +391,7 @@ export function ContasPagarPage() {
                         {conta.status !== 'paga' && (
                           <Button
                             aria-label="Marcar como paga"
-                            className="h-9 w-9 px-0"
+                            size="icon-sm"
                             disabled={payMutation.isPending}
                             onClick={() => void handlePay(conta)}
                             variant="ghost"
@@ -390,7 +401,7 @@ export function ContasPagarPage() {
                         )}
                         <Button
                           aria-label="Editar conta"
-                          className="h-9 w-9 px-0"
+                          size="icon-sm"
                           onClick={() => openEditModal(conta)}
                           variant="ghost"
                         >
@@ -398,7 +409,7 @@ export function ContasPagarPage() {
                         </Button>
                         <Button
                           aria-label="Excluir conta"
-                          className="h-9 w-9 px-0"
+                          size="icon-sm"
                           disabled={deleteMutation.isPending}
                           onClick={() => void handleDelete(conta)}
                           variant="ghost"

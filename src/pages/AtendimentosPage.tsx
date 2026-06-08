@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CalendarPlus, Loader2, Plus } from 'lucide-react'
+import { Bell, CalendarPlus, Eye, Loader2, Plus, RefreshCw, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
@@ -21,12 +21,21 @@ import {
   TableRow,
 } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
+import { useFeatureAccess } from '../hooks/useSubscription'
 import {
   listAtendimentoBarbeiros,
   listAtendimentoClientes,
   listAtendimentos,
   listAtendimentoServicos,
+  listAdminWaitlist,
+  listDailyAppointments,
+  notifyWaitlistEntry,
   registrarAtendimento,
+  removeAdminWaitlistEntry,
+  rescheduleDailyAppointment,
+  updateDailyAppointmentStatus,
+  type DailyAppointment,
+  type DailyAppointmentStatus,
 } from '../services/atendimentosService'
 import {
   atendimentoSchema,
@@ -57,10 +66,14 @@ function emptyFormValues(): AtendimentoFormInput {
     barbeiro_id: '',
     cliente_id: '',
     data: todayInputValue(),
+    desconto_tipo: 'valor',
     forma_pagamento: 'Dinheiro',
     hora: currentTimeInputValue(),
+    motivo_desconto: 'Outro',
     servico_id: '',
     valor: 0,
+    valor_desconto: 0,
+    comissao_base: 'liquido',
   }
 }
 
@@ -69,19 +82,51 @@ function getStatusVariant(status: string) {
     return 'success'
   }
 
-  if (status === 'cancelado' || status === 'faltou') {
+  if (status === 'cancelado' || status === 'faltou' || status === 'nao_compareceu') {
     return 'danger'
+  }
+
+  if (status === 'remarcado') {
+    return 'info'
   }
 
   return 'warning'
 }
 
+const dailyStatusOptions = [
+  { label: 'Todos', value: '' },
+  { label: 'Agendado', value: 'agendado' },
+  { label: 'Confirmado', value: 'confirmado' },
+  { label: 'Em atendimento', value: 'em_atendimento' },
+  { label: 'Concluido', value: 'concluido' },
+  { label: 'Cancelado', value: 'cancelado' },
+  { label: 'Remarcado', value: 'remarcado' },
+  { label: 'Nao compareceu', value: 'nao_compareceu' },
+]
+
+function getStatusLabel(status: string) {
+  return (
+    dailyStatusOptions.find((option) => option.value === status)?.label ??
+    status
+  )
+}
+
 export function AtendimentosPage() {
   const { profile } = useAuth()
   const empresaId = profile?.empresa_id
+  const waitlistAccess = useFeatureAccess('HAS_WAITLIST')
   const queryClient = useQueryClient()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [dailyDate, setDailyDate] = useState(todayInputValue())
+  const [dailyBarberId, setDailyBarberId] = useState('')
+  const [dailyStatus, setDailyStatus] = useState('')
+  const [selectedDailyAppointment, setSelectedDailyAppointment] =
+    useState<DailyAppointment | null>(null)
+  const [rescheduleAppointment, setRescheduleAppointment] =
+    useState<DailyAppointment | null>(null)
+  const [rescheduleDate, setRescheduleDate] = useState(todayInputValue())
+  const [rescheduleTime, setRescheduleTime] = useState(currentTimeInputValue())
 
   const {
     formState: { errors, isSubmitting },
@@ -105,10 +150,22 @@ export function AtendimentosPage() {
       name: 'valor',
     }) || 0,
   )
+  const watchedDiscountType = useWatch({ control, name: 'desconto_tipo' })
+  const watchedDiscount = Number(
+    useWatch({ control, name: 'valor_desconto' }) || 0,
+  )
+  const watchedCommissionBase = useWatch({ control, name: 'comissao_base' })
+  const discountAmount =
+    watchedDiscountType === 'percentual'
+      ? watchedValor * (watchedDiscount / 100)
+      : watchedDiscount
+  const valorFinal = Math.max(0, watchedValor - discountAmount)
+  const commissionBase =
+    watchedCommissionBase === 'cheio' ? watchedValor : valorFinal
   const comissaoPercentual = profile?.empresa?.percentual_comissao_padrao ?? 60
   const empresaPercentual = Math.max(0, 100 - comissaoPercentual)
-  const comissaoBarbeiro = watchedValor * (comissaoPercentual / 100)
-  const valorEmpresa = watchedValor * (empresaPercentual / 100)
+  const comissaoBarbeiro = commissionBase * (comissaoPercentual / 100)
+  const valorEmpresa = valorFinal - comissaoBarbeiro
 
   const atendimentosQuery = useQuery({
     enabled: Boolean(empresaId),
@@ -132,6 +189,30 @@ export function AtendimentosPage() {
     enabled: Boolean(empresaId),
     queryFn: () => listAtendimentoServicos(empresaId as string),
     queryKey: ['atendimentos-servicos', empresaId],
+  })
+
+  const dailyAppointmentsQuery = useQuery({
+    enabled: Boolean(empresaId),
+    queryFn: () =>
+      listDailyAppointments({
+        barbeiroId: dailyBarberId,
+        date: dailyDate,
+        empresaId: empresaId as string,
+        status: dailyStatus,
+      }),
+    queryKey: [
+      'daily-appointments',
+      empresaId,
+      dailyDate,
+      dailyBarberId,
+      dailyStatus,
+    ],
+  })
+
+  const waitlistQuery = useQuery({
+    enabled: Boolean(empresaId && waitlistAccess.canUse),
+    queryFn: () => listAdminWaitlist(empresaId as string),
+    queryKey: ['admin-waitlist', empresaId],
   })
 
   const clienteOptions = useMemo(
@@ -197,6 +278,78 @@ export function AtendimentosPage() {
       reset(emptyFormValues())
       setFormError(null)
       setIsFormOpen(false)
+    },
+  })
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async (input: {
+      appointment: DailyAppointment
+      status: DailyAppointmentStatus
+    }) => {
+      if (!empresaId) {
+        throw new Error('Empresa nao encontrada.')
+      }
+
+      await updateDailyAppointmentStatus({
+        empresaId,
+        id: input.appointment.id,
+        reason:
+          input.status === 'cancelado'
+            ? window.prompt('Motivo do cancelamento') || null
+            : null,
+        source: input.appointment.source,
+        status: input.status,
+      })
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['daily-appointments'] }),
+        queryClient.invalidateQueries({ queryKey: ['atendimentos'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-waitlist'] }),
+      ])
+    },
+  })
+
+  const rescheduleMutation = useMutation({
+    mutationFn: async () => {
+      if (!empresaId || !rescheduleAppointment) {
+        throw new Error('Atendimento nao encontrado.')
+      }
+
+      const startsAt = new Date(`${rescheduleDate}T${rescheduleTime}:00`)
+      const endsAt = new Date(
+        startsAt.getTime() + rescheduleAppointment.duration_minutes * 60 * 1000,
+      )
+
+      await rescheduleDailyAppointment({
+        appointment: rescheduleAppointment,
+        empresaId,
+        endsAt: endsAt.toISOString(),
+        startsAt: startsAt.toISOString(),
+      })
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['daily-appointments'] }),
+        queryClient.invalidateQueries({ queryKey: ['atendimentos'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+      ])
+      setRescheduleAppointment(null)
+    },
+  })
+
+  const notifyWaitlistMutation = useMutation({
+    mutationFn: notifyWaitlistEntry,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin-waitlist'] })
+    },
+  })
+
+  const removeWaitlistMutation = useMutation({
+    mutationFn: removeAdminWaitlistEntry,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin-waitlist'] })
     },
   })
 
@@ -287,6 +440,299 @@ export function AtendimentosPage() {
           </CardContent>
         </Card>
       </section>
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+                Atendimentos do dia
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Consulte a agenda por data, barbeiro e status.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Input
+                label="Data"
+                onChange={(event) => setDailyDate(event.target.value)}
+                type="date"
+                value={dailyDate}
+              />
+              <Select
+                label="Barbeiro"
+                onChange={(event) => setDailyBarberId(event.target.value)}
+                options={barbeiroOptions}
+                value={dailyBarberId}
+              />
+              <Select
+                label="Status"
+                onChange={(event) => setDailyStatus(event.target.value)}
+                options={dailyStatusOptions}
+                value={dailyStatus}
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {dailyAppointmentsQuery.error && (
+            <p className="mb-4 text-sm text-red-600">
+              {dailyAppointmentsQuery.error.message}
+            </p>
+          )}
+
+          {dailyAppointmentsQuery.isLoading ? (
+            <div className="flex min-h-40 items-center justify-center">
+              <Loader2 className="animate-spin text-brand-500" size={28} />
+            </div>
+          ) : !dailyAppointmentsQuery.data?.length ? (
+            <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-6 text-center text-sm font-medium text-slate-500">
+              Nenhum atendimento agendado para esta data.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {dailyAppointmentsQuery.data.map((appointment) => (
+                <div
+                  className="grid gap-4 rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] lg:grid-cols-[5rem_1.2fr_1fr_1fr_auto]"
+                  key={`${appointment.source}-${appointment.id}`}
+                >
+                  <div>
+                    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      Horario
+                    </p>
+                    <p className="mt-1 text-xl font-black text-brand-600">
+                      {new Date(appointment.starts_at).toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-black text-slate-950">
+                      {appointment.cliente}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {appointment.servico}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">
+                      {appointment.barbeiro}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {appointment.duration_minutes}min
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-black text-brand-600">
+                      {currencyFormatter.format(appointment.valor)}
+                    </p>
+                    <Badge variant={getStatusVariant(appointment.status)}>
+                      {getStatusLabel(appointment.status)}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                    <Select
+                      className="min-w-44"
+                      onChange={(event) =>
+                        updateStatusMutation.mutate({
+                          appointment,
+                          status: event.target.value as DailyAppointmentStatus,
+                        })
+                      }
+                      options={dailyStatusOptions.filter((option) => option.value)}
+                      value={appointment.status}
+                    />
+                    {!['cancelado', 'concluido', 'remarcado', 'nao_compareceu', 'faltou'].includes(
+                      appointment.status,
+                    ) && (
+                      <>
+                        <Button
+                          aria-label="Remarcar"
+                          onClick={() => {
+                            setRescheduleAppointment(appointment)
+                            setRescheduleDate(appointment.starts_at.slice(0, 10))
+                            setRescheduleTime(
+                              new Date(appointment.starts_at).toLocaleTimeString(
+                                'pt-BR',
+                                {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                },
+                              ),
+                            )
+                          }}
+                          size="icon-sm"
+                          variant="ghost"
+                        >
+                          <RefreshCw size={16} />
+                        </Button>
+                        <Button
+                          aria-label="Cancelar"
+                          disabled={updateStatusMutation.isPending}
+                          onClick={() => {
+                            if (
+                              !window.confirm(
+                                'Cancelar este atendimento e liberar o horario?',
+                              )
+                            ) {
+                              return
+                            }
+
+                            updateStatusMutation.mutate({
+                              appointment,
+                              status: 'cancelado',
+                            })
+                          }}
+                          size="icon-sm"
+                          variant="ghost"
+                        >
+                          <X size={16} />
+                        </Button>
+                        <Button
+                          aria-label="Concluir"
+                          disabled={updateStatusMutation.isPending}
+                          onClick={() =>
+                            updateStatusMutation.mutate({
+                              appointment,
+                              status: 'concluido',
+                            })
+                          }
+                          size="icon-sm"
+                          variant="ghost"
+                        >
+                          <CalendarPlus size={16} />
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      aria-label="Ver detalhes"
+                      onClick={() => setSelectedDailyAppointment(appointment)}
+                      size="icon-sm"
+                      variant="ghost"
+                    >
+                      <Eye size={16} />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+              <Bell size={20} />
+            </span>
+            <div>
+              <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+                Lista de espera
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Clientes aguardando vaga por data, servico e profissional.
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {!waitlistAccess.isLoading && !waitlistAccess.canUse ? (
+            <div className="rounded-[1.35rem] border border-brand-100 bg-brand-50/70 p-6 text-sm font-semibold text-slate-700">
+              A lista de espera nao esta disponivel no seu plano atual. Faça
+              upgrade em Assinatura para liberar este recurso.
+            </div>
+          ) : waitlistQuery.error ? (
+            <p className="text-sm text-red-600">{waitlistQuery.error.message}</p>
+          ) : waitlistQuery.isLoading ? (
+            <div className="flex min-h-28 items-center justify-center">
+              <Loader2 className="animate-spin text-brand-500" size={24} />
+            </div>
+          ) : !waitlistQuery.data?.length ? (
+            <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-6 text-center text-sm font-medium text-slate-500">
+              Nenhum cliente na lista de espera.
+            </div>
+          ) : (
+            waitlistQuery.data.map((entry) => (
+              <div
+                className="grid gap-4 rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] lg:grid-cols-[1fr_1fr_1fr_auto]"
+                key={entry.id}
+              >
+                <div>
+                  <p className="font-black text-slate-950">
+                    {entry.client?.nome ?? 'Cliente'}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {entry.client?.telefone ?? 'Telefone nao informado'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">
+                    {entry.service?.nome ?? 'Servico'}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {entry.barber?.nome ?? 'Qualquer profissional'}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-black text-brand-600">
+                    {new Date(`${entry.desired_date}T00:00:00`).toLocaleDateString(
+                      'pt-BR',
+                    )}
+                  </p>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    <Badge variant="info">{entry.preferred_period ?? 'qualquer'}</Badge>
+                    <Badge
+                      variant={
+                        entry.status === 'aguardando'
+                          ? 'warning'
+                          : entry.status === 'notificado'
+                            ? 'info'
+                            : 'default'
+                      }
+                    >
+                      {entry.status}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                  <Button
+                    disabled={notifyWaitlistMutation.isPending}
+                    leftIcon={<Bell size={14} />}
+                    onClick={() =>
+                      notifyWaitlistMutation.mutate({
+                        barbershopName: profile?.empresa?.nome,
+                        entry,
+                      })
+                    }
+                    size="sm"
+                    type="button"
+                    variant="secondary"
+                  >
+                    Avisar
+                  </Button>
+                  <Button
+                    disabled={removeWaitlistMutation.isPending}
+                    leftIcon={<X size={14} />}
+                    onClick={() =>
+                      removeWaitlistMutation.mutate({
+                        empresaId: empresaId as string,
+                        id: entry.id,
+                      })
+                    }
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                  >
+                    Remover
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -422,12 +868,56 @@ export function AtendimentosPage() {
 
           <Input
             error={errors.valor?.message}
-            label="Valor"
+            label="Preco"
             min={0}
             step="0.01"
             type="number"
             {...register('valor')}
           />
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select
+              error={errors.desconto_tipo?.message}
+              label="Tipo de desconto"
+              options={[
+                { label: 'Valor', value: 'valor' },
+                { label: 'Percentual', value: 'percentual' },
+              ]}
+              {...register('desconto_tipo')}
+            />
+            <Input
+              error={errors.valor_desconto?.message}
+              label="Desconto"
+              min={0}
+              step="0.01"
+              type="number"
+              {...register('valor_desconto')}
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select
+              error={errors.motivo_desconto?.message}
+              label="Motivo do desconto"
+              options={[
+                { label: 'Promoção', value: 'Promoção' },
+                { label: 'Cliente fiel', value: 'Cliente fiel' },
+                { label: 'Cupom', value: 'Cupom' },
+                { label: 'Cortesia', value: 'Cortesia' },
+                { label: 'Outro', value: 'Outro' },
+              ]}
+              {...register('motivo_desconto')}
+            />
+            <Select
+              error={errors.comissao_base?.message}
+              label="Comissao sobre"
+              options={[
+                { label: 'Valor cheio', value: 'cheio' },
+                { label: 'Valor liquido', value: 'liquido' },
+              ]}
+              {...register('comissao_base')}
+            />
+          </div>
 
           <Select
             error={errors.forma_pagamento?.message}
@@ -442,6 +932,18 @@ export function AtendimentosPage() {
           />
 
           <div className="grid gap-3 rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-zinc-800 dark:bg-zinc-950 sm:grid-cols-2">
+            <div>
+              <p className="text-zinc-500 dark:text-zinc-400">Pago</p>
+              <p className="mt-1 font-semibold text-brand-600">
+                {currencyFormatter.format(valorFinal)}
+              </p>
+            </div>
+            <div>
+              <p className="text-zinc-500 dark:text-zinc-400">Desconto</p>
+              <p className="mt-1 font-semibold text-zinc-950 dark:text-zinc-50">
+                {currencyFormatter.format(discountAmount)}
+              </p>
+            </div>
             <div>
               <p className="text-zinc-500 dark:text-zinc-400">
                 Comissão barbeiro {comissaoPercentual}%
@@ -473,6 +975,92 @@ export function AtendimentosPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(selectedDailyAppointment)}
+        onClose={() => setSelectedDailyAppointment(null)}
+        title="Detalhes do atendimento"
+      >
+        {selectedDailyAppointment && (
+          <div className="space-y-4 text-sm">
+            {[
+              ['Horario', dateTimeFormatter.format(new Date(selectedDailyAppointment.starts_at))],
+              ['Cliente', selectedDailyAppointment.cliente],
+              ['Barbeiro', selectedDailyAppointment.barbeiro],
+              ['Servico', selectedDailyAppointment.servico],
+              ['Duracao', `${selectedDailyAppointment.duration_minutes}min`],
+              ['Valor', currencyFormatter.format(selectedDailyAppointment.valor)],
+              ['Status', getStatusLabel(selectedDailyAppointment.status)],
+            ].map(([label, value]) => (
+              <div
+                className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                key={label}
+              >
+                <span className="font-semibold text-slate-500">{label}</span>
+                <span className="text-right font-bold text-slate-950">
+                  {value}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(rescheduleAppointment)}
+        onClose={() => setRescheduleAppointment(null)}
+        title="Remarcar atendimento"
+      >
+        <div className="space-y-4">
+          {rescheduleMutation.error && (
+            <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {rescheduleMutation.error.message}
+            </p>
+          )}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label="Nova data"
+              min={todayInputValue()}
+              onChange={(event) => setRescheduleDate(event.target.value)}
+              type="date"
+              value={rescheduleDate}
+            />
+            <Input
+              label="Novo horario"
+              onChange={(event) => setRescheduleTime(event.target.value)}
+              type="time"
+              value={rescheduleTime}
+            />
+          </div>
+          {rescheduleAppointment && (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+              <p className="font-semibold text-slate-950">
+                {rescheduleAppointment.cliente}
+              </p>
+              <p className="mt-1 text-slate-500">
+                {rescheduleAppointment.servico} ·{' '}
+                {rescheduleAppointment.duration_minutes}min
+              </p>
+            </div>
+          )}
+          <div className="flex justify-end gap-3">
+            <Button
+              onClick={() => setRescheduleAppointment(null)}
+              type="button"
+              variant="secondary"
+            >
+              Fechar
+            </Button>
+            <Button
+              disabled={rescheduleMutation.isPending}
+              onClick={() => rescheduleMutation.mutate()}
+              type="button"
+            >
+              {rescheduleMutation.isPending ? 'Remarcando...' : 'Confirmar'}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   )

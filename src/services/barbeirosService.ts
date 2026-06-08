@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase'
 import type { BarbeiroFormData } from '../types/barbeiros'
 import type { Database } from '../types/database'
+import { onlyDigits } from '../utils/masks'
 
 export type Barbeiro = Database['public']['Tables']['barbeiros']['Row']
 
@@ -24,7 +25,7 @@ function normalizeBarbeiroInput(data: BarbeiroFormData, empresaId: string) {
   return {
     empresa_id: empresaId,
     nome: data.nome.trim(),
-    telefone: data.telefone?.trim() || null,
+    telefone: onlyDigits(data.telefone) || null,
     percentual_comissao: Number(data.percentual_comissao),
   }
 }
@@ -99,19 +100,6 @@ export async function listBarbeiros(
   })
 }
 
-export async function createBarbeiro(
-  empresaId: string,
-  data: BarbeiroFormData,
-) {
-  const { error } = await supabase
-    .from('barbeiros')
-    .insert(normalizeBarbeiroInput(data, empresaId))
-
-  if (error) {
-    throw new Error(error.message)
-  }
-}
-
 export async function updateBarbeiro(
   empresaId: string,
   barbeiroId: string,
@@ -120,18 +108,6 @@ export async function updateBarbeiro(
   const { error } = await supabase
     .from('barbeiros')
     .update(normalizeBarbeiroInput(data, empresaId))
-    .eq('empresa_id', empresaId)
-    .eq('id', barbeiroId)
-
-  if (error) {
-    throw new Error(error.message)
-  }
-}
-
-export async function deleteBarbeiro(empresaId: string, barbeiroId: string) {
-  const { error } = await supabase
-    .from('barbeiros')
-    .delete()
     .eq('empresa_id', empresaId)
     .eq('id', barbeiroId)
 
