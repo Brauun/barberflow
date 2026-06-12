@@ -187,7 +187,7 @@ function statusKey(status: string | undefined): keyof ExecutiveAppointmentStatus
     return 'emAtendimento'
   }
 
-  if (status === 'concluido') {
+  if (status === 'concluido' || status === 'concluido_automatico') {
     return 'concluido'
   }
 
@@ -248,7 +248,7 @@ export async function getRelatorioData(
       .from('atendimentos')
       .select('valor,barbeiros(nome)')
       .eq('empresa_id', empresaId)
-      .eq('status', 'concluido')
+      .in('status', ['concluido', 'concluido_automatico'])
       .gte('data_hora_inicio', startIso)
       .lt('data_hora_inicio', endIso),
     supabase
@@ -426,8 +426,8 @@ export async function getExecutiveRelatorioData(
   const entradas = current.summary.receitaServicos + current.summary.receitaProdutos
   const previousEntradas =
     previous.summary.receitaServicos + previous.summary.receitaProdutos
-  const concluidoAppointments = appointments.filter(
-    (appointment) => appointment.status === 'concluido',
+  const concluidoAppointments = appointments.filter((appointment) =>
+    ['concluido', 'concluido_automatico'].includes(appointment.status ?? ''),
   )
   const status = appointments.reduce<ExecutiveAppointmentStatus>(
     (acc, appointment) => {
@@ -489,7 +489,9 @@ export async function getExecutiveRelatorioData(
       appointment.servicos?.duration_minutes ??
       appointment.servicos?.duracao_minutos ??
       0
-    const isConcluido = appointment.status === 'concluido'
+    const isConcluido = ['concluido', 'concluido_automatico'].includes(
+      appointment.status ?? '',
+    )
     const nextAtendimentos = currentBarber.atendimentos + (isConcluido ? 1 : 0)
     const nextFaturamento =
       currentBarber.faturamento +
@@ -548,7 +550,10 @@ export async function getExecutiveRelatorioData(
   const dailyAverage = entradas / periodDays
   const dayBuckets = new Map<string, number>()
   appointments.forEach((appointment) => {
-    if (appointment.status !== 'concluido' || !appointment.data_hora_inicio) {
+    if (
+      !['concluido', 'concluido_automatico'].includes(appointment.status ?? '') ||
+      !appointment.data_hora_inicio
+    ) {
       return
     }
 

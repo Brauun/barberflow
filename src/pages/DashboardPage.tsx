@@ -21,6 +21,7 @@ import {
   TableRow,
 } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
+import { processPendingAppointmentCompletions } from '../services/atendimentosService'
 import {
   getDashboardData,
   type MonthlyFinancePoint,
@@ -294,7 +295,11 @@ export function DashboardPage() {
 
   const { data, error, isLoading } = useQuery({
     enabled: Boolean(empresaId),
-    queryFn: () => getDashboardData(empresaId as string),
+    queryFn: async () => {
+      await processPendingAppointmentCompletions(empresaId as string)
+
+      return getDashboardData(empresaId as string)
+    },
     queryKey: ['dashboard', empresaId],
   })
 

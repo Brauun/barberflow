@@ -142,13 +142,13 @@ export function ClientBookingPage() {
   const bookingMutation = useMutation({
     mutationFn: async () => {
       if (!clientProfile || !barbershop || !selectedService || !selectedBarber || !slot) {
-        throw new Error('Selecione barbearia, servico, profissional, data e horario.')
+        throw new Error('Selecione barbearia, serviço, profissional, data e horário.')
       }
 
       const selectedSlot = slots.find((item) => item.value === slot)
 
       if (!selectedSlot?.available) {
-        throw new Error('Este horario nao esta disponivel para agendamento.')
+        throw new Error('Este horário não está disponível para agendamento.')
       }
 
       const startsAt = new Date(slot)
@@ -175,7 +175,7 @@ export function ClientBookingPage() {
   const waitlistMutation = useMutation({
     mutationFn: async () => {
       if (!clientProfile || !barbershop || !selectedService) {
-        throw new Error('Selecione barbearia, servico e data para entrar na lista.')
+        throw new Error('Selecione barbearia, serviço e data para entrar na lista.')
       }
 
       await createWaitlistEntry({
@@ -189,7 +189,7 @@ export function ClientBookingPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['client-waitlist'] })
-      setFormError('Voce entrou na lista de espera para esta data.')
+      setFormError('Você entrou na lista de espera para esta data.')
     },
   })
 
@@ -200,7 +200,7 @@ export function ClientBookingPage() {
           Agendar
         </p>
         <h2 className="mt-3 text-3xl font-black text-slate-950">
-          Novo horario
+          Novo horário
         </h2>
         <p className="mt-2 text-sm text-slate-500">
           {barbershop?.nome ?? 'Selecione uma barbearia principal para agendar.'}
@@ -238,7 +238,7 @@ export function ClientBookingPage() {
           />
 
           <Select
-            label="Servico"
+            label="Serviço"
             onChange={(event) => {
               setServiceId(event.target.value)
               setSlot('')
@@ -260,7 +260,7 @@ export function ClientBookingPage() {
 
           {barberId && !servicesQuery.isLoading && servicesQuery.data?.length === 0 && (
             <p className="rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-brand-500/20 dark:bg-brand-500/10 dark:text-slate-200">
-              Este profissional ainda nao possui servicos vinculados pela administracao.
+              Este profissional ainda não possui serviços vinculados pela administração.
             </p>
           )}
           <label className="block">
@@ -281,7 +281,7 @@ export function ClientBookingPage() {
 
           <div>
             <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Horario
+              Horário
             </p>
             {slotResult.message && (
               <p
@@ -315,13 +315,13 @@ export function ClientBookingPage() {
             </div>
             {isAllDayUnavailable && (
               <p className="mt-3 rounded-2xl border border-rose-200/80 bg-rose-50/70 px-4 py-3 text-sm font-medium text-rose-700">
-                Este profissional nao esta disponivel neste dia.
+                Este profissional não está disponível neste dia.
               </p>
             )}
             {serviceId && date && !hasAvailableSlots && (
               <div className="mt-4 rounded-[1.35rem] border border-slate-200 bg-slate-50/80 p-4">
                 <p className="text-sm font-semibold text-slate-950">
-                  Nenhum horario disponivel para essa combinacao.
+                  Nenhum horário disponível para essa combinação.
                 </p>
                 {canUseWaitlist ? (
                   <>
@@ -331,15 +331,15 @@ export function ClientBookingPage() {
                     </p>
                     <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto]">
                       <Select
-                        label="Periodo preferido"
+                        label="Período preferido"
                         onChange={(event) =>
                           setPreferredPeriod(
                             event.target.value as typeof preferredPeriod,
                           )
                         }
                         options={[
-                          { label: 'Qualquer horario', value: 'qualquer' },
-                          { label: 'Manha', value: 'manha' },
+                          { label: 'Qualquer horário', value: 'qualquer' },
+                          { label: 'Manhã', value: 'manha' },
                           { label: 'Tarde', value: 'tarde' },
                           { label: 'Noite', value: 'noite' },
                         ]}
@@ -354,7 +354,7 @@ export function ClientBookingPage() {
                                 setFormError(
                                   error instanceof Error
                                     ? error.message
-                                    : 'Nao foi possivel entrar na lista de espera.',
+                                    : 'Não foi possível entrar na lista de espera.',
                                 ),
                             })
                           }
@@ -370,7 +370,7 @@ export function ClientBookingPage() {
                   </>
                 ) : (
                   <p className="mt-2 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm font-semibold text-slate-700">
-                    A lista de espera nao esta disponivel no plano atual desta barbearia.
+                    A lista de espera não está disponível no plano atual desta barbearia.
                   </p>
                 )}
               </div>
@@ -387,12 +387,12 @@ export function ClientBookingPage() {
                   setFormError(
                     error instanceof Error
                       ? error.message
-                      : 'Nao foi possivel agendar.',
+                      : 'Não foi possível agendar.',
                   ),
               })
             }}
           >
-            {bookingMutation.isPending ? 'Agendando...' : 'Confirmar horario'}
+            {bookingMutation.isPending ? 'Agendando...' : 'Confirmar horário'}
           </Button>
         </CardContent>
       </Card>

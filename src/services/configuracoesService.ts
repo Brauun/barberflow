@@ -110,3 +110,73 @@ export async function updateUserProfile(
 
 export type SettingsEmpresa = Empresa
 export type SettingsUsuario = Usuario
+
+export type AppointmentAutomationSettings = {
+  enabled: boolean
+  after_minutes: number
+  allow_reversal: boolean
+  reversal_hours: number
+}
+
+const defaultAppointmentAutomationSettings: AppointmentAutomationSettings = {
+  after_minutes: 60,
+  allow_reversal: true,
+  enabled: true,
+  reversal_hours: 24,
+}
+
+function normalizeAppointmentAutomationSettings(
+  value: unknown,
+): AppointmentAutomationSettings {
+  const config = (value ?? {}) as Partial<AppointmentAutomationSettings>
+
+  return {
+    after_minutes: Number(config.after_minutes ?? 60),
+    allow_reversal: config.allow_reversal ?? true,
+    enabled: config.enabled ?? true,
+    reversal_hours: Number(config.reversal_hours ?? 24),
+  }
+}
+
+export async function getAppointmentAutomationSettings(
+  empresaId: string,
+): Promise<AppointmentAutomationSettings> {
+  const { data, error } = await supabase.rpc(
+    'get_appointment_auto_complete_config',
+    {
+      p_empresa_id: empresaId,
+    },
+  )
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return normalizeAppointmentAutomationSettings(
+    data ?? defaultAppointmentAutomationSettings,
+  )
+}
+
+export async function saveAppointmentAutomationSettings(
+  empresaId: string,
+  settings: AppointmentAutomationSettings,
+): Promise<AppointmentAutomationSettings> {
+  const { data, error } = await supabase.rpc(
+    'save_appointment_auto_complete_config',
+    {
+      p_after_minutes: settings.after_minutes,
+      p_allow_reversal: settings.allow_reversal,
+      p_empresa_id: empresaId,
+      p_enabled: settings.enabled,
+      p_reversal_hours: settings.reversal_hours,
+    },
+  )
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return normalizeAppointmentAutomationSettings(
+    data ?? defaultAppointmentAutomationSettings,
+  )
+}

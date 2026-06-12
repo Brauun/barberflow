@@ -93,6 +93,7 @@ export type Database = {
         Row: {
           id: string
           empresa_id: string
+          client_profile_id: string | null
           nome: string
           telefone: string | null
           email: string | null
@@ -105,6 +106,7 @@ export type Database = {
         Insert: {
           id?: string
           empresa_id: string
+          client_profile_id?: string | null
           nome: string
           telefone?: string | null
           email?: string | null
@@ -117,6 +119,7 @@ export type Database = {
         Update: {
           id?: string
           empresa_id?: string
+          client_profile_id?: string | null
           nome?: string
           telefone?: string | null
           email?: string | null
@@ -275,11 +278,16 @@ export type Database = {
             | 'agendado'
             | 'confirmado'
             | 'em_atendimento'
+            | 'aguardando_finalizacao'
             | 'concluido'
+            | 'concluido_automatico'
             | 'cancelado'
             | 'remarcado'
             | 'nao_compareceu'
             | 'faltou'
+          auto_completed: boolean
+          auto_completed_at: string | null
+          auto_completed_by: string | null
           cancelled_at: string | null
           cancelled_by: string | null
           cancellation_reason: string | null
@@ -311,11 +319,16 @@ export type Database = {
             | 'agendado'
             | 'confirmado'
             | 'em_atendimento'
+            | 'aguardando_finalizacao'
             | 'concluido'
+            | 'concluido_automatico'
             | 'cancelado'
             | 'remarcado'
             | 'nao_compareceu'
             | 'faltou'
+          auto_completed?: boolean
+          auto_completed_at?: string | null
+          auto_completed_by?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
           cancellation_reason?: string | null
@@ -684,11 +697,16 @@ export type Database = {
             | 'agendado'
             | 'confirmado'
             | 'em_atendimento'
+            | 'aguardando_finalizacao'
             | 'concluido'
+            | 'concluido_automatico'
             | 'cancelado'
             | 'remarcado'
             | 'nao_compareceu'
             | 'faltou'
+          auto_completed: boolean
+          auto_completed_at: string | null
+          auto_completed_by: string | null
           valor_original: number
           valor_desconto: number
           valor_final: number
@@ -1240,6 +1258,64 @@ export type Database = {
           p_barber_name?: string | null
         }
         Returns: undefined
+      }
+      create_client_appointment: {
+        Args: {
+          p_barbershop_id: string
+          p_client_profile_id: string
+          p_barbeiro_id: string
+          p_servico_id: string
+          p_starts_at: string
+          p_ends_at: string
+        }
+        Returns: Database['public']['Tables']['appointments']['Row']
+      }
+      complete_appointment_financial_flow: {
+        Args: {
+          p_empresa_id: string
+          p_appointment_id: string
+          p_forma_pagamento?: string
+        }
+        Returns: Database['public']['Tables']['appointments']['Row']
+      }
+      complete_appointment_financial_flow_with_status: {
+        Args: {
+          p_empresa_id: string
+          p_appointment_id: string
+          p_forma_pagamento?: string
+          p_status?: string
+        }
+        Returns: Database['public']['Tables']['appointments']['Row']
+      }
+      process_pending_appointment_completions: {
+        Args: {
+          p_empresa_id: string
+        }
+        Returns: number
+      }
+      reverse_auto_completed_appointment: {
+        Args: {
+          p_empresa_id: string
+          p_appointment_id: string
+          p_next_status: string
+        }
+        Returns: Database['public']['Tables']['appointments']['Row']
+      }
+      get_appointment_auto_complete_config: {
+        Args: {
+          p_empresa_id: string
+        }
+        Returns: Json
+      }
+      save_appointment_auto_complete_config: {
+        Args: {
+          p_empresa_id: string
+          p_enabled: boolean
+          p_after_minutes: number
+          p_allow_reversal: boolean
+          p_reversal_hours: number
+        }
+        Returns: Json
       }
     }
     Enums: Record<string, never>

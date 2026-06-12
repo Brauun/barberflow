@@ -24,7 +24,9 @@ export type DailyAppointmentStatus =
   | 'agendado'
   | 'confirmado'
   | 'em_atendimento'
+  | 'aguardando_finalizacao'
   | 'concluido'
+  | 'concluido_automatico'
   | 'cancelado'
   | 'remarcado'
   | 'nao_compareceu'
@@ -43,6 +45,8 @@ export type DailyAppointment = {
   duration_minutes: number
   valor: number
   status: DailyAppointmentStatus
+  auto_completed?: boolean
+  auto_completed_at?: string | null
 }
 
 export type AdminWaitlistEntry =
@@ -89,7 +93,7 @@ export async function listDailyAppointments(input: {
   let appointmentsQuery = supabase
     .from('appointments')
     .select(
-      'id,starts_at,ends_at,status,valor_final,barbeiro_id,client:profiles(nome),barbeiro:barbeiros(nome),items:appointment_items(nome,duration_minutes,servico_id,valor_final)',
+      'id,atendimento_id,starts_at,ends_at,status,valor_final,barbeiro_id,auto_completed,auto_completed_at,client:profiles(nome),barbeiro:barbeiros(nome),items:appointment_items(nome,duration_minutes,servico_id,valor_final)',
     )
     .eq('empresa_id', input.empresaId)
     .gte('starts_at', dayStart.toISOString())
@@ -135,11 +139,14 @@ export async function listDailyAppointments(input: {
 
   const appointments = (appointmentsResponse.data ?? []) as unknown as Array<{
     id: string
+    atendimento_id: string | null
     starts_at: string
     ends_at: string
     status: DailyAppointmentStatus
     valor_final: number
     barbeiro_id: string | null
+    auto_completed?: boolean
+    auto_completed_at?: string | null
     client: { nome: string } | null
     barbeiro: { nome: string } | null
     items: Array<{
@@ -157,6 +164,14 @@ export async function listDailyAppointments(input: {
         servicos: { nome: string; duracao_minutos: number } | null
       }
     >
+  const linkedAtendimentoIds = new Set(
+    appointments
+      .map((appointment) => appointment.atendimento_id)
+      .filter(Boolean),
+  )
+  const unlinkedAtendimentos = atendimentos.filter(
+    (atendimento) => !linkedAtendimentoIds.has(atendimento.id),
+  )
 
   return [
     ...appointments.map((appointment) => {
@@ -179,6 +194,8 @@ export async function listDailyAppointments(input: {
         ends_at: appointment.ends_at,
         starts_at: appointment.starts_at,
         status: appointment.status,
+        auto_completed: appointment.auto_completed,
+        auto_completed_at: appointment.auto_completed_at,
         service_id: firstItem?.servico_id ?? null,
         valor:
           firstItem?.valor_final !== undefined
@@ -189,7 +206,7 @@ export async function listDailyAppointments(input: {
             : Number(appointment.valor_final),
       }
     }),
-    ...atendimentos.map((atendimento) => ({
+    ...unlinkedAtendimentos.map((atendimento) => ({
       barbeiro: atendimento.barbeiros?.nome ?? 'Barbeiro',
       barbeiro_id: atendimento.barbeiro_id,
       cliente: atendimento.clientes?.nome ?? 'Cliente',
@@ -206,12 +223,40 @@ export async function listDailyAppointments(input: {
       source: 'atendimento' as const,
       starts_at: atendimento.data_hora_inicio,
       status: atendimento.status as DailyAppointmentStatus,
+      auto_completed: atendimento.auto_completed,
+      auto_completed_at: atendimento.auto_completed_at,
       valor: Number(atendimento.valor_final ?? atendimento.valor),
     })),
   ].sort(
     (first, second) =>
       new Date(first.starts_at).getTime() - new Date(second.starts_at).getTime(),
   )
+}
+
+export async function processPendingAppointmentCompletions(empresaId: string) {
+  const { error } = await supabase.rpc('process_pending_appointment_completions', {
+    p_empresa_id: empresaId,
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
+export async function reverseAutoCompletedAppointment(input: {
+  empresaId: string
+  appointmentId: string
+  nextStatus: 'concluido' | 'nao_compareceu'
+}) {
+  const { error } = await supabase.rpc('reverse_auto_completed_appointment', {
+    p_appointment_id: input.appointmentId,
+    p_empresa_id: input.empresaId,
+    p_next_status: input.nextStatus,
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
 }
 
 export async function updateDailyAppointmentStatus(input: {
@@ -230,7 +275,7 @@ export async function updateDailyAppointmentStatus(input: {
     input.source === 'appointment'
       ? await supabase
           .from('appointments')
-          .select('id,status,starts_at,barbeiro_id,barbershop:barbershops(nome),items:appointment_items(servico_id)')
+          .select('id,atendimento_id,status,starts_at,barbeiro_id,barbershop:barbershops(nome),items:appointment_items(servico_id)')
           .eq('empresa_id', input.empresaId)
           .eq('id', input.id)
           .maybeSingle()
@@ -250,6 +295,7 @@ export async function updateDailyAppointmentStatus(input: {
         status: DailyAppointmentStatus
         starts_at?: string
         data_hora_inicio?: string
+        atendimento_id?: string | null
         barbeiro_id: string | null
         servico_id?: string | null
         barbershop?: { nome: string } | null
@@ -267,11 +313,29 @@ export async function updateDailyAppointmentStatus(input: {
         }
       : { status: input.status }
 
-  const { error } = await supabase
-    .from(table)
-    .update(patch)
-    .eq('empresa_id', input.empresaId)
-    .eq('id', input.id)
+  const updateResponse =
+    input.source === 'appointment' &&
+    (input.status === 'concluido' || input.status === 'concluido_automatico')
+      ? await supabase.rpc(
+          input.status === 'concluido_automatico'
+            ? 'complete_appointment_financial_flow_with_status'
+            : 'complete_appointment_financial_flow',
+          {
+          p_appointment_id: input.id,
+          p_empresa_id: input.empresaId,
+          p_forma_pagamento: 'Agendamento',
+          ...(input.status === 'concluido_automatico'
+            ? { p_status: 'concluido_automatico' }
+            : {}),
+          },
+        )
+      : await supabase
+          .from(table)
+          .update(patch)
+          .eq('empresa_id', input.empresaId)
+          .eq('id', input.id)
+
+  const { error } = updateResponse
 
   if (error) {
     throw new Error(error.message)
@@ -318,7 +382,7 @@ export async function updateDailyAppointmentStatus(input: {
     })
   }
 
-  if (input.status === 'cancelado') {
+  if (['cancelado', 'nao_compareceu', 'faltou'].includes(input.status)) {
     await supabase
       .from('movimentacoes_financeiras')
       .update({ cancelled_at: now, status: 'cancelada' })
@@ -330,9 +394,12 @@ export async function updateDailyAppointmentStatus(input: {
       .from('comissoes')
       .update({ status: 'cancelada' })
       .eq('empresa_id', input.empresaId)
-      .eq('atendimento_id', input.id)
+      .eq(
+        'atendimento_id',
+        input.source === 'appointment' ? current?.atendimento_id ?? input.id : input.id,
+      )
 
-    if (current) {
+    if (input.status === 'cancelado' && current) {
       await notifyWaitlistForVacancy({
         barberId: current.barbeiro_id,
         barbershopName: current.barbershop?.nome,

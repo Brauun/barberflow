@@ -56,7 +56,7 @@ export async function listBarbeiros(
         .from('atendimentos')
         .select('barbeiro_id,valor')
         .eq('empresa_id', empresaId)
-        .eq('status', 'concluido'),
+        .in('status', ['concluido', 'concluido_automatico']),
       supabase
         .from('comissoes')
         .select('barbeiro_id,valor_comissao')

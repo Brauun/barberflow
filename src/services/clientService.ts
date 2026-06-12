@@ -498,39 +498,24 @@ export async function createClientAppointment(input: {
     throw new Error('Barbearia sem empresa vinculada.')
   }
 
-  const price = Number(input.service.preco)
-
-  const { data: appointment, error: appointmentError } = await supabase
-    .from('appointments')
-    .insert({
-      barbeiro_id: input.barber.id,
-      barbershop_id: input.barbershop.id,
-      client_profile_id: input.clientProfile.id,
-      empresa_id: input.barbershop.empresa_id,
-      ends_at: input.endsAt,
-      starts_at: input.startsAt,
-      valor_final: price,
-      valor_original: price,
-    })
-    .select()
-    .single()
+  const { data: appointment, error: appointmentError } = await supabase.rpc(
+    'create_client_appointment',
+    {
+      p_barbeiro_id: input.barber.id,
+      p_barbershop_id: input.barbershop.id,
+      p_client_profile_id: input.clientProfile.id,
+      p_ends_at: input.endsAt,
+      p_servico_id: input.service.id,
+      p_starts_at: input.startsAt,
+    },
+  )
 
   if (appointmentError) {
     throw new Error(appointmentError.message)
   }
 
-  const { error: itemError } = await supabase.from('appointment_items').insert({
-    appointment_id: appointment.id,
-    duration_minutes:
-      input.service.duration_minutes ?? input.service.duracao_minutos ?? 30,
-    nome: input.service.nome,
-    servico_id: input.service.id,
-    valor_final: price,
-    valor_original: price,
-  })
-
-  if (itemError) {
-    throw new Error(itemError.message)
+  if (!appointment) {
+    throw new Error('Não foi possível confirmar o agendamento.')
   }
 
   await tryCreateInternalNotification({

@@ -36,11 +36,11 @@ export function useServicos(input: {
       servicoId?: string
     }) => {
       if (!input.empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       if (!canManage) {
-        throw new Error('Apenas administradores podem gerenciar servicos.')
+        throw new Error('Apenas administradores podem gerenciar serviços.')
       }
 
       if (payload.servicoId) {
@@ -54,11 +54,8 @@ export function useServicos(input: {
       }
 
       const created = await createServico(input.empresaId, payload.data)
-      await saveServicoBarberLinks({
-        barbeiroIds: payload.barbeiroIds,
-        empresaId: input.empresaId,
-        servicoId: created.id,
-      })
+
+      return created
     },
     onSuccess: async () => {
       await Promise.all([
@@ -71,11 +68,11 @@ export function useServicos(input: {
   const deleteServicoMutation = useMutation({
     mutationFn: async (servico: Servico) => {
       if (!input.empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       if (!canManage) {
-        throw new Error('Apenas administradores podem gerenciar servicos.')
+        throw new Error('Apenas administradores podem gerenciar serviços.')
       }
 
       await deleteServico(input.empresaId, servico.id)

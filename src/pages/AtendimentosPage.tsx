@@ -30,8 +30,10 @@ import {
   listAdminWaitlist,
   listDailyAppointments,
   notifyWaitlistEntry,
+  processPendingAppointmentCompletions,
   registrarAtendimento,
   removeAdminWaitlistEntry,
+  reverseAutoCompletedAppointment,
   rescheduleDailyAppointment,
   updateDailyAppointmentStatus,
   type DailyAppointment,
@@ -82,12 +84,12 @@ function getStatusVariant(status: string) {
     return 'success'
   }
 
-  if (status === 'cancelado' || status === 'faltou' || status === 'nao_compareceu') {
-    return 'danger'
+  if (status === 'concluido_automatico' || status === 'remarcado') {
+    return 'info'
   }
 
-  if (status === 'remarcado') {
-    return 'info'
+  if (status === 'cancelado' || status === 'faltou' || status === 'nao_compareceu') {
+    return 'danger'
   }
 
   return 'warning'
@@ -98,7 +100,9 @@ const dailyStatusOptions = [
   { label: 'Agendado', value: 'agendado' },
   { label: 'Confirmado', value: 'confirmado' },
   { label: 'Em atendimento', value: 'em_atendimento' },
+  { label: 'Finalizacao pendente', value: 'aguardando_finalizacao' },
   { label: 'Concluido', value: 'concluido' },
+  { label: 'Concluido automatico', value: 'concluido_automatico' },
   { label: 'Cancelado', value: 'cancelado' },
   { label: 'Remarcado', value: 'remarcado' },
   { label: 'Nao compareceu', value: 'nao_compareceu' },
@@ -193,13 +197,16 @@ export function AtendimentosPage() {
 
   const dailyAppointmentsQuery = useQuery({
     enabled: Boolean(empresaId),
-    queryFn: () =>
-      listDailyAppointments({
+    queryFn: async () => {
+      await processPendingAppointmentCompletions(empresaId as string)
+
+      return listDailyAppointments({
         barbeiroId: dailyBarberId,
         date: dailyDate,
         empresaId: empresaId as string,
         status: dailyStatus,
-      }),
+      })
+    },
     queryKey: [
       'daily-appointments',
       empresaId,
@@ -307,7 +314,37 @@ export function AtendimentosPage() {
         queryClient.invalidateQueries({ queryKey: ['daily-appointments'] }),
         queryClient.invalidateQueries({ queryKey: ['atendimentos'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['fluxo-caixa'] }),
+        queryClient.invalidateQueries({ queryKey: ['relatorios'] }),
+        queryClient.invalidateQueries({ queryKey: ['relatorios-executivos'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-waitlist'] }),
+      ])
+    },
+  })
+
+  const reverseAutoMutation = useMutation({
+    mutationFn: async (input: {
+      appointment: DailyAppointment
+      nextStatus: 'concluido' | 'nao_compareceu'
+    }) => {
+      if (!empresaId) {
+        throw new Error('Empresa nao encontrada.')
+      }
+
+      await reverseAutoCompletedAppointment({
+        appointmentId: input.appointment.id,
+        empresaId,
+        nextStatus: input.nextStatus,
+      })
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['daily-appointments'] }),
+        queryClient.invalidateQueries({ queryKey: ['atendimentos'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['fluxo-caixa'] }),
+        queryClient.invalidateQueries({ queryKey: ['relatorios'] }),
+        queryClient.invalidateQueries({ queryKey: ['relatorios-executivos'] }),
       ])
     },
   })
@@ -544,9 +581,69 @@ export function AtendimentosPage() {
                       options={dailyStatusOptions.filter((option) => option.value)}
                       value={appointment.status}
                     />
-                    {!['cancelado', 'concluido', 'remarcado', 'nao_compareceu', 'faltou'].includes(
-                      appointment.status,
-                    ) && (
+                    {appointment.status === 'aguardando_finalizacao' && (
+                      <>
+                        <Button
+                          disabled={updateStatusMutation.isPending}
+                          onClick={() =>
+                            updateStatusMutation.mutate({
+                              appointment,
+                              status: 'concluido',
+                            })
+                          }
+                          size="sm"
+                          type="button"
+                        >
+                          Concluido
+                        </Button>
+                        <Button
+                          disabled={updateStatusMutation.isPending}
+                          onClick={() =>
+                            updateStatusMutation.mutate({
+                              appointment,
+                              status: 'nao_compareceu',
+                            })
+                          }
+                          size="sm"
+                          type="button"
+                          variant="secondary"
+                        >
+                          Nao compareceu
+                        </Button>
+                      </>
+                    )}
+                    {appointment.status === 'concluido_automatico' &&
+                      appointment.source === 'appointment' && (
+                        <Button
+                          disabled={reverseAutoMutation.isPending}
+                          onClick={() => {
+                            const markNoShow = window.confirm(
+                              'Corrigir para Nao compareceu? Cancele para apenas confirmar como concluido.',
+                            )
+
+                            reverseAutoMutation.mutate({
+                              appointment,
+                              nextStatus: markNoShow
+                                ? 'nao_compareceu'
+                                : 'concluido',
+                            })
+                          }}
+                          size="sm"
+                          type="button"
+                          variant="secondary"
+                        >
+                          Corrigir status
+                        </Button>
+                      )}
+                    {![
+                      'cancelado',
+                      'concluido',
+                      'concluido_automatico',
+                      'remarcado',
+                      'nao_compareceu',
+                      'faltou',
+                      'aguardando_finalizacao',
+                    ].includes(appointment.status) && (
                       <>
                         <Button
                           aria-label="Remarcar"

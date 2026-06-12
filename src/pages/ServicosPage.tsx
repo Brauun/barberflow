@@ -162,6 +162,10 @@ export function ServicosPage() {
   }
 
   function toggleBarber(barberId: string) {
+    if (!editingServico) {
+      return
+    }
+
     setSelectedBarberIds((current) =>
       current.includes(barberId)
         ? current.filter((id) => id !== barberId)
@@ -187,14 +191,14 @@ export function ServicosPage() {
       setFormError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel salvar o servico.',
+          : 'Não foi possível salvar o serviço.',
       )
     }
   }
 
   async function handleDelete(servico: Servico) {
     const shouldDelete = window.confirm(
-      `Inativar o servico ${servico.nome}? O historico sera preservado.`,
+      `Inativar o serviço ${servico.nome}? O histórico será preservado.`,
     )
 
     if (!shouldDelete) {
@@ -209,8 +213,8 @@ export function ServicosPage() {
       <Card>
         <CardContent>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Complete o vinculo do usuario com uma empresa para visualizar
-            servicos.
+            Complete o vínculo do usuário com uma empresa para visualizar
+            serviços.
           </p>
         </CardContent>
       </Card>
@@ -222,21 +226,21 @@ export function ServicosPage() {
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-semibold uppercase text-brand-600 dark:text-brand-400">
-            Servicos
+            Serviços
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-normal text-zinc-950 dark:text-zinc-50">
-            Catalogo de servicos
+            Catálogo de serviços
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
             {canManageServices
-              ? 'Cadastre servicos, defina precos, duracao, comissao padrao e quais barbeiros executam cada item.'
-              : 'Servicos definidos pela administracao. Barbeiros apenas utilizam o catalogo existente.'}
+              ? 'Cadastre serviços, defina preços, duração, comissão padrão e quais barbeiros executam cada item.'
+              : 'Serviços definidos pela administração. Barbeiros apenas utilizam o catálogo existente.'}
           </p>
         </div>
 
         {canManageServices && (
           <Button leftIcon={<Plus size={18} />} onClick={openCreateModal}>
-            Novo servico
+            Novo serviço
           </Button>
         )}
       </section>
@@ -246,10 +250,10 @@ export function ServicosPage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
-                Servicos cadastrados
+                Serviços cadastrados
               </h3>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                {servicos.length} servico{servicos.length === 1 ? '' : 's'} na
+                {servicos.length} serviço{servicos.length === 1 ? '' : 's'} na
                 listagem atual.
               </p>
             </div>
@@ -286,12 +290,12 @@ export function ServicosPage() {
                 <Sparkles size={22} />
               </span>
               <p className="mt-4 font-semibold text-zinc-950 dark:text-zinc-50">
-                Nenhum servico encontrado
+                Nenhum serviço encontrado
               </p>
               <p className="mt-2 max-w-sm text-sm text-zinc-500 dark:text-zinc-400">
                 {canManageServices
-                  ? 'Cadastre o primeiro servico ou ajuste a pesquisa.'
-                  : 'A administracao ainda nao cadastrou servicos.'}
+                  ? 'Cadastre o primeiro serviço ou ajuste a pesquisa.'
+                  : 'A administração ainda não cadastrou serviços.'}
               </p>
             </div>
           ) : (
@@ -300,11 +304,11 @@ export function ServicosPage() {
                 <TableRow>
                   <TableHeaderCell>Nome</TableHeaderCell>
                   <TableHeaderCell>Categoria</TableHeaderCell>
-                  <TableHeaderCell>Preco</TableHeaderCell>
-                  <TableHeaderCell>Duracao</TableHeaderCell>
+                  <TableHeaderCell>Preço</TableHeaderCell>
+                  <TableHeaderCell>Duração</TableHeaderCell>
                   <TableHeaderCell>Status</TableHeaderCell>
                   {canManageServices && (
-                    <TableHeaderCell className="text-right">Acoes</TableHeaderCell>
+                    <TableHeaderCell className="text-right">Ações</TableHeaderCell>
                   )}
                 </TableRow>
               </TableHead>
@@ -328,7 +332,7 @@ export function ServicosPage() {
                       <TableCell>
                         <div className="flex justify-end gap-2">
                           <Button
-                            aria-label="Editar servico"
+                            aria-label="Editar serviço"
                             size="icon-sm"
                             onClick={() => openEditModal(servico)}
                             variant="ghost"
@@ -336,7 +340,7 @@ export function ServicosPage() {
                             <Edit size={16} />
                           </Button>
                           <Button
-                            aria-label="Inativar servico"
+                            aria-label="Inativar serviço"
                             size="icon-sm"
                             disabled={deleteServicoMutation.isPending}
                             onClick={() => void handleDelete(servico)}
@@ -359,7 +363,7 @@ export function ServicosPage() {
         <Modal
           isOpen={isFormOpen}
           onClose={closeFormModal}
-          title={editingServico ? 'Editar servico' : 'Cadastrar servico'}
+          title={editingServico ? 'Editar serviço' : 'Cadastrar serviço'}
         >
           <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             {formError && (
@@ -379,15 +383,15 @@ export function ServicosPage() {
 
             <Input
               error={errors.descricao?.message}
-              label="Descricao"
-              placeholder="Detalhes internos do servico"
+              label="Descrição"
+              placeholder="Detalhes internos do serviço"
               {...register('descricao')}
             />
 
             <div className="grid gap-4 sm:grid-cols-3">
               <Input
                 error={errors.preco?.message}
-                label="Preco"
+                label="Preço"
                 min={0}
                 step="0.01"
                 type="number"
@@ -396,7 +400,7 @@ export function ServicosPage() {
 
               <Input
                 error={errors.duracao_minutos?.message}
-                label="Duracao (min)"
+                label="Duração (min)"
                 min={1}
                 step="1"
                 type="number"
@@ -405,7 +409,7 @@ export function ServicosPage() {
 
               <Input
                 error={errors.percentual_comissao?.message}
-                label="Comissao padrao (%)"
+                label="Comissão padrão (%)"
                 min={0}
                 max={100}
                 step="1"
@@ -431,7 +435,7 @@ export function ServicosPage() {
                     Barbeiros que executam
                   </p>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    O cliente so vera este servico para os profissionais
+                    O cliente só verá este serviço para os profissionais
                     selecionados.
                   </p>
                 </div>
@@ -470,6 +474,7 @@ export function ServicosPage() {
                       <input
                         checked={selectedBarberIds.includes(barber.id)}
                         className="h-4 w-4 accent-brand-500"
+                        disabled={!editingServico}
                         onChange={() => toggleBarber(barber.id)}
                         type="checkbox"
                       />
@@ -488,7 +493,7 @@ export function ServicosPage() {
                 Cancelar
               </Button>
               <Button disabled={isSubmitting || saveServicoMutation.isPending} type="submit">
-                {saveServicoMutation.isPending ? 'Salvando...' : 'Salvar servico'}
+                {saveServicoMutation.isPending ? 'Salvando...' : 'Salvar serviço'}
               </Button>
             </div>
           </form>

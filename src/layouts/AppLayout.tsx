@@ -568,7 +568,7 @@ export function AppLayout() {
 
       <div className={cn('transition-[padding] duration-300', contentPaddingClass)}>
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/82 backdrop-blur-xl">
-          <div className="flex h-20 items-center gap-3 px-5 sm:px-10">
+          <div className="flex h-16 items-center gap-3 px-4 sm:h-20 sm:px-6 md:px-8 lg:px-10 xl:px-12">
             <Button
               aria-label="Abrir menu"
               className="lg:hidden"
@@ -702,7 +702,7 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="px-5 py-9 sm:px-10 lg:px-12">
+        <main className="px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:px-10 lg:py-9 xl:px-12">
           {subscriptionQuery.subscription?.status === 'TRIAL' && (
             <div className="mb-6 rounded-[1.35rem] border border-brand-100 bg-brand-50/80 px-5 py-4 text-sm font-semibold text-slate-700 dark:border-brand-400/20 dark:bg-brand-400/10 dark:text-brand-100">
               Seu teste gratis termina em {trialDaysRemaining ?? 0} dias.

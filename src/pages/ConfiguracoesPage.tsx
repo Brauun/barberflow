@@ -20,13 +20,16 @@ import { useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { canExportData } from '../auth/permissions'
-import { Button, Card, CardContent, CardHeader, Input } from '../components/ui'
+import { Button, Card, CardContent, CardHeader, Input, Select } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { queryKeys } from '../lib/queryKeys'
 import {
+  getAppointmentAutomationSettings,
+  saveAppointmentAutomationSettings,
   updateEmpresaSettings,
   updateUserProfile,
+  type AppointmentAutomationSettings,
 } from '../services/configuracoesService'
 import {
   exportAtendimentosCsv,
@@ -148,6 +151,15 @@ export function ConfiguracoesPage() {
   const [businessHoursError, setBusinessHoursError] = useState<string | null>(
     null,
   )
+  const [appointmentAutomation, setAppointmentAutomation] =
+    useState<AppointmentAutomationSettings>({
+      after_minutes: 60,
+      allow_reversal: true,
+      enabled: true,
+      reversal_hours: 24,
+    })
+  const [appointmentAutomationError, setAppointmentAutomationError] =
+    useState<string | null>(null)
   const [cepStatus, setCepStatus] = useState<string | null>(null)
   const lastCepLookupRef = useRef('')
 
@@ -188,6 +200,12 @@ export function ConfiguracoesPage() {
     enabled: Boolean(empresaId),
     queryFn: () => listBusinessHours(empresaId as string),
     queryKey: ['business-hours', empresaId],
+  })
+
+  const appointmentAutomationQuery = useQuery({
+    enabled: Boolean(empresaId),
+    queryFn: () => getAppointmentAutomationSettings(empresaId as string),
+    queryKey: ['appointment-automation-settings', empresaId],
   })
 
   const auditLogsQuery = useQuery({
@@ -361,6 +379,14 @@ export function ConfiguracoesPage() {
     queueMicrotask(() => setBusinessHours(nextHours))
   }, [businessHoursQuery.data])
 
+  useEffect(() => {
+    if (appointmentAutomationQuery.data) {
+      queueMicrotask(() =>
+        setAppointmentAutomation(appointmentAutomationQuery.data),
+      )
+    }
+  }, [appointmentAutomationQuery.data])
+
   const empresaMutation = useMutation({
     mutationFn: async (data: EmpresaSettingsFormData) => {
       if (!empresaId) {
@@ -403,6 +429,22 @@ export function ConfiguracoesPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['business-hours'] })
       setBusinessHoursError(null)
+    },
+  })
+
+  const appointmentAutomationMutation = useMutation({
+    mutationFn: async () => {
+      if (!empresaId) {
+        throw new Error('Empresa nao encontrada.')
+      }
+
+      await saveAppointmentAutomationSettings(empresaId, appointmentAutomation)
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['appointment-automation-settings'],
+      })
+      setAppointmentAutomationError(null)
     },
   })
 
@@ -552,6 +594,20 @@ export function ConfiguracoesPage() {
     }
   }
 
+  async function handleSaveAppointmentAutomation() {
+    setAppointmentAutomationError(null)
+
+    try {
+      await appointmentAutomationMutation.mutateAsync()
+    } catch (error) {
+      setAppointmentAutomationError(
+        error instanceof Error
+          ? error.message
+          : 'Nao foi possivel salvar a automacao de atendimentos.',
+      )
+    }
+  }
+
   if (!empresaId) {
     return (
       <Card>
@@ -667,6 +723,7 @@ export function ConfiguracoesPage() {
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2">
               <Button
+                className="border-slate-200 bg-white text-slate-950 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 dark:border-transparent dark:bg-slate-950 dark:text-white dark:hover:border-transparent dark:hover:bg-slate-900"
                 disabled={exportMutation.isPending}
                 leftIcon={<Download size={18} />}
                 onClick={() => exportMutation.mutate('clientes')}
@@ -676,6 +733,7 @@ export function ConfiguracoesPage() {
                 Exportar clientes
               </Button>
               <Button
+                className="border-slate-200 bg-white text-slate-950 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 dark:border-transparent dark:bg-slate-950 dark:text-white dark:hover:border-transparent dark:hover:bg-slate-900"
                 disabled={exportMutation.isPending}
                 leftIcon={<Download size={18} />}
                 onClick={() => exportMutation.mutate('financeiro')}
@@ -685,6 +743,7 @@ export function ConfiguracoesPage() {
                 Exportar financeiro
               </Button>
               <Button
+                className="border-slate-200 bg-white text-slate-950 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 dark:border-transparent dark:bg-slate-950 dark:text-white dark:hover:border-transparent dark:hover:bg-slate-900"
                 disabled={exportMutation.isPending}
                 leftIcon={<Download size={18} />}
                 onClick={() => exportMutation.mutate('atendimentos')}
@@ -694,6 +753,7 @@ export function ConfiguracoesPage() {
                 Exportar atendimentos
               </Button>
               <Button
+                className="border-slate-200 bg-white text-slate-950 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 dark:border-transparent dark:bg-slate-950 dark:text-white dark:hover:border-transparent dark:hover:bg-slate-900"
                 disabled={exportMutation.isPending}
                 leftIcon={<Download size={18} />}
                 onClick={() => exportMutation.mutate('produtos')}
@@ -704,6 +764,7 @@ export function ConfiguracoesPage() {
               </Button>
               <div className="sm:col-span-2">
                 <Button
+                  className="border-transparent bg-slate-950 text-white hover:border-transparent hover:bg-slate-800 dark:border-transparent dark:bg-white dark:text-slate-950 dark:hover:border-transparent dark:hover:bg-slate-200"
                   disabled={exportMutation.isPending}
                   leftIcon={<FileJson size={18} />}
                   onClick={() => exportMutation.mutate('completo')}
@@ -784,6 +845,7 @@ export function ConfiguracoesPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               <Button
+                className="border-slate-200 bg-white text-slate-950 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 dark:border-transparent dark:bg-slate-950 dark:text-white dark:hover:border-transparent dark:hover:bg-slate-900"
                 onClick={copyWeekdayHours}
                 type="button"
                 variant="secondary"
@@ -791,6 +853,7 @@ export function ConfiguracoesPage() {
                 Copiar segunda a sexta
               </Button>
               <Button
+                className="border-transparent bg-slate-950 text-white hover:border-transparent hover:bg-slate-800 dark:border-transparent dark:bg-white dark:text-slate-950 dark:hover:border-transparent dark:hover:bg-slate-200"
                 disabled={businessHoursMutation.isPending}
                 onClick={() => void handleSaveBusinessHours()}
                 type="button"
@@ -898,6 +961,106 @@ export function ConfiguracoesPage() {
               )
             })}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+                Automacao de atendimentos
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Defina quando o sistema conclui atendimentos esquecidos e por
+                quanto tempo eles podem ser corrigidos.
+              </p>
+            </div>
+            <Button
+              className="border-transparent bg-slate-950 text-white hover:border-transparent hover:bg-slate-800 dark:border-transparent dark:bg-white dark:text-slate-950 dark:hover:border-transparent dark:hover:bg-slate-200"
+              disabled={appointmentAutomationMutation.isPending}
+              onClick={() => void handleSaveAppointmentAutomation()}
+              type="button"
+            >
+              {appointmentAutomationMutation.isPending
+                ? 'Salvando...'
+                : 'Salvar automacao'}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {appointmentAutomationError && (
+            <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
+              {appointmentAutomationError}
+            </p>
+          )}
+          {appointmentAutomationMutation.isSuccess && (
+            <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+              Automacao salva com sucesso.
+            </p>
+          )}
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Select
+              label="Finalizacao automatica"
+              onChange={(event) => {
+                const value = event.target.value
+
+                setAppointmentAutomation((current) => ({
+                  ...current,
+                  after_minutes:
+                    value === 'off' ? current.after_minutes : Number(value),
+                  enabled: value !== 'off',
+                }))
+              }}
+              options={[
+                { label: 'Desativado', value: 'off' },
+                { label: '30 minutos apos fim', value: '30' },
+                { label: '1 hora apos fim', value: '60' },
+                { label: '2 horas apos fim', value: '120' },
+                { label: '4 horas apos fim', value: '240' },
+              ]}
+              value={
+                appointmentAutomation.enabled
+                  ? String(appointmentAutomation.after_minutes)
+                  : 'off'
+              }
+            />
+            <Select
+              label="Permitir correcao"
+              onChange={(event) =>
+                setAppointmentAutomation((current) => ({
+                  ...current,
+                  allow_reversal: event.target.value === 'true',
+                }))
+              }
+              options={[
+                { label: 'Sim', value: 'true' },
+                { label: 'Nao', value: 'false' },
+              ]}
+              value={String(appointmentAutomation.allow_reversal)}
+            />
+            <Select
+              disabled={!appointmentAutomation.allow_reversal}
+              label="Prazo para correcao"
+              onChange={(event) =>
+                setAppointmentAutomation((current) => ({
+                  ...current,
+                  reversal_hours: Number(event.target.value),
+                }))
+              }
+              options={[
+                { label: '12 horas', value: '12' },
+                { label: '24 horas', value: '24' },
+                { label: '48 horas', value: '48' },
+              ]}
+              value={String(appointmentAutomation.reversal_hours)}
+            />
+          </div>
+          {appointmentAutomationQuery.isLoading && (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Carregando configuracao de atendimentos...
+            </p>
+          )}
         </CardContent>
       </Card>
 

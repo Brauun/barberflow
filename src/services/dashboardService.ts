@@ -221,7 +221,7 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
       .from('atendimentos')
       .select('id', { count: 'exact', head: true })
       .eq('empresa_id', empresaId)
-      .eq('status', 'concluido')
+      .in('status', ['concluido', 'concluido_automatico'])
       .gte('data_hora_inicio', monthStart.toISOString())
       .lt('data_hora_inicio', nextMonth.toISOString()),
     supabase

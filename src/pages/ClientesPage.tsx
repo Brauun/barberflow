@@ -27,7 +27,7 @@ import {
 } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useClienteHistorico, useClientes } from '../hooks/useClientes'
-import type { Cliente } from '../services/clientesService'
+import type { Cliente, ClienteWithIndicators } from '../services/clientesService'
 import { clienteSchema, type ClienteFormData } from '../types/clientes'
 import { formatPhone, maskPhoneChange } from '../utils/masks'
 
@@ -90,7 +90,7 @@ export function ClientesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
-  const [historyCliente, setHistoryCliente] = useState<Cliente | null>(null)
+  const [historyCliente, setHistoryCliente] = useState<ClienteWithIndicators | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
 
   const {
@@ -267,6 +267,9 @@ export function ClientesPage() {
                           >
                             {cliente.status}
                           </Badge>
+                          {cliente.is_online_only && (
+                            <Badge variant="info">Agendado</Badge>
+                          )}
                         </div>
                         <p className="mt-1 text-sm text-slate-500">
                           {cliente.telefone
@@ -287,7 +290,7 @@ export function ClientesPage() {
 
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
                       <RecordMetric
-                        label="Ultima visita"
+                        label="Última visita"
                         value={
                           cliente.ultima_visita
                             ? dateFormatter.format(new Date(cliente.ultima_visita))
@@ -296,36 +299,51 @@ export function ClientesPage() {
                       />
                       <RecordMetric
                         accent
-                        label="Total gasto"
+                        label={
+                          cliente.agendamentos_count > 0
+                            ? 'Total concluído'
+                            : 'Total gasto'
+                        }
                         value={currencyFormatter.format(cliente.total_gasto)}
                       />
-                      <RecordMetric label="Visitas" value={cliente.visitas_count} />
+                      <RecordMetric
+                        label={
+                          cliente.agendamentos_count > 0
+                            ? 'Atend./agend.'
+                            : 'Visitas'
+                        }
+                        value={cliente.visitas_count}
+                      />
                       <div className="flex gap-2 sm:justify-end">
-                        <Button
-                          aria-label="Ver histórico"
-                          size="icon-sm"
-                          onClick={() => setHistoryCliente(cliente)}
-                          variant="ghost"
-                        >
-                          <History size={16} />
-                        </Button>
-                        <Button
-                          aria-label="Editar cliente"
-                          size="icon-sm"
-                          onClick={() => openEditModal(cliente)}
-                          variant="ghost"
-                        >
-                          <Edit size={16} />
-                        </Button>
-                        <Button
-                          aria-label="Excluir cliente"
-                          size="icon-sm"
-                          disabled={deleteClienteMutation.isPending}
-                          onClick={() => void handleDelete(cliente)}
-                          variant="ghost"
-                        >
-                          <Trash2 size={16} />
-                        </Button>
+                        {!cliente.is_online_only && (
+                          <>
+                            <Button
+                              aria-label="Ver histórico"
+                              size="icon-sm"
+                              onClick={() => setHistoryCliente(cliente)}
+                              variant="ghost"
+                            >
+                              <History size={16} />
+                            </Button>
+                            <Button
+                              aria-label="Editar cliente"
+                              size="icon-sm"
+                              onClick={() => openEditModal(cliente)}
+                              variant="ghost"
+                            >
+                              <Edit size={16} />
+                            </Button>
+                            <Button
+                              aria-label="Excluir cliente"
+                              size="icon-sm"
+                              disabled={deleteClienteMutation.isPending}
+                              onClick={() => void handleDelete(cliente)}
+                              variant="ghost"
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

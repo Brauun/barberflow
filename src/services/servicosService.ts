@@ -65,6 +65,11 @@ export async function createServico(empresaId: string, data: ServicoFormData) {
     throw toAppError(error, 'Não foi possível criar o serviço.')
   }
 
+  await linkServicoToActiveBarbers({
+    empresaId,
+    servicoId: (created as Servico).id,
+  })
+
   await createAuditLog({
     action: 'servico_criado',
     empresaId,
@@ -78,6 +83,43 @@ export async function createServico(empresaId: string, data: ServicoFormData) {
   })
 
   return created as Servico
+}
+
+export async function linkServicoToActiveBarbers(input: {
+  empresaId: string
+  servicoId: string
+}) {
+  const { data: barbers, error: barbersError } = await supabase
+    .from('barbeiros')
+    .select('id')
+    .eq('empresa_id', input.empresaId)
+    .eq('status', 'ativo')
+
+  if (barbersError) {
+    throw toAppError(
+      barbersError,
+      'Não foi possível listar barbeiros para vincular o serviço.',
+    )
+  }
+
+  const rows = (barbers ?? []).map((barber) => ({
+    active: true,
+    barbeiro_id: barber.id,
+    empresa_id: input.empresaId,
+    service_id: input.servicoId,
+  }))
+
+  if (!rows.length) {
+    return
+  }
+
+  const { error } = await supabase.from('barber_services').upsert(rows, {
+    onConflict: 'empresa_id,barbeiro_id,service_id',
+  })
+
+  if (error) {
+    throw toAppError(error, 'Não foi possível vincular barbeiros ao serviço.')
+  }
 }
 
 export async function updateServico(

@@ -265,13 +265,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession)
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       devAuthLog('auth state alterado', {
-        event: _event,
+        event,
         hasSession: Boolean(nextSession),
         userId: nextSession?.user.id,
       })
+
+      // Ignora INITIAL_SESSION pois já foi tratado pelo getSession acima
+      if (event === 'INITIAL_SESSION') {
+        return
+      }
+
+      setSession(nextSession)
+
+      if (event === 'SIGNED_OUT') {
+        setProfile(null)
+        setClientProfile(null)
+        return
+      }
 
       if (nextSession?.user) {
         void loadProfile(nextSession.user)
