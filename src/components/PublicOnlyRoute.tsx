@@ -3,9 +3,10 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
 export function PublicOnlyRoute() {
-  const { clientProfile, isAuthenticated, isLoading, profile, user } = useAuth()
+  const { clientProfile, isAuthenticated, isLoading, profileLoading, profile, user } = useAuth()
 
-  if (isLoading) {
+  // Aguarda tanto o carregamento da sessão quanto do profile
+  if (isLoading || (isAuthenticated && profileLoading)) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-surface px-6">
         <p className="text-sm font-medium text-ink-700">
@@ -15,10 +16,12 @@ export function PublicOnlyRoute() {
     )
   }
 
+  // Usuário autenticado com profile de barbearia carregado
   if (isAuthenticated && profile?.empresa_id) {
     return <Navigate replace to="/app/dashboard" />
   }
 
+  // Usuário autenticado com profile de cliente carregado
   if (isAuthenticated && clientProfile) {
     return (
       <Navigate
@@ -32,7 +35,8 @@ export function PublicOnlyRoute() {
     )
   }
 
-  if (isAuthenticated) {
+  // Usuário autenticado mas profile ainda não identificado (fallback por metadata)
+  if (isAuthenticated && !profileLoading) {
     return (
       <Navigate
         replace
