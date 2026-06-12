@@ -58,7 +58,7 @@ export function ClientLayout() {
   return (
     <div className="min-h-screen bg-surface text-slate-950 dark:text-slate-50">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/82 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/88">
-        <div className="mx-auto flex h-20 max-w-6xl items-center gap-4 px-5">
+        <div className="mx-auto flex h-20 max-w-7xl items-center gap-4 px-5">
           <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-brand-600 ring-1 ring-brand-100 dark:bg-brand-400/12 dark:text-brand-100 dark:ring-brand-400/20">
             {avatarSrc ? (
               <img

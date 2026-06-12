@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bw-barber-static-v1'
+const CACHE_NAME = 'bw-barber-static-v2'
 const OFFLINE_URL = '/offline.html'
 const STATIC_ASSETS = ['/', '/offline.html', '/manifest.webmanifest', '/favicon.svg']
 
@@ -52,6 +52,24 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (url.origin !== self.location.origin) {
+    return
+  }
+
+  if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const responseClone = response.clone()
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone)
+            })
+          }
+
+          return response
+        })
+        .catch(() => caches.match(request)),
+    )
     return
   }
 

@@ -7,142 +7,143 @@ import { AppLayout } from '../layouts/AppLayout'
 import { AuthLayout } from '../layouts/AuthLayout'
 import { ClientLayout } from '../layouts/ClientLayout'
 import { RootLayout } from '../layouts/RootLayout'
+import { lazyWithRetry } from '../utils/lazyWithRetry'
 
-const AtendimentosPage = lazy(() =>
+const AtendimentosPage = lazy(lazyWithRetry(() =>
   import('../pages/AtendimentosPage').then(({ AtendimentosPage }) => ({
     default: AtendimentosPage,
   })),
-)
-const AssinaturaPage = lazy(() =>
+))
+const AssinaturaPage = lazy(lazyWithRetry(() =>
   import('../pages/AssinaturaPage').then(({ AssinaturaPage }) => ({
     default: AssinaturaPage,
   })),
-)
-const BarbeirosPage = lazy(() =>
+))
+const BarbeirosPage = lazy(lazyWithRetry(() =>
   import('../pages/BarbeirosPage').then(({ BarbeirosPage }) => ({
     default: BarbeirosPage,
   })),
-)
-const ClientesPage = lazy(() =>
+))
+const ClientesPage = lazy(lazyWithRetry(() =>
   import('../pages/ClientesPage').then(({ ClientesPage }) => ({
     default: ClientesPage,
   })),
-)
-const ClientAppointmentsPage = lazy(() =>
+))
+const ClientAppointmentsPage = lazy(lazyWithRetry(() =>
   import('../pages/ClientAppointmentsPage').then(({ ClientAppointmentsPage }) => ({
     default: ClientAppointmentsPage,
   })),
-)
-const ClientBarbershopPage = lazy(() =>
+))
+const ClientBarbershopPage = lazy(lazyWithRetry(() =>
   import('../pages/ClientBarbershopPage').then(({ ClientBarbershopPage }) => ({
     default: ClientBarbershopPage,
   })),
-)
-const ClientBarbershopSearchPage = lazy(() =>
+))
+const ClientBarbershopSearchPage = lazy(lazyWithRetry(() =>
   import('../pages/ClientBarbershopSearchPage').then(
     ({ ClientBarbershopSearchPage }) => ({
       default: ClientBarbershopSearchPage,
     }),
   ),
-)
-const ClientBookingPage = lazy(() =>
+))
+const ClientBookingPage = lazy(lazyWithRetry(() =>
   import('../pages/ClientBookingPage').then(({ ClientBookingPage }) => ({
     default: ClientBookingPage,
   })),
-)
-const ClientHomePage = lazy(() =>
+))
+const ClientHomePage = lazy(lazyWithRetry(() =>
   import('../pages/ClientHomePage').then(({ ClientHomePage }) => ({
     default: ClientHomePage,
   })),
-)
-const ClientProfilePage = lazy(() =>
+))
+const ClientProfilePage = lazy(lazyWithRetry(() =>
   import('../pages/ClientProfilePage').then(({ ClientProfilePage }) => ({
     default: ClientProfilePage,
   })),
-)
-const ConfiguracoesPage = lazy(() =>
+))
+const ConfiguracoesPage = lazy(lazyWithRetry(() =>
   import('../pages/ConfiguracoesPage').then(({ ConfiguracoesPage }) => ({
     default: ConfiguracoesPage,
   })),
-)
-const ContasPagarPage = lazy(() =>
+))
+const ContasPagarPage = lazy(lazyWithRetry(() =>
   import('../pages/ContasPagarPage').then(({ ContasPagarPage }) => ({
     default: ContasPagarPage,
   })),
-)
-const DashboardPage = lazy(() =>
+))
+const DashboardPage = lazy(lazyWithRetry(() =>
   import('../pages/DashboardPage').then(({ DashboardPage }) => ({
     default: DashboardPage,
   })),
-)
-const EmployeeInvitePage = lazy(() =>
+))
+const EmployeeInvitePage = lazy(lazyWithRetry(() =>
   import('../pages/EmployeeInvitePage').then(({ EmployeeInvitePage }) => ({
     default: EmployeeInvitePage,
   })),
-)
-const FluxoCaixaPage = lazy(() =>
+))
+const FluxoCaixaPage = lazy(lazyWithRetry(() =>
   import('../pages/FluxoCaixaPage').then(({ FluxoCaixaPage }) => ({
     default: FluxoCaixaPage,
   })),
-)
-const ForgotPasswordPage = lazy(() =>
+))
+const ForgotPasswordPage = lazy(lazyWithRetry(() =>
   import('../pages/ForgotPasswordPage').then(({ ForgotPasswordPage }) => ({
     default: ForgotPasswordPage,
   })),
-)
-const HomePage = lazy(() =>
+))
+const HomePage = lazy(lazyWithRetry(() =>
   import('../pages/HomePage').then(({ HomePage }) => ({ default: HomePage })),
-)
-const LoginPage = lazy(() =>
+))
+const LoginPage = lazy(lazyWithRetry(() =>
   import('../pages/LoginPage').then(({ LoginPage }) => ({ default: LoginPage })),
-)
-const LogoutPage = lazy(() =>
+))
+const LogoutPage = lazy(lazyWithRetry(() =>
   import('../pages/LogoutPage').then(({ LogoutPage }) => ({
     default: LogoutPage,
   })),
-)
-const NotFoundPage = lazy(() =>
+))
+const NotFoundPage = lazy(lazyWithRetry(() =>
   import('../pages/NotFoundPage').then(({ NotFoundPage }) => ({
     default: NotFoundPage,
   })),
-)
-const PlanosFidelidadePage = lazy(() =>
+))
+const PlanosFidelidadePage = lazy(lazyWithRetry(() =>
   import('../pages/PlanosFidelidadePage').then(({ PlanosFidelidadePage }) => ({
     default: PlanosFidelidadePage,
   })),
-)
-const ProfilePage = lazy(() =>
+))
+const ProfilePage = lazy(lazyWithRetry(() =>
   import('../pages/ProfilePage').then(({ ProfilePage }) => ({
     default: ProfilePage,
   })),
-)
-const ProdutosPage = lazy(() =>
+))
+const ProdutosPage = lazy(lazyWithRetry(() =>
   import('../pages/ProdutosPage').then(({ ProdutosPage }) => ({
     default: ProdutosPage,
   })),
-)
-const RegisterPage = lazy(() =>
+))
+const RegisterPage = lazy(lazyWithRetry(() =>
   import('../pages/RegisterPage').then(({ RegisterPage }) => ({
     default: RegisterPage,
   })),
-)
-const RelatoriosPage = lazy(() =>
+))
+const RelatoriosPage = lazy(lazyWithRetry(() =>
   import('../pages/RelatoriosPage').then(({ RelatoriosPage }) => ({
     default: RelatoriosPage,
   })),
-)
-const RelatoriosExecutivosPage = lazy(() =>
+))
+const RelatoriosExecutivosPage = lazy(lazyWithRetry(() =>
   import('../pages/RelatoriosExecutivosPage').then(
     ({ RelatoriosExecutivosPage }) => ({
       default: RelatoriosExecutivosPage,
     }),
   ),
-)
-const ServicosPage = lazy(() =>
+))
+const ServicosPage = lazy(lazyWithRetry(() =>
   import('../pages/ServicosPage').then(({ ServicosPage }) => ({
     default: ServicosPage,
   })),
-)
+))
 
 function withSuspense(element: ReactNode) {
   return (
