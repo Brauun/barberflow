@@ -194,6 +194,10 @@ const router = createBrowserRouter([
         ],
       },
       {
+        path: 'logout',
+        element: withSuspense(<LogoutPage />),
+      },
+      {
         element: <ProtectedRoute />,
         children: [
           {
@@ -295,10 +299,6 @@ const router = createBrowserRouter([
                 element: withSuspense(<ProfilePage />),
               },
             ],
-          },
-          {
-            path: 'logout',
-            element: withSuspense(<LogoutPage />),
           },
         ],
       },

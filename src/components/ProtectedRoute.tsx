@@ -3,10 +3,10 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
 export function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, profileLoading } = useAuth()
   const location = useLocation()
 
-  if (isLoading) {
+  if (isLoading || (isAuthenticated && profileLoading)) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-surface px-6">
         <p className="text-sm font-medium text-ink-700">

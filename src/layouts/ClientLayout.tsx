@@ -25,7 +25,7 @@ const clientNavigation = [
 ]
 
 export function ClientLayout() {
-  const { clientProfile, userType } = useAuth()
+  const { clientProfile, userType, isLoading, profileLoading } = useAuth()
   const { setTheme, theme } = useTheme()
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null)
 
@@ -42,6 +42,14 @@ export function ClientLayout() {
       active = false
     }
   }, [clientProfile?.avatar_url])
+
+  if (isLoading || profileLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-surface px-6">
+        <p className="text-sm font-medium text-ink-700">Carregando...</p>
+      </main>
+    )
+  }
 
   if (userType === 'barbearia') {
     return <Navigate replace to="/app/dashboard" />
