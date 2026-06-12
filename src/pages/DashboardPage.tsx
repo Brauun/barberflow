@@ -6,7 +6,7 @@ import {
   Scissors,
   TrendingUp,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import {
   Badge,
@@ -141,9 +141,14 @@ function MetricCard({
 
 function RevenueChart({ data }: { data: MonthlyFinancePoint[] }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
-  const chartWidth = 720
-  const chartHeight = 300
-  const margin = { bottom: 40, left: 72, right: 20, top: 16 }
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const [containerWidth, setContainerWidth] = useState(0)
+  const chartWidth = Math.max(320, Math.min(containerWidth || 720, 820))
+  const isCompact = chartWidth < 520
+  const chartHeight = isCompact ? 238 : chartWidth < 700 ? 270 : 300
+  const margin = isCompact
+    ? { bottom: 36, left: 48, right: 16, top: 18 }
+    : { bottom: 40, left: 72, right: 22, top: 18 }
   const plotWidth = chartWidth - margin.left - margin.right
   const plotHeight = chartHeight - margin.top - margin.bottom
   const normalizedData = useMemo(
@@ -152,6 +157,22 @@ function RevenueChart({ data }: { data: MonthlyFinancePoint[] }) {
   )
   const maxValue = Math.max(...normalizedData.map((point) => point.entradas), 0)
   const hasRevenue = maxValue > 0
+
+  useEffect(() => {
+    const element = containerRef.current
+
+    if (!element) {
+      return undefined
+    }
+
+    const updateWidth = () => setContainerWidth(element.clientWidth)
+    updateWidth()
+
+    const observer = new ResizeObserver(updateWidth)
+    observer.observe(element)
+
+    return () => observer.disconnect()
+  }, [])
 
   if (!hasRevenue) {
     return (
@@ -189,11 +210,16 @@ function RevenueChart({ data }: { data: MonthlyFinancePoint[] }) {
   const activePoint = activeIndex !== null ? points[activeIndex] : null
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950" style={{ height: '14rem' }}>
+    <div
+      className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white px-2 py-3 dark:border-slate-800 dark:bg-slate-950 sm:px-3"
+      ref={containerRef}
+    >
       <svg
-        className="h-full w-full"
-        preserveAspectRatio="none"
+        className="mx-auto block max-w-full"
+        height={chartHeight}
+        preserveAspectRatio="xMidYMid meet"
         viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+        width={chartWidth}
         onMouseLeave={() => setActiveIndex(null)}
       >
         <defs>
@@ -219,9 +245,9 @@ function RevenueChart({ data }: { data: MonthlyFinancePoint[] }) {
               <text
                 className="fill-slate-400 dark:fill-slate-500"
                 dominantBaseline="middle"
-                fontSize="11"
+                fontSize={isCompact ? 10 : 11}
                 textAnchor="end"
-                x={margin.left - 8}
+                x={margin.left - (isCompact ? 6 : 8)}
                 y={y}
               >
                 {formatAxisCurrency(tick)}
@@ -259,7 +285,7 @@ function RevenueChart({ data }: { data: MonthlyFinancePoint[] }) {
         {points.map((point) => (
           <text
             className="fill-slate-400 dark:fill-slate-500"
-            fontSize="11"
+            fontSize={isCompact ? 10 : 11}
             key={point.label}
             textAnchor="middle"
             x={point.x}
