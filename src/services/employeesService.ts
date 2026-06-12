@@ -4,6 +4,7 @@ import type {
 } from '../types/employees'
 import type { Database } from '../types/database'
 import { onlyDigits } from '../utils/masks'
+import { createAuditLog } from './observabilityService'
 
 export type Employee = Database['public']['Tables']['employees']['Row']
 export type EmployeeLink =
@@ -12,13 +13,6 @@ export type EmployeeLink =
   }
 export type EmployeeInvitation =
   Database['public']['Tables']['employee_invitations']['Row']
-
-function createInviteToken() {
-  const firstPart = crypto.randomUUID()
-  const secondPart = crypto.randomUUID()
-
-  return `${firstPart}-${secondPart}`
-}
 
 export async function listEmployeeLinks(empresaId: string) {
   const { data, error } = await supabase
@@ -53,50 +47,36 @@ export async function createEmployeeInvitation(input: {
   createdBy: string | null
   data: EmployeeInvitationFormData
 }) {
-  const expiresAt = new Date()
-  expiresAt.setDate(expiresAt.getDate() + 7)
   const telefone = onlyDigits(input.data.telefone)
 
-  const { data: employee, error: employeeError } = await supabase
-    .from('employees')
-    .upsert(
-      {
-        email: input.data.email.trim().toLowerCase(),
-        nome: input.data.nome.trim(),
-        telefone: telefone || null,
-      },
-      { onConflict: 'email' },
-    )
-    .select()
-    .single()
-
-  if (employeeError) {
-    throw new Error(employeeError.message)
-  }
-
-  const token = createInviteToken()
-
-  const { data: invitation, error } = await supabase
-    .from('employee_invitations')
-    .insert({
-      commission_percentage: Number(input.data.commission_percentage),
-      created_by: input.createdBy,
-      email: input.data.email.trim().toLowerCase(),
-      employee_id: employee.id,
-      empresa_id: input.empresaId,
-      expires_at: expiresAt.toISOString(),
-      nome: input.data.nome.trim(),
-      role: input.data.role,
-      status: 'pendente',
-      telefone: telefone || null,
-      token,
-    })
-    .select()
-    .single()
+  const { data: invitation, error } = await supabase.rpc(
+    'create_employee_invitation',
+    {
+      p_commission_percentage: Number(input.data.commission_percentage),
+      p_created_by: input.createdBy,
+      p_email: input.data.email.trim().toLowerCase(),
+      p_empresa_id: input.empresaId,
+      p_nome: input.data.nome.trim(),
+      p_role: input.data.role,
+      p_telefone: telefone || '',
+    },
+  )
 
   if (error) {
     throw new Error(error.message)
   }
+
+  await createAuditLog({
+    action: 'convite_funcionario',
+    empresaId: input.empresaId,
+    entityId: (invitation as EmployeeInvitation).id,
+    entityType: 'employee_invitations',
+    metadata: {
+      email: input.data.email.trim().toLowerCase(),
+      role: input.data.role,
+    },
+    userRole: 'administrador',
+  })
 
   return invitation as EmployeeInvitation
 }
@@ -201,4 +181,16 @@ export async function inactivateEmployeeLink(
       .eq('empresa_id', empresaId)
       .eq('auth_user_id', link.employee.auth_user_id)
   }
+
+  await createAuditLog({
+    action: 'funcionario_inativado',
+    empresaId,
+    entityId: link.employee_id,
+    entityType: 'employees',
+    metadata: {
+      link_id: link.id,
+      nome: link.employee?.nome ?? null,
+    },
+    userRole: 'administrador',
+  })
 }

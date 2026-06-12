@@ -13,12 +13,16 @@ import {
   listBarberUnavailabilityForDate,
   listBookingBarbers,
   listBookingServices,
-  type BookingUnavailability,
 } from '../services/clientService'
+import {
+  listBusinessHours,
+  listSpecialBusinessHoursForDate,
+} from '../services/businessHoursService'
 import {
   canUseFeature,
   getSubscriptionState,
 } from '../services/subscriptionsService'
+import { buildBookingSlots } from '../utils/bookingSlots'
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
@@ -27,83 +31,6 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 
 function todayInputValue() {
   return new Date().toISOString().slice(0, 10)
-}
-
-function localDateKey(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
-
-function minutesFromDate(date: Date) {
-  return date.getHours() * 60 + date.getMinutes()
-}
-
-function buildSlots(
-  date: string,
-  durationMinutes: number,
-  appointments: Array<{ starts_at: string; ends_at: string }>,
-  unavailability: BookingUnavailability[],
-) {
-  const slots: Array<{ label: string; value: string; available: boolean }> = []
-  const openHour = 9
-  const closeHour = 19
-  const isAllDayBlocked = unavailability.some((block) => block.all_day)
-
-  function timeToMinutes(value: string) {
-    const [hour, minute] = value.split(':').map(Number)
-
-    return hour * 60 + minute
-  }
-
-  for (let minutes = openHour * 60; minutes <= closeHour * 60 - durationMinutes; minutes += 30) {
-    const hour = Math.floor(minutes / 60)
-    const minute = minutes % 60
-    const startsAt = new Date(`${date}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`)
-
-    const hasAppointmentConflict = appointments.some((appointment) => {
-      const busyStart = new Date(appointment.starts_at)
-      const busyEnd = new Date(appointment.ends_at)
-      const busyStartDate = localDateKey(busyStart)
-      const busyEndDate = localDateKey(busyEnd)
-      const busyStartMinutes =
-        busyStartDate === date ? minutesFromDate(busyStart) : openHour * 60
-      const busyEndMinutes =
-        busyEndDate === date ? minutesFromDate(busyEnd) : closeHour * 60
-
-      if (busyStartDate !== date && busyEndDate !== date) {
-        return false
-      }
-
-      return minutes < busyEndMinutes && minutes + durationMinutes > busyStartMinutes
-    })
-    const hasUnavailabilityConflict =
-      isAllDayBlocked ||
-      unavailability.some((block) => {
-        if (block.all_day) {
-          return true
-        }
-
-        if (!block.start_time || !block.end_time) {
-          return true
-        }
-
-        const blockStart = timeToMinutes(block.start_time)
-        const blockEnd = timeToMinutes(block.end_time)
-
-        return minutes < blockEnd && minutes + durationMinutes > blockStart
-      })
-
-    slots.push({
-      available: !hasAppointmentConflict && !hasUnavailabilityConflict,
-      label: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
-      value: startsAt.toISOString(),
-    })
-  }
-
-  return slots
 }
 
 export function ClientBookingPage() {
@@ -133,9 +60,9 @@ export function ClientBookingPage() {
   const canUseWaitlist = canUseFeature(subscriptionQuery.data, 'HAS_WAITLIST')
 
   const servicesQuery = useQuery({
-    enabled: Boolean(barbershop?.empresa_id),
-    queryFn: () => listBookingServices(barbershop?.empresa_id as string),
-    queryKey: ['booking-services', barbershop?.empresa_id],
+    enabled: Boolean(barbershop?.empresa_id && barberId),
+    queryFn: () => listBookingServices(barbershop?.empresa_id as string, barberId),
+    queryKey: ['booking-services', barbershop?.empresa_id, barberId],
   })
   const barbersQuery = useQuery({
     enabled: Boolean(barbershop?.empresa_id),
@@ -171,16 +98,39 @@ export function ClientBookingPage() {
     queryKey: ['booking-unavailability', barbershop?.empresa_id, barberId, date],
   })
 
-  const slots = useMemo(
+  const businessHoursQuery = useQuery({
+    enabled: Boolean(barbershop?.empresa_id),
+    queryFn: () => listBusinessHours(barbershop?.empresa_id as string),
+    queryKey: ['business-hours', barbershop?.empresa_id],
+  })
+
+  const specialHoursQuery = useQuery({
+    enabled: Boolean(barbershop?.empresa_id && date),
+    queryFn: () =>
+      listSpecialBusinessHoursForDate(barbershop?.empresa_id as string, date),
+    queryKey: ['special-business-hours', barbershop?.empresa_id, date],
+  })
+
+  const slotResult = useMemo(
     () =>
-      buildSlots(
+      buildBookingSlots({
+        appointments: busyQuery.data ?? [],
+        businessHours: businessHoursQuery.data ?? [],
         date,
-        duration,
-        busyQuery.data ?? [],
-        unavailabilityQuery.data ?? [],
-      ),
-    [busyQuery.data, date, duration, unavailabilityQuery.data],
+        durationMinutes: duration,
+        specialHour: specialHoursQuery.data,
+        unavailability: unavailabilityQuery.data ?? [],
+      }),
+    [
+      busyQuery.data,
+      businessHoursQuery.data,
+      date,
+      duration,
+      specialHoursQuery.data,
+      unavailabilityQuery.data,
+    ],
   )
+  const slots = slotResult.slots
   const isAllDayUnavailable = Boolean(
     barberId && unavailabilityQuery.data?.some((block) => block.all_day),
   )
@@ -271,25 +221,10 @@ export function ClientBookingPage() {
           )}
 
           <Select
-            label="Servico"
-            onChange={(event) => {
-              setServiceId(event.target.value)
-              setSlot('')
-            }}
-            options={[
-              { label: 'Selecione', value: '' },
-              ...(servicesQuery.data ?? []).map((service) => ({
-                label: `${service.nome} · ${currencyFormatter.format(Number(service.preco))} · ${service.duration_minutes ?? service.duracao_minutos}min`,
-                value: service.id,
-              })),
-            ]}
-            value={serviceId}
-          />
-
-          <Select
             label="Profissional"
             onChange={(event) => {
               setBarberId(event.target.value)
+              setServiceId('')
               setSlot('')
             }}
             options={[
@@ -302,6 +237,32 @@ export function ClientBookingPage() {
             value={barberId}
           />
 
+          <Select
+            label="Servico"
+            onChange={(event) => {
+              setServiceId(event.target.value)
+              setSlot('')
+            }}
+            options={[
+              {
+                label: barberId
+                  ? 'Selecione'
+                  : 'Selecione um profissional primeiro',
+                value: '',
+              },
+              ...(servicesQuery.data ?? []).map((service) => ({
+                label: `${service.nome} · ${currencyFormatter.format(Number(service.preco))} · ${service.duration_minutes ?? service.duracao_minutos}min`,
+                value: service.id,
+              })),
+            ]}
+            value={serviceId}
+          />
+
+          {barberId && !servicesQuery.isLoading && servicesQuery.data?.length === 0 && (
+            <p className="rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-brand-500/20 dark:bg-brand-500/10 dark:text-slate-200">
+              Este profissional ainda nao possui servicos vinculados pela administracao.
+            </p>
+          )}
           <label className="block">
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Data
@@ -322,6 +283,17 @@ export function ClientBookingPage() {
             <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Horario
             </p>
+            {slotResult.message && (
+              <p
+                className={`mt-3 rounded-2xl border px-4 py-3 text-sm font-medium ${
+                  slotResult.status === 'closed'
+                    ? 'border-rose-200/80 bg-rose-50/70 text-rose-700'
+                    : 'border-brand-100 bg-brand-50 text-slate-700'
+                }`}
+              >
+                {slotResult.message}
+              </p>
+            )}
             <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
               {slots.map((item) => (
                 <button

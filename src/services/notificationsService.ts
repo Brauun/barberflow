@@ -19,14 +19,6 @@ type NotificationEventInput = {
   barberName?: string | null
 }
 
-type UsuarioRecipient = {
-  id: string
-  nome: string
-  papel: UserRole
-}
-
-const adminRoles: UserRole[] = ['administrador', 'gerente']
-
 function canSeeAllNotifications(role: UserRole | null | undefined) {
   return role === 'administrador' || role === 'gerente'
 }
@@ -93,59 +85,15 @@ export async function markAllNotificationsAsRead(input: {
   }
 }
 
-async function listRecipients(input: {
-  empresaId: string
-  barberName?: string | null
-}) {
-  const { data, error } = await supabase
-    .from('usuarios')
-    .select('id,nome,papel')
-    .eq('empresa_id', input.empresaId)
-    .eq('status', 'ativo')
-    .in('papel', ['administrador', 'gerente', 'barbeiro'])
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  const users = (data ?? []) as UsuarioRecipient[]
-  const admins = users.filter((user) => adminRoles.includes(user.papel))
-  const normalizedBarberName = input.barberName?.trim().toLowerCase()
-  const barbers = normalizedBarberName
-    ? users.filter(
-        (user) =>
-          user.papel === 'barbeiro' &&
-          user.nome.trim().toLowerCase() === normalizedBarberName,
-      )
-    : []
-  const recipients = new Map<string, UsuarioRecipient>()
-
-  admins.forEach((user) => recipients.set(user.id, user))
-  barbers.forEach((user) => recipients.set(user.id, user))
-
-  return Array.from(recipients.values())
-}
-
 export async function createInternalNotification(input: NotificationEventInput) {
-  const recipients = await listRecipients({
-    barberName: input.barberName,
-    empresaId: input.empresaId,
+  const { error } = await supabase.rpc('create_internal_notification', {
+    p_barber_name: input.barberName ?? null,
+    p_empresa_id: input.empresaId,
+    p_message: input.message,
+    p_metadata: (input.metadata ?? {}) as never,
+    p_title: input.title,
+    p_type: input.type,
   })
-
-  if (recipients.length === 0) {
-    return
-  }
-
-  const { error } = await supabase.from('notifications').insert(
-    recipients.map((recipient) => ({
-      empresa_id: input.empresaId,
-      message: input.message,
-      metadata: (input.metadata ?? {}) as never,
-      recipient_user_id: recipient.id,
-      title: input.title,
-      type: input.type,
-    })),
-  )
 
   if (error) {
     throw new Error(error.message)

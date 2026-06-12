@@ -9,6 +9,26 @@ type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
   variant?: BadgeVariant
 }
 
+const badgeTextLabels: Record<string, string> = {
+  agendado: 'Agendado',
+  ativo: 'Ativo',
+  cancelada: 'Cancelada',
+  cancelado: 'Cancelado',
+  concluido: 'Concluido',
+  confirmada: 'Confirmada',
+  confirmado: 'Confirmado',
+  em_atendimento: 'Em atendimento',
+  faltou: 'Faltou',
+  inativo: 'Inativo',
+  nao_compareceu: 'Nao compareceu',
+  paga: 'Paga',
+  pago: 'Pago',
+  pendente: 'Pendente',
+  remarcado: 'Remarcado',
+  vencida: 'Vencida',
+  vencido: 'Vencido',
+}
+
 const variantClasses: Record<BadgeVariant, string> = {
   default:
     'border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-200 dark:bg-slate-100 dark:text-slate-700',
@@ -28,6 +48,11 @@ export function Badge({
   variant = 'default',
   ...props
 }: BadgeProps) {
+  const content =
+    typeof children === 'string'
+      ? badgeTextLabels[children.toLowerCase()] ?? children
+      : children
+
   return (
     <span
       className={cn(
@@ -37,7 +62,7 @@ export function Badge({
       )}
       {...props}
     >
-      {children}
+      {content}
     </span>
   )
 }

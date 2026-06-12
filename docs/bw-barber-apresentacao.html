@@ -1,0 +1,1040 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apresentação BW Barber</title>
+    <style>
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+
+      :root {
+        --ink: #071426;
+        --ink-2: #0e1d32;
+        --ink-3: #13243b;
+        --cyan: #12c6f3;
+        --blue: #2b6fff;
+        --paper: #f5f8fb;
+        --white: #ffffff;
+        --muted: #a5b4cb;
+        --line: rgba(255, 255, 255, 0.1);
+        --dark-line: rgba(15, 23, 42, 0.11);
+        --shadow: 0 28px 80px rgba(7, 20, 38, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #101827;
+        color: var(--white);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .deck {
+        width: 297mm;
+        margin: 0 auto;
+      }
+
+      .slide {
+        position: relative;
+        display: grid;
+        width: 297mm;
+        height: 210mm;
+        overflow: hidden;
+        page-break-after: always;
+        background:
+          radial-gradient(circle at 92% 12%, rgba(18, 198, 243, 0.2), transparent 20%),
+          radial-gradient(circle at 8% 86%, rgba(43, 111, 255, 0.18), transparent 24%),
+          linear-gradient(135deg, #071426 0%, #0b1728 48%, #06101e 100%);
+      }
+
+      .slide.light {
+        background:
+          radial-gradient(circle at 92% 14%, rgba(18, 198, 243, 0.2), transparent 20%),
+          linear-gradient(135deg, #ffffff 0%, #f6f9fc 100%);
+        color: #06101e;
+      }
+
+      .slide::after {
+        content: "";
+        position: absolute;
+        inset: auto -28mm -46mm auto;
+        width: 116mm;
+        height: 116mm;
+        border: 1px solid rgba(18, 198, 243, 0.18);
+        border-radius: 999px;
+      }
+
+      .slide.light::after {
+        border-color: rgba(18, 198, 243, 0.22);
+      }
+
+      .content {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 8mm;
+        padding: 18mm 20mm;
+      }
+
+      .cover .content {
+        align-content: center;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .brand-mark {
+        width: 66mm;
+        height: auto;
+      }
+
+      .eyebrow {
+        color: var(--cyan);
+        font-size: 9pt;
+        font-weight: 900;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        max-width: 138mm;
+        color: #fff;
+        font-size: 38pt;
+        font-weight: 950;
+        letter-spacing: -0.04em;
+        line-height: 0.95;
+      }
+
+      .light h1,
+      .light h2,
+      .light h3 {
+        color: #06101e;
+      }
+
+      h2 {
+        max-width: 160mm;
+        color: #fff;
+        font-size: 27pt;
+        font-weight: 950;
+        letter-spacing: -0.035em;
+        line-height: 1.02;
+      }
+
+      h3 {
+        color: #fff;
+        font-size: 13pt;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+      }
+
+      .lead {
+        max-width: 128mm;
+        color: #c7d5ea;
+        font-size: 13pt;
+        line-height: 1.55;
+      }
+
+      .light .lead {
+        color: #506179;
+      }
+
+      .pill {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        gap: 2mm;
+        border: 1px solid rgba(18, 198, 243, 0.28);
+        border-radius: 999px;
+        background: rgba(18, 198, 243, 0.12);
+        color: #dff9ff;
+        padding: 2.6mm 4.3mm;
+        font-size: 8pt;
+        font-weight: 850;
+      }
+
+      .light .pill {
+        color: #025b73;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10mm;
+        align-items: center;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5mm;
+      }
+
+      .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4mm;
+      }
+
+      .feature-card,
+      .metric-card,
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8mm;
+        background: rgba(14, 29, 50, 0.78);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.16);
+      }
+
+      .light .feature-card,
+      .light .metric-card,
+      .light .panel {
+        border-color: rgba(15, 23, 42, 0.09);
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: var(--shadow);
+      }
+
+      .feature-card {
+        min-height: 36mm;
+        padding: 5mm;
+      }
+
+      .feature-card .icon {
+        display: grid;
+        width: 11mm;
+        height: 11mm;
+        place-items: center;
+        border-radius: 4mm;
+        background: rgba(18, 198, 243, 0.12);
+        color: var(--cyan);
+        font-size: 13pt;
+        font-weight: 950;
+      }
+
+      .feature-card p,
+      .panel p,
+      .metric-card p {
+        margin-top: 2.5mm;
+        color: #adc0d9;
+        font-size: 8.2pt;
+        line-height: 1.45;
+      }
+
+      .light .feature-card p,
+      .light .panel p,
+      .light .metric-card p {
+        color: #5d6f89;
+      }
+
+      .metric-card {
+        min-height: 27mm;
+        padding: 4.5mm;
+      }
+
+      .metric-card strong {
+        display: block;
+        color: var(--cyan);
+        font-size: 18pt;
+        font-weight: 950;
+        letter-spacing: -0.04em;
+      }
+
+      .mockup {
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 9mm;
+        background: #081221;
+        box-shadow: 0 36px 90px rgba(0, 0, 0, 0.34);
+      }
+
+      .light .mockup {
+        border-color: rgba(15, 23, 42, 0.1);
+        background: #f8fbff;
+        box-shadow: var(--shadow);
+      }
+
+      .mock-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 4mm 5mm;
+      }
+
+      .light .mock-header {
+        border-bottom-color: rgba(15, 23, 42, 0.08);
+      }
+
+      .dots {
+        display: flex;
+        gap: 1.4mm;
+      }
+
+      .dot {
+        width: 2.5mm;
+        height: 2.5mm;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.22);
+      }
+
+      .mock-body {
+        display: grid;
+        gap: 4mm;
+        padding: 5mm;
+      }
+
+      .mock-row {
+        display: grid;
+        grid-template-columns: 35mm 1fr;
+        gap: 4mm;
+      }
+
+      .mock-sidebar {
+        display: grid;
+        gap: 2.7mm;
+        border-radius: 6mm;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 4mm;
+      }
+
+      .light .mock-sidebar {
+        background: #eef6fb;
+      }
+
+      .mock-nav {
+        height: 7mm;
+        border-radius: 999px;
+        background: rgba(165, 180, 203, 0.14);
+      }
+
+      .mock-nav.active {
+        background: rgba(18, 198, 243, 0.22);
+      }
+
+      .mock-main {
+        display: grid;
+        gap: 3mm;
+      }
+
+      .mock-title {
+        width: 56mm;
+        height: 7mm;
+        border-radius: 999px;
+        background: #f9fbff;
+      }
+
+      .light .mock-title {
+        background: #071426;
+      }
+
+      .mock-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 3mm;
+      }
+
+      .mock-stat,
+      .mock-list,
+      .mock-chart {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6mm;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 4mm;
+      }
+
+      .light .mock-stat,
+      .light .mock-list,
+      .light .mock-chart {
+        border-color: rgba(15, 23, 42, 0.08);
+        background: #fff;
+      }
+
+      .mock-stat b {
+        display: block;
+        color: var(--cyan);
+        font-size: 14pt;
+      }
+
+      .mock-stat span,
+      .mock-list span {
+        display: block;
+        margin-top: 1mm;
+        color: #91a3bd;
+        font-size: 7pt;
+      }
+
+      .mock-chart {
+        height: 48mm;
+      }
+
+      .chart-line {
+        width: 100%;
+        height: 100%;
+      }
+
+      .mock-list {
+        display: grid;
+        gap: 2.2mm;
+      }
+
+      .list-item {
+        display: grid;
+        grid-template-columns: 8mm 1fr auto;
+        align-items: center;
+        gap: 2.5mm;
+        border-radius: 4mm;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 2.6mm;
+      }
+
+      .light .list-item {
+        background: #f4f8fc;
+      }
+
+      .avatar {
+        display: grid;
+        width: 8mm;
+        height: 8mm;
+        place-items: center;
+        border-radius: 999px;
+        background: rgba(18, 198, 243, 0.16);
+        color: var(--cyan);
+        font-size: 7pt;
+        font-weight: 900;
+      }
+
+      .badge {
+        border-radius: 999px;
+        background: rgba(18, 198, 243, 0.13);
+        color: var(--cyan);
+        padding: 1.6mm 2.4mm;
+        font-size: 6.8pt;
+        font-weight: 850;
+      }
+
+      .phone {
+        width: 54mm;
+        min-height: 112mm;
+        overflow: hidden;
+        border: 1.6mm solid #0b1728;
+        border-radius: 12mm;
+        background: #f7fbff;
+        box-shadow: 0 30px 70px rgba(7, 20, 38, 0.28);
+      }
+
+      .phone.dark {
+        background: #081221;
+      }
+
+      .phone-top {
+        height: 13mm;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+        background: #fff;
+      }
+
+      .phone.dark .phone-top {
+        background: #0e1d32;
+        border-color: rgba(255, 255, 255, 0.08);
+      }
+
+      .phone-body {
+        display: grid;
+        gap: 3mm;
+        padding: 4mm;
+      }
+
+      .phone-card {
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 6mm;
+        background: #fff;
+        padding: 4mm;
+      }
+
+      .phone.dark .phone-card {
+        border-color: rgba(255, 255, 255, 0.08);
+        background: #101d33;
+      }
+
+      .phone h3 {
+        color: #06101e;
+        font-size: 10pt;
+      }
+
+      .phone.dark h3 {
+        color: #fff;
+      }
+
+      .slot-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2mm;
+      }
+
+      .slot {
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        border-radius: 999px;
+        padding: 2mm;
+        color: #06101e;
+        text-align: center;
+        font-size: 6.6pt;
+        font-weight: 800;
+      }
+
+      .slot.off {
+        border-color: rgba(239, 68, 68, 0.28);
+        background: #fff1f2;
+        color: #be123c;
+      }
+
+      .section-head {
+        display: grid;
+        gap: 4mm;
+      }
+
+      .footer {
+        position: absolute;
+        right: 20mm;
+        bottom: 10mm;
+        left: 20mm;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: rgba(255, 255, 255, 0.52);
+        font-size: 7pt;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .light .footer {
+        color: rgba(7, 20, 38, 0.42);
+      }
+
+      .page-number {
+        color: var(--cyan);
+      }
+
+      .timeline {
+        display: grid;
+        gap: 3mm;
+      }
+
+      .timeline-item {
+        display: grid;
+        grid-template-columns: 11mm 1fr;
+        gap: 3.5mm;
+        align-items: start;
+      }
+
+      .timeline-number {
+        display: grid;
+        width: 10mm;
+        height: 10mm;
+        place-items: center;
+        border-radius: 999px;
+        background: var(--cyan);
+        color: #06101e;
+        font-size: 8pt;
+        font-weight: 950;
+      }
+
+      .table {
+        overflow: hidden;
+        border: 1px solid var(--dark-line);
+        border-radius: 7mm;
+        background: #fff;
+      }
+
+      .table-row {
+        display: grid;
+        grid-template-columns: 1.1fr 0.7fr 0.9fr 0.8fr;
+        gap: 3mm;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+        padding: 3.5mm 4mm;
+        color: #06101e;
+        font-size: 8pt;
+      }
+
+      .table-row.head {
+        background: #eef6fb;
+        color: #506179;
+        font-size: 7pt;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .table-row:last-child {
+        border-bottom: 0;
+      }
+
+      .price {
+        color: #008fbd;
+        font-weight: 950;
+      }
+
+      .plan-card {
+        display: grid;
+        min-height: 82mm;
+        align-content: space-between;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 8mm;
+        background: rgba(14, 29, 50, 0.78);
+        padding: 6mm;
+      }
+
+      .plan-card.featured {
+        border-color: rgba(18, 198, 243, 0.45);
+        background:
+          linear-gradient(180deg, rgba(18, 198, 243, 0.16), rgba(14, 29, 50, 0.86)),
+          #0e1d32;
+      }
+
+      .plan-card ul {
+        display: grid;
+        gap: 2mm;
+        margin: 5mm 0 0;
+        padding: 0;
+        color: #bfd0e8;
+        font-size: 8pt;
+        line-height: 1.35;
+        list-style: none;
+      }
+
+      .plan-card li::before {
+        content: "✓";
+        margin-right: 2mm;
+        color: var(--cyan);
+        font-weight: 950;
+      }
+
+      .big-number {
+        color: var(--cyan);
+        font-size: 48pt;
+        font-weight: 950;
+        letter-spacing: -0.06em;
+        line-height: 0.9;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="deck">
+      <section class="slide cover">
+        <div class="content">
+          <div class="section-head">
+            <img class="brand-mark" src="../public/brand/bw-barber-login-logo.png" alt="BW Barber" />
+            <p class="eyebrow">Apresentação comercial</p>
+            <h1>Gestão premium para barbearias modernas.</h1>
+            <p class="lead">
+              O BW Barber une operação, agendamento, cliente, financeiro,
+              relatórios e PWA em uma experiência proprietária, elegante e
+              pronta para escalar.
+            </p>
+            <span class="pill">Web + PWA + Painel Cliente + Painel Barbearia</span>
+          </div>
+          <div class="mockup">
+            <div class="mock-header">
+              <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+              <span class="badge">BW Barber OS</span>
+            </div>
+            <div class="mock-body">
+              <div class="mock-row">
+                <aside class="mock-sidebar">
+                  <span class="mock-nav active"></span>
+                  <span class="mock-nav"></span>
+                  <span class="mock-nav"></span>
+                  <span class="mock-nav"></span>
+                  <span class="mock-nav"></span>
+                  <span class="mock-nav"></span>
+                </aside>
+                <div class="mock-main">
+                  <span class="mock-title"></span>
+                  <div class="mock-stat-grid">
+                    <div class="mock-stat"><b>R$ 2.840</b><span>Receita hoje</span></div>
+                    <div class="mock-stat"><b>24</b><span>Atendimentos</span></div>
+                    <div class="mock-stat"><b>89/100</b><span>Score operação</span></div>
+                  </div>
+                  <div class="mock-chart">
+                    <svg class="chart-line" viewBox="0 0 620 180" preserveAspectRatio="none">
+                      <defs>
+                        <linearGradient id="area1" x1="0" x2="0" y1="0" y2="1">
+                          <stop offset="0" stop-color="#12c6f3" stop-opacity=".28" />
+                          <stop offset="1" stop-color="#12c6f3" stop-opacity="0" />
+                        </linearGradient>
+                      </defs>
+                      <path d="M0 145 C90 105 150 112 210 128 C280 146 320 82 402 64 C472 48 520 22 620 74 L620 180 L0 180Z" fill="url(#area1)" />
+                      <path d="M0 145 C90 105 150 112 210 128 C280 146 320 82 402 64 C472 48 520 22 620 74" fill="none" stroke="#12c6f3" stroke-width="5" stroke-linecap="round" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span>BW Barber</span><span class="page-number">01</span></div>
+      </section>
+
+      <section class="slide light">
+        <div class="content">
+          <div class="section-head">
+            <p class="eyebrow">Visão geral</p>
+            <h2>Um sistema completo para comandar a barbearia e encantar o cliente.</h2>
+            <p class="lead">
+              A plataforma foi desenhada para reduzir fricção na rotina:
+              agenda inteligente, operação financeira, relacionamento com
+              clientes, funcionários por convite e relatórios executivos.
+            </p>
+          </div>
+          <div class="grid-4">
+            <div class="metric-card"><strong>2</strong><p>Experiências conectadas: barbearia e cliente.</p></div>
+            <div class="metric-card"><strong>14</strong><p>Dias de teste grátis para novas barbearias.</p></div>
+            <div class="metric-card"><strong>PWA</strong><p>Instalável em iOS e Android, com sessão persistente.</p></div>
+            <div class="metric-card"><strong>RLS</strong><p>Dados isolados por empresa no Supabase.</p></div>
+          </div>
+          <div class="grid-3">
+            <div class="feature-card"><span class="icon">01</span><h3>Operação</h3><p>Clientes, barbeiros, serviços, atendimentos, produtos, caixa, contas e configurações.</p></div>
+            <div class="feature-card"><span class="icon">02</span><h3>Experiência do cliente</h3><p>Busca de barbearias, favoritos, barbearia principal, agendamento e remarcação.</p></div>
+            <div class="feature-card"><span class="icon">03</span><h3>Gestão executiva</h3><p>Indicadores, PDF profissional, Excel, planos, fidelidade e decisões baseadas em dados.</p></div>
+          </div>
+        </div>
+        <div class="footer"><span>Produto e proposta</span><span class="page-number">02</span></div>
+      </section>
+
+      <section class="slide">
+        <div class="content grid-2">
+          <div class="section-head">
+            <p class="eyebrow">Painel da barbearia</p>
+            <h2>Controle operacional com visual premium e fluxo profissional.</h2>
+            <p class="lead">
+              O administrador acompanha faturamento, equipe, agenda, comissões,
+              produtos, contas e relatórios em uma interface clara, rápida e
+              responsiva.
+            </p>
+            <div class="grid-2">
+              <div class="feature-card"><span class="icon">R$</span><h3>Dashboard financeiro</h3><p>Receita diária, semanal, mensal, lucro líquido e fluxo de receita.</p></div>
+              <div class="feature-card"><span class="icon">↗</span><h3>Alertas e ações</h3><p>Contas próximas do vencimento, notificações internas e atalhos de gestão.</p></div>
+            </div>
+          </div>
+          <div class="mockup">
+            <div class="mock-header">
+              <strong>Dashboard</strong>
+              <span class="badge">Teste grátis: 14 dias</span>
+            </div>
+            <div class="mock-body">
+              <div class="mock-stat-grid">
+                <div class="mock-stat"><b>R$ 550</b><span>Faturamento</span></div>
+                <div class="mock-stat"><b>R$ 288</b><span>Lucro líquido</span></div>
+                <div class="mock-stat"><b>4</b><span>Atendimentos</span></div>
+              </div>
+              <div class="mock-chart">
+                <svg class="chart-line" viewBox="0 0 620 180" preserveAspectRatio="none">
+                  <path d="M0 160 L120 160 L240 160 L360 160 C420 158 475 74 620 42" fill="none" stroke="#12c6f3" stroke-width="5" stroke-linecap="round" />
+                  <path d="M0 160 L120 160 L240 160 L360 160 C420 158 475 74 620 42 L620 180 L0 180Z" fill="#12c6f3" opacity=".14" />
+                </svg>
+              </div>
+              <div class="mock-list">
+                <div class="list-item"><span class="avatar">JS</span><span>João marcou Corte + Barba</span><b class="price">R$ 80</b></div>
+                <div class="list-item"><span class="avatar">AB</span><span>Conta de Internet vence amanhã</span><b class="badge">Alerta</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span>Operação da barbearia</span><span class="page-number">03</span></div>
+      </section>
+
+      <section class="slide light">
+        <div class="content grid-2">
+          <div class="section-head">
+            <p class="eyebrow">Agendamento inteligente</p>
+            <h2>Horários disponíveis, bloqueios, remarcações e lista de espera.</h2>
+            <p class="lead">
+              O BW Barber calcula disponibilidade considerando duração do
+              serviço, agenda existente, indisponibilidade do barbeiro e
+              horário de funcionamento.
+            </p>
+            <div class="timeline">
+              <div class="timeline-item"><span class="timeline-number">1</span><div><h3>Cliente escolhe serviço e profissional</h3><p>O sistema carrega serviços e barbeiros reais da empresa.</p></div></div>
+              <div class="timeline-item"><span class="timeline-number">2</span><div><h3>Slots são calculados com segurança</h3><p>Horários conflitantes ficam bloqueados e visualmente indisponíveis.</p></div></div>
+              <div class="timeline-item"><span class="timeline-number">3</span><div><h3>Cancelou? A vaga volta para a agenda</h3><p>Clientes da lista de espera podem ser avisados por notificação.</p></div></div>
+            </div>
+          </div>
+          <div class="phone">
+            <div class="phone-top"></div>
+            <div class="phone-body">
+              <h3>Agendar horário</h3>
+              <div class="phone-card">
+                <p>Serviço</p>
+                <h3>Corte + Barba · 60min</h3>
+              </div>
+              <div class="phone-card">
+                <p>Profissional</p>
+                <h3>Anderson</h3>
+              </div>
+              <div class="slot-grid">
+                <span class="slot">09:00</span>
+                <span class="slot off">09:30</span>
+                <span class="slot off">10:00</span>
+                <span class="slot">10:30</span>
+                <span class="slot">11:00</span>
+                <span class="slot off">11:30</span>
+                <span class="slot">14:00</span>
+                <span class="slot off">14:30</span>
+                <span class="slot">15:00</span>
+              </div>
+              <div class="phone-card">
+                <h3>Entrar na lista de espera</h3>
+                <p>Receba aviso quando surgir vaga.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span>Agenda e disponibilidade</span><span class="page-number">04</span></div>
+      </section>
+
+      <section class="slide">
+        <div class="content">
+          <div class="section-head">
+            <p class="eyebrow">Equipe e segurança</p>
+            <h2>Funcionários entram por convite, criam a própria senha e mantêm histórico preservado.</h2>
+            <p class="lead">
+              O fluxo elimina criação manual de senha pelo administrador e
+              prepara a estrutura para multiunidades, papéis e permissões.
+            </p>
+          </div>
+          <div class="grid-3">
+            <div class="feature-card"><span class="icon">✉</span><h3>Convites</h3><p>Administrador convida funcionário com nome, e-mail, telefone, função e comissão.</p></div>
+            <div class="feature-card"><span class="icon">🔐</span><h3>Senha própria</h3><p>Funcionário aceita o link e define sua senha no Supabase Auth.</p></div>
+            <div class="feature-card"><span class="icon">∞</span><h3>Histórico intacto</h3><p>Ao sair, fica inativo. Comissões, atendimentos e relatórios seguem consistentes.</p></div>
+          </div>
+          <div class="table">
+            <div class="table-row head"><span>Funcionário</span><span>Papel</span><span>Comissão</span><span>Status</span></div>
+            <div class="table-row"><strong>Anderson</strong><span>Barbeiro</span><span>60%</span><span class="price">Ativo</span></div>
+            <div class="table-row"><strong>Dule</strong><span>Barbeiro</span><span>60%</span><span class="price">Ativo</span></div>
+            <div class="table-row"><strong>Recepção</strong><span>Recepção</span><span>-</span><span class="price">Convite pendente</span></div>
+          </div>
+        </div>
+        <div class="footer"><span>Funcionários e permissões</span><span class="page-number">05</span></div>
+      </section>
+
+      <section class="slide light">
+        <div class="content grid-2">
+          <div class="section-head">
+            <p class="eyebrow">Financeiro</p>
+            <h2>Caixa, contas a pagar, comissões e descontos no atendimento.</h2>
+            <p class="lead">
+              A plataforma diferencia entrada, saída, contas pagas, pendentes,
+              vencidas, comissões e descontos para manter relatórios confiáveis.
+            </p>
+            <div class="grid-2">
+              <div class="metric-card"><strong>60/40</strong><p>Comissão do barbeiro e parte da empresa configuráveis.</p></div>
+              <div class="metric-card"><strong>R$</strong><p>Cancelados não entram no faturamento nem geram comissão.</p></div>
+            </div>
+          </div>
+          <div class="mockup">
+            <div class="mock-header"><strong>Fluxo de Caixa</strong><span class="badge">Confirmada</span></div>
+            <div class="mock-body">
+              <div class="mock-stat-grid">
+                <div class="mock-stat"><b>R$ 550</b><span>Entradas</span></div>
+                <div class="mock-stat"><b style="color:#ff5d6c">R$ 262</b><span>Saídas</span></div>
+                <div class="mock-stat"><b>R$ 288</b><span>Saldo atual</span></div>
+              </div>
+              <div class="mock-list">
+                <div class="list-item"><span class="avatar">+</span><span>Atendimento · Platinado</span><b class="price">R$ 250</b></div>
+                <div class="list-item"><span class="avatar">-</span><span>Pagamento · Internet</span><b style="color:#ff5d6c">R$ 139</b></div>
+                <div class="list-item"><span class="avatar">%</span><span>Comissão Anderson</span><b class="price">R$ 150</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span>Gestão financeira</span><span class="page-number">06</span></div>
+      </section>
+
+      <section class="slide">
+        <div class="content grid-2">
+          <div class="section-head">
+            <p class="eyebrow">Painel do cliente</p>
+            <h2>Descoberta, favoritos, barbearia principal e perfil no celular.</h2>
+            <p class="lead">
+              O cliente encontra barbearias, define uma principal, favorite,
+              acessa rotas, acompanha agendamentos e usa o PWA como aplicativo.
+            </p>
+            <div class="grid-2">
+              <div class="feature-card"><span class="icon">♡</span><h3>Favoritos</h3><p>Barbearias favoritas aparecem antes na busca e na tela inicial.</p></div>
+              <div class="feature-card"><span class="icon">⌖</span><h3>Localização</h3><p>Endereço, distância aproximada e botão Ver rota para Google Maps.</p></div>
+            </div>
+          </div>
+          <div class="phone dark">
+            <div class="phone-top"></div>
+            <div class="phone-body">
+              <h3>Sua barbearia</h3>
+              <div class="phone-card">
+                <div class="list-item"><span class="avatar">BF</span><span>Barbearia do Vale</span><b class="badge">Principal</b></div>
+                <p>Rua Exemplo, 123 · Centro</p>
+              </div>
+              <div class="phone-card">
+                <h3>Próximo horário</h3>
+                <p>05/06/2026, 16:30 · Corte + Barba</p>
+              </div>
+              <div class="phone-card">
+                <h3>Favoritas</h3>
+                <p>Barbearia do Vale · Studio Prime · Navalha Club</p>
+              </div>
+              <div class="phone-card">
+                <h3>Agendar horário</h3>
+                <p>Escolha serviço, profissional, data e horário.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span>Experiência do cliente</span><span class="page-number">07</span></div>
+      </section>
+
+      <section class="slide light">
+        <div class="content">
+          <div class="section-head">
+            <p class="eyebrow">Relatórios executivos</p>
+            <h2>Do dado operacional à decisão de negócio.</h2>
+            <p class="lead">
+              No BW Pro, relatórios deixam de ser simples tabelas e viram uma
+              ferramenta de leitura do negócio: financeiro, equipe, clientes,
+              agenda, produtos e previsões.
+            </p>
+          </div>
+          <div class="grid-2">
+            <div class="mockup">
+              <div class="mock-header"><strong>Relatório Executivo</strong><span class="badge">PDF premium</span></div>
+              <div class="mock-body">
+                <div class="mock-stat-grid">
+                  <div class="mock-stat"><b>89/100</b><span>Score operação</span></div>
+                  <div class="mock-stat"><b>18%</b><span>Crescimento</span></div>
+                  <div class="mock-stat"><b>R$ 288</b><span>Lucro líquido</span></div>
+                </div>
+                <div class="mock-chart">
+                  <svg class="chart-line" viewBox="0 0 620 180" preserveAspectRatio="none">
+                    <rect x="40" y="85" width="56" height="95" rx="9" fill="#12c6f3" opacity=".55" />
+                    <rect x="132" y="64" width="56" height="116" rx="9" fill="#12c6f3" opacity=".7" />
+                    <rect x="224" y="38" width="56" height="142" rx="9" fill="#12c6f3" opacity=".9" />
+                    <rect x="316" y="70" width="56" height="110" rx="9" fill="#2b6fff" opacity=".6" />
+                    <rect x="408" y="30" width="56" height="150" rx="9" fill="#12c6f3" opacity=".95" />
+                    <rect x="500" y="52" width="56" height="128" rx="9" fill="#2b6fff" opacity=".72" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="feature-card"><span class="icon">📈</span><h3>Resumo executivo</h3><p>Receita, margem, despesas, comissões, ticket médio e insights automáticos.</p></div>
+              <div class="feature-card"><span class="icon">👥</span><h3>Equipe</h3><p>Ranking de faturamento, comissão, ticket, cancelamentos e tempo médio.</p></div>
+              <div class="feature-card"><span class="icon">★</span><h3>Clientes</h3><p>Retenção, novos clientes, inativos e top clientes por gasto.</p></div>
+              <div class="feature-card"><span class="icon">↯</span><h3>Previsões</h3><p>Projeção de receita, lucro e clientes para 30, 90 dias e 12 meses.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span>Inteligência de gestão</span><span class="page-number">08</span></div>
+      </section>
+
+      <section class="slide">
+        <div class="content">
+          <div class="section-head">
+            <p class="eyebrow">Relacionamento e crescimento</p>
+            <h2>Planos, fidelidade, notificações internas e lista de espera.</h2>
+            <p class="lead">
+              A barbearia pode criar regras próprias de benefícios, acompanhar
+              uso, gerar caixa com pacotes e manter o cliente engajado.
+            </p>
+          </div>
+          <div class="grid-4">
+            <div class="feature-card"><span class="icon">10x</span><h3>Fidelidade</h3><p>A cada 10 cortes, ganha 1. Ou qualquer regra criada pela barbearia.</p></div>
+            <div class="feature-card"><span class="icon">%</span><h3>Descontos</h3><p>Desconto em valor, percentual, cupom, cortesia ou cliente fiel.</p></div>
+            <div class="feature-card"><span class="icon">🔔</span><h3>Notificações</h3><p>Novo agendamento, cancelamento, remarcação e lista de espera no sino do app.</p></div>
+            <div class="feature-card"><span class="icon">↺</span><h3>Lista de espera</h3><p>Quando vaga abre, o sistema prepara o aviso para o cliente interessado.</p></div>
+          </div>
+          <div class="table">
+            <div class="table-row head"><span>Programa</span><span>Regra</span><span>Recompensa</span><span>Status</span></div>
+            <div class="table-row"><strong>Clube VIP</strong><span>Mensal</span><span>15% em serviços</span><span class="price">Ativo</span></div>
+            <div class="table-row"><strong>Pacote Barba</strong><span>5 usos</span><span>Preço fechado</span><span class="price">Ativo</span></div>
+            <div class="table-row"><strong>Cliente Fiel</strong><span>10 visitas</span><span>Serviço grátis</span><span class="price">Ativo</span></div>
+          </div>
+        </div>
+        <div class="footer"><span>Fidelização e retenção</span><span class="page-number">09</span></div>
+      </section>
+
+      <section class="slide light">
+        <div class="content">
+          <div class="section-head">
+            <p class="eyebrow">Monetização SaaS</p>
+            <h2>Planos internos preparados para assinatura, trial e limites por recurso.</h2>
+            <p class="lead">
+              A fundação de assinatura permite testar planos agora e integrar
+              pagamento em etapa futura sem refazer a arquitetura.
+            </p>
+          </div>
+          <div class="grid-3">
+            <div class="plan-card">
+              <div><h3>BW Start</h3><p>Para barbeiro autônomo.</p><ul><li>1 barbeiro</li><li>Até 300 clientes</li><li>PWA e app cliente</li></ul></div>
+              <span class="badge">Entrada</span>
+            </div>
+            <div class="plan-card featured">
+              <div><h3>BW Pro</h3><p>Para barbearias em crescimento.</p><ul><li>Até 5 barbeiros</li><li>Relatórios executivos</li><li>Lista de espera e fidelidade</li></ul></div>
+              <span class="badge">Plano recomendado</span>
+            </div>
+            <div class="plan-card">
+              <div><h3>BW Elite</h3><p>Para operações maiores.</p><ul><li>Multiunidades</li><li>WhatsApp avançado</li><li>Limites ampliados</li></ul></div>
+              <span class="badge">Em breve</span>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span>Assinaturas e planos</span><span class="page-number">10</span></div>
+      </section>
+
+      <section class="slide">
+        <div class="content grid-2">
+          <div class="section-head">
+            <p class="eyebrow">Arquitetura e confiança</p>
+            <h2>Construído para produção, isolamento por empresa e experiência mobile.</h2>
+            <p class="lead">
+              O BW Barber usa React, TypeScript, Supabase, RLS, PWA e design
+              responsivo para entregar uma base moderna e evolutiva.
+            </p>
+            <div class="grid-2">
+              <div class="feature-card"><span class="icon">DB</span><h3>Supabase + RLS</h3><p>Cada barbearia visualiza apenas seus próprios dados.</p></div>
+              <div class="feature-card"><span class="icon">PWA</span><h3>Instalável</h3><p>Abre como app no iOS e Android, mantendo sessão ativa.</p></div>
+              <div class="feature-card"><span class="icon">TS</span><h3>TypeScript</h3><p>Tipos, validações com Zod e formulários com React Hook Form.</p></div>
+              <div class="feature-card"><span class="icon">UX</span><h3>Premium</h3><p>Dark mode, cards modernos, modais mobile e UI proprietária.</p></div>
+            </div>
+          </div>
+          <div class="panel" style="padding: 9mm;">
+            <div class="big-number">BW</div>
+            <h2 style="font-size: 22pt; margin-top: 5mm;">Um produto pronto para crescer.</h2>
+            <p style="font-size: 11pt; line-height: 1.65;">
+              A apresentação consolida as funcionalidades atuais do sistema e
+              posiciona o BW Barber como uma plataforma SaaS completa para
+              barbearias: operação eficiente, cliente conectado e gestão
+              orientada por dados.
+            </p>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin-top: 8mm;">
+              <span class="pill">Gestão</span>
+              <span class="pill">Agendamento</span>
+              <span class="pill">Financeiro</span>
+              <span class="pill">Relatórios</span>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span>BW Barber · Sistema de gestão para barbearias</span><span class="page-number">11</span></div>
+      </section>
+    </main>
+  </body>
+</html>

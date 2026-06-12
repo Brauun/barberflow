@@ -26,13 +26,6 @@ export type AppointmentWaitlist =
     service?: { nome: string } | null
   }
 
-const unavailableAppointmentStatuses = [
-  'cancelado',
-  'remarcado',
-  'nao_compareceu',
-  'faltou',
-]
-
 function appointmentTimeLabel(value: string) {
   return new Date(value).toLocaleTimeString('pt-BR', {
     hour: '2-digit',
@@ -124,7 +117,9 @@ export async function listFavoriteBarbershopIds(clientProfileId: string) {
     throw new Error(error.message)
   }
 
-  return new Set((data ?? []).map((favorite) => favorite.barbershop_id))
+  const rows = Array.isArray(data) ? data : []
+
+  return new Set(rows.map((favorite) => favorite.barbershop_id))
 }
 
 export async function listFavoriteBarbershops(clientProfileId: string) {
@@ -138,7 +133,9 @@ export async function listFavoriteBarbershops(clientProfileId: string) {
     throw new Error(error.message)
   }
 
-  return ((data ?? []) as unknown as Array<
+  const rows = Array.isArray(data) ? data : []
+
+  return (rows as unknown as Array<
     ClientFavoriteBarbershop & { barbershop: Barbershop | null }
   >)
     .map((favorite) => favorite.barbershop)
@@ -268,19 +265,31 @@ export async function listClientAppointments(profileId: string) {
   return (data ?? []) as unknown as ClientAppointment[]
 }
 
-export async function listBookingServices(empresaId: string) {
+export async function listBookingServices(empresaId: string, barberId: string) {
+  if (!barberId) {
+    return []
+  }
+
   const { data, error } = await supabase
-    .from('servicos')
-    .select('id,empresa_id,nome,preco,duracao_minutos,duration_minutes,ativo')
+    .from('barber_services')
+    .select(
+      'service:servicos(id,empresa_id,nome,preco,duracao_minutos,duration_minutes,ativo,status)',
+    )
     .eq('empresa_id', empresaId)
-    .eq('ativo', true)
-    .order('nome', { ascending: true })
+    .eq('barbeiro_id', barberId)
+    .eq('active', true)
 
   if (error) {
     throw new Error(error.message)
   }
 
-  return (data ?? []) as BookingService[]
+  return ((data ?? []) as unknown as Array<{ service: BookingService | null }>)
+    .map((item) => item.service)
+    .filter(
+      (service): service is BookingService =>
+        Boolean(service?.ativo) && service?.status !== 'inativo',
+    )
+    .sort((first, second) => first.nome.localeCompare(second.nome))
 }
 
 export async function listBookingBarbers(empresaId: string) {
@@ -303,77 +312,24 @@ export async function listBarberAppointments(
   barbeiroId: string,
   date: string,
   excludeAppointmentId?: string,
-  empresaId?: string | null,
+  _empresaId?: string | null,
 ) {
-  const dayStart = new Date(`${date}T00:00:00`)
-  const dayEnd = new Date(dayStart)
-  dayEnd.setDate(dayStart.getDate() + 1)
-
-  let query = supabase
-    .from('appointments')
-    .select('id,starts_at,ends_at')
-    .eq('barbeiro_id', barbeiroId)
-    .lt('starts_at', dayEnd.toISOString())
-    .gt('ends_at', dayStart.toISOString())
-    .not('status', 'in', `(${unavailableAppointmentStatuses.join(',')})`)
-
-  if (barbershopId) {
-    query = query.eq('barbershop_id', barbershopId)
-  } else if (empresaId) {
-    query = query.eq('empresa_id', empresaId)
+  if (!barbershopId || !barbeiroId || !date) {
+    return []
   }
 
-  if (excludeAppointmentId) {
-    query = query.neq('id', excludeAppointmentId)
-  }
-
-  const { data, error } = await query
+  const { data, error } = await supabase.rpc('get_booking_busy_slots', {
+    p_barbeiro_id: barbeiroId,
+    p_barbershop_id: barbershopId,
+    p_date: date,
+    p_exclude_appointment_id: excludeAppointmentId ?? null,
+  })
 
   if (error) {
     throw new Error(error.message)
   }
 
-  let adminBusy: Array<{ starts_at: string; ends_at: string }> = []
-
-  if (empresaId) {
-    const { data: atendimentosData, error: atendimentosError } = await supabase
-      .from('atendimentos')
-      .select('id,data_hora_inicio,data_hora_fim,status,servicos(duracao_minutos,duration_minutes)')
-      .eq('empresa_id', empresaId)
-      .eq('barbeiro_id', barbeiroId)
-      .lt('data_hora_inicio', dayEnd.toISOString())
-      .gte('data_hora_inicio', dayStart.toISOString())
-      .not('status', 'in', `(${unavailableAppointmentStatuses.join(',')})`)
-
-    if (atendimentosError) {
-      throw new Error(atendimentosError.message)
-    }
-
-    adminBusy = ((atendimentosData ?? []) as unknown as Array<{
-      data_hora_inicio: string
-      data_hora_fim: string | null
-      servicos: { duracao_minutos: number; duration_minutes: number | null } | null
-    }>).map((atendimento) => {
-      const start = new Date(atendimento.data_hora_inicio)
-      const duration =
-        atendimento.servicos?.duration_minutes ??
-        atendimento.servicos?.duracao_minutos ??
-        30
-      const end = atendimento.data_hora_fim
-        ? new Date(atendimento.data_hora_fim)
-        : new Date(start.getTime() + duration * 60 * 1000)
-
-      return {
-        ends_at: end.toISOString(),
-        starts_at: start.toISOString(),
-      }
-    })
-  }
-
-  return [
-    ...((data ?? []) as Array<{ starts_at: string; ends_at: string }>),
-    ...adminBusy,
-  ]
+  return (data ?? []) as Array<{ starts_at: string; ends_at: string }>
 }
 
 async function logAppointmentStatus(input: {

@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase'
 import type { Database } from '../types/database'
 import type { ClienteFormData } from '../types/clientes'
+import { toAppError } from '../utils/handleAppError'
 import { onlyDigits } from '../utils/masks'
 
 export type Cliente = Database['public']['Tables']['clientes']['Row']
@@ -69,7 +70,7 @@ export async function listClientes(
   )
 
   if (failedResponse?.error) {
-    throw new Error(failedResponse.error.message)
+    throw toAppError(failedResponse.error, 'Não foi possível listar clientes.')
   }
 
   const atendimentos = (atendimentosResponse.data ?? []) as ClienteIndicator[]
@@ -101,7 +102,7 @@ export async function createCliente(empresaId: string, data: ClienteFormData) {
     .insert(normalizeClienteInput(data, empresaId))
 
   if (error) {
-    throw new Error(error.message)
+    throw toAppError(error, 'Não foi possível criar o cliente.')
   }
 }
 
@@ -117,7 +118,7 @@ export async function updateCliente(
     .eq('id', clienteId)
 
   if (error) {
-    throw new Error(error.message)
+    throw toAppError(error, 'Não foi possível atualizar o cliente.')
   }
 }
 
@@ -129,7 +130,7 @@ export async function deleteCliente(empresaId: string, clienteId: string) {
     .eq('id', clienteId)
 
   if (error) {
-    throw new Error(error.message)
+    throw toAppError(error, 'Não foi possível excluir o cliente.')
   }
 }
 
@@ -145,7 +146,7 @@ export async function getClienteHistorico(
     .order('data_hora_inicio', { ascending: false })
 
   if (error) {
-    throw new Error(error.message)
+    throw toAppError(error, 'Não foi possível carregar o histórico do cliente.')
   }
 
   return (data ?? []) as unknown as ClienteAtendimento[]

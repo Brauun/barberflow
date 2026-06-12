@@ -3,6 +3,7 @@ import { Heart, MapPin, Navigation, Route, Search, Star, Timer } from 'lucide-re
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { BarbershopLogo } from '../components/BarbershopLogo'
 import { Badge, Button, Card, CardContent, SearchInput } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import {
@@ -85,11 +86,14 @@ export function ClientBarbershopSearchPage() {
   const favoritesQuery = useQuery({
     enabled: Boolean(clientProfile?.id),
     queryFn: () => listFavoriteBarbershopIds(clientProfile?.id as string),
-    queryKey: ['client-favorite-barbershops', clientProfile?.id],
+    queryKey: ['client-favorite-barbershop-ids', clientProfile?.id],
   })
 
   const favoriteIds = useMemo(
-    () => favoritesQuery.data ?? new Set<string>(),
+    () =>
+      favoritesQuery.data instanceof Set
+        ? favoritesQuery.data
+        : new Set<string>(),
     [favoritesQuery.data],
   )
 
@@ -173,9 +177,14 @@ export function ClientBarbershopSearchPage() {
       await favoriteBarbershop(clientProfile, barbershop)
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ['client-favorite-barbershops', clientProfile?.id],
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['client-favorite-barbershop-ids', clientProfile?.id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['client-favorite-barbershops', clientProfile?.id],
+        }),
+      ])
     },
   })
 
@@ -231,17 +240,11 @@ export function ClientBarbershopSearchPage() {
               <CardContent>
                 <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-brand-50 text-base font-black text-brand-600 ring-1 ring-brand-100">
-                      {barbershop.logo_url ? (
-                        <img
-                          alt={barbershop.nome}
-                          className="h-full w-full rounded-3xl object-cover"
-                          src={barbershop.logo_url}
-                        />
-                      ) : (
-                        'BF'
-                      )}
-                    </div>
+                    <BarbershopLogo
+                      className="h-14 w-14 text-base"
+                      logoUrl={barbershop.logo_url}
+                      name={barbershop.nome}
+                    />
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="text-lg font-black text-slate-950">

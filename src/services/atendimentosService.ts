@@ -5,6 +5,7 @@ import {
 } from './clientService'
 import type { AtendimentoFormData } from '../types/atendimentos'
 import type { Database } from '../types/database'
+import { createAuditLog } from './observabilityService'
 
 export type Atendimento = Database['public']['Tables']['atendimentos']['Row']
 
@@ -88,7 +89,7 @@ export async function listDailyAppointments(input: {
   let appointmentsQuery = supabase
     .from('appointments')
     .select(
-      'id,starts_at,ends_at,status,valor_final,barbeiro_id,client:profiles(nome),barbeiro:barbeiros(nome),items:appointment_items(nome,duration_minutes,valor_final)',
+      'id,starts_at,ends_at,status,valor_final,barbeiro_id,client:profiles(nome),barbeiro:barbeiros(nome),items:appointment_items(nome,duration_minutes,servico_id,valor_final)',
     )
     .eq('empresa_id', input.empresaId)
     .gte('starts_at', dayStart.toISOString())
@@ -294,6 +295,29 @@ export async function updateDailyAppointmentStatus(input: {
     throw new Error(logError.message)
   }
 
+  const actionByStatus: Partial<Record<DailyAppointmentStatus, string>> = {
+    cancelado: 'atendimento_cancelado',
+    concluido: 'atendimento_concluido',
+    faltou: 'atendimento_nao_compareceu',
+    nao_compareceu: 'atendimento_nao_compareceu',
+  }
+  const auditAction = actionByStatus[input.status]
+
+  if (auditAction) {
+    await createAuditLog({
+      action: auditAction,
+      empresaId: input.empresaId,
+      entityId: input.id,
+      entityType: input.source,
+      metadata: {
+        motivo: input.reason ?? null,
+        novo_status: input.status,
+        status_anterior: current?.status ?? null,
+      },
+      userRole: 'administrador',
+    })
+  }
+
   if (input.status === 'cancelado') {
     await supabase
       .from('movimentacoes_financeiras')
@@ -422,6 +446,18 @@ export async function rescheduleDailyAppointment(input: {
   if (logError) {
     throw new Error(logError.message)
   }
+
+  await createAuditLog({
+    action: 'atendimento_remarcado',
+    empresaId: input.empresaId,
+    entityId: input.appointment.id,
+    entityType: input.appointment.source,
+    metadata: {
+      de: input.appointment.starts_at,
+      para: input.startsAt,
+    },
+    userRole: 'administrador',
+  })
 }
 
 export async function listAdminWaitlist(empresaId: string) {
@@ -429,7 +465,7 @@ export async function listAdminWaitlist(empresaId: string) {
     .from('appointment_waitlist')
     .select('*,client:profiles(nome,telefone),service:servicos(nome),barber:barbeiros(nome)')
     .eq('empresa_id', empresaId)
-    .neq('status', 'cancelado')
+    .in('status', ['aguardando', 'notificado'])
     .order('desired_date', { ascending: true })
     .order('created_at', { ascending: true })
 
@@ -600,5 +636,20 @@ export async function registrarAtendimento(
     if (discountError) {
       throw new Error(discountError.message)
     }
+
+    void createAuditLog({
+      action: 'desconto_aplicado',
+      empresaId,
+      entityId: atendimentoId,
+      entityType: 'atendimentos',
+      metadata: {
+        motivo: data.motivo_desconto ?? 'Outro',
+        tipo: data.desconto_tipo,
+        valor_desconto: valorDesconto,
+        valor_final: valorFinal,
+        valor_original: valorOriginal,
+      },
+      userRole: 'administrador',
+    })
   }
 }

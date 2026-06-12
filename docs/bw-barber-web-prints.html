@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BW Barber - Prints Web</title>
+    <style>
+      @page {
+        size: 1440px 900px;
+        margin: 0;
+      }
+
+      :root {
+        --bg: #050b14;
+        --sidebar: #101a2d;
+        --surface: #111c31;
+        --surface-2: #16243d;
+        --cyan: #12c6f3;
+        --muted: #a5b4cb;
+        --text: #ffffff;
+        --line: rgba(255, 255, 255, 0.1);
+        --green: #00d69b;
+        --red: #ff6477;
+        --paper: #f6f9fc;
+        --ink: #071426;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #111827;
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .page {
+        position: relative;
+        display: grid;
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        page-break-after: always;
+        break-after: page;
+        background:
+          radial-gradient(circle at 92% 4%, rgba(18, 198, 243, 0.18), transparent 25%),
+          linear-gradient(135deg, #050b14 0%, #071426 58%, #0a1424 100%);
+      }
+
+      .page.light {
+        background:
+          radial-gradient(circle at 95% 0%, rgba(18, 198, 243, 0.18), transparent 24%),
+          #f6f9fc;
+        color: var(--ink);
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: 232px 1fr;
+        width: 100%;
+        height: 100%;
+      }
+
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--line);
+        background: rgba(16, 26, 45, 0.94);
+      }
+
+      .light .sidebar {
+        border-right-color: rgba(7, 20, 38, 0.08);
+        background: #ffffff;
+      }
+
+      .brand {
+        display: flex;
+        min-height: 96px;
+        align-items: center;
+        gap: 14px;
+        border-bottom: 1px solid var(--line);
+        padding: 18px;
+      }
+
+      .light .brand {
+        border-bottom-color: rgba(7, 20, 38, 0.08);
+      }
+
+      .brand-logo {
+        display: grid;
+        width: 56px;
+        height: 56px;
+        place-items: center;
+        overflow: hidden;
+        border: 1px solid rgba(18, 198, 243, 0.28);
+        border-radius: 999px;
+        background: #071426;
+      }
+
+      .brand-logo img {
+        width: 50px;
+        height: 50px;
+        object-fit: contain;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        color: inherit;
+        font-size: 34px;
+        font-weight: 950;
+        letter-spacing: -0.04em;
+      }
+
+      h2 {
+        color: inherit;
+        font-size: 24px;
+        font-weight: 950;
+        letter-spacing: -0.035em;
+      }
+
+      h3 {
+        color: inherit;
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      p,
+      small {
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .brand b {
+        display: block;
+        color: inherit;
+        font-size: 15px;
+      }
+
+      .brand small {
+        display: block;
+        margin-top: 3px;
+        font-size: 11px;
+        font-weight: 850;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+
+      .nav {
+        display: grid;
+        gap: 8px;
+        padding: 26px 14px;
+      }
+
+      .group {
+        margin: 16px 4px 4px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+      }
+
+      .nav-item {
+        display: flex;
+        height: 44px;
+        align-items: center;
+        gap: 12px;
+        border-radius: 16px;
+        color: #c8d6ea;
+        padding: 0 14px;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .light .nav-item {
+        color: #51647e;
+      }
+
+      .nav-item.active {
+        background: rgba(18, 198, 243, 0.14);
+        color: var(--cyan);
+      }
+
+      .user {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: auto;
+        border-top: 1px solid var(--line);
+        padding: 18px;
+      }
+
+      .user > div {
+        display: grid;
+        min-width: 0;
+        gap: 2px;
+      }
+
+      .light .user {
+        border-top-color: rgba(7, 20, 38, 0.08);
+      }
+
+      .avatar {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 999px;
+        background: rgba(18, 198, 243, 0.14);
+        color: var(--cyan);
+        font-weight: 950;
+      }
+
+      .main {
+        display: grid;
+        grid-template-rows: 80px 1fr;
+        min-width: 0;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+        padding: 0 34px;
+      }
+
+      .light .header {
+        border-bottom-color: rgba(7, 20, 38, 0.08);
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .eyebrow {
+        color: var(--cyan);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+      }
+
+      .search {
+        display: flex;
+        width: 320px;
+        height: 46px;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        padding: 0 16px;
+        font-size: 14px;
+      }
+
+      .light .search {
+        border-color: rgba(7, 20, 38, 0.08);
+        background: #fff;
+      }
+
+      .content {
+        display: grid;
+        align-content: start;
+        gap: 24px;
+        padding: 34px;
+      }
+
+      .trial {
+        border: 1px solid rgba(18, 198, 243, 0.28);
+        border-radius: 22px;
+        background: rgba(18, 198, 243, 0.1);
+        color: #c9f8ff;
+        padding: 18px 22px;
+        font-size: 14px;
+        font-weight: 850;
+      }
+
+      .light .trial {
+        color: #02627b;
+      }
+
+      .hero {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+      }
+
+      .hero p {
+        margin-top: 8px;
+        max-width: 560px;
+      }
+
+      .button {
+        display: inline-flex;
+        height: 46px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 16px;
+        background: var(--cyan);
+        color: var(--ink);
+        padding: 0 20px;
+        font-size: 14px;
+        font-weight: 950;
+      }
+
+      .button.dark {
+        background: #030814;
+        color: #fff;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1.45fr 1fr;
+        gap: 18px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        background: rgba(17, 28, 49, 0.92);
+        box-shadow: 0 26px 80px rgba(0, 0, 0, 0.16);
+      }
+
+      .light .card {
+        border-color: rgba(7, 20, 38, 0.08);
+        background: #ffffff;
+        box-shadow: 0 24px 80px rgba(7, 20, 38, 0.08);
+      }
+
+      .stat {
+        min-height: 118px;
+        padding: 24px;
+      }
+
+      .stat span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .stat strong {
+        display: block;
+        margin-top: 14px;
+        color: inherit;
+        font-size: 30px;
+        font-weight: 950;
+        letter-spacing: -0.04em;
+      }
+
+      .accent {
+        color: var(--cyan) !important;
+      }
+
+      .green {
+        color: var(--green) !important;
+      }
+
+      .red {
+        color: var(--red) !important;
+      }
+
+      .chart {
+        height: 330px;
+        padding: 24px;
+      }
+
+      .chart svg {
+        width: 100%;
+        height: 235px;
+        margin-top: 18px;
+      }
+
+      .panel {
+        padding: 24px;
+      }
+
+      .list {
+        display: grid;
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 48px 1fr auto;
+        align-items: center;
+        gap: 14px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.035);
+        padding: 14px;
+      }
+
+      .light .row {
+        border-color: rgba(7, 20, 38, 0.07);
+        background: #f7fafc;
+      }
+
+      .row b {
+        display: block;
+        font-size: 14px;
+      }
+
+      .row small {
+        display: block;
+        margin-top: 3px;
+        font-size: 12px;
+      }
+
+      .badge {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        border: 1px solid rgba(18, 198, 243, 0.28);
+        border-radius: 999px;
+        background: rgba(18, 198, 243, 0.12);
+        color: var(--cyan);
+        padding: 7px 11px;
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .badge.green-bg {
+        border-color: rgba(0, 214, 155, 0.28);
+        background: rgba(0, 214, 155, 0.12);
+        color: var(--green);
+      }
+
+      .badge.red-bg {
+        border-color: rgba(255, 100, 119, 0.28);
+        background: rgba(255, 100, 119, 0.12);
+        color: var(--red);
+      }
+
+      .full-card {
+        padding: 26px;
+      }
+
+      .table-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+        margin: -26px -26px 22px;
+        padding: 24px 26px;
+      }
+
+      .light .table-header {
+        border-bottom-color: rgba(7, 20, 38, 0.08);
+      }
+
+      .filters {
+        display: flex;
+        gap: 12px;
+      }
+
+      .filter {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.04);
+        color: inherit;
+        padding: 12px 16px;
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .light .filter {
+        border-color: rgba(7, 20, 38, 0.08);
+        background: #fff;
+      }
+
+      .login-page {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: center;
+        gap: 80px;
+        padding: 90px 110px;
+      }
+
+      .logo-large {
+        width: 230px;
+        height: auto;
+      }
+
+      .login-card {
+        display: grid;
+        gap: 18px;
+        border: 1px solid var(--line);
+        border-radius: 34px;
+        background: rgba(17, 28, 49, 0.92);
+        padding: 34px;
+        box-shadow: 0 28px 90px rgba(0, 0, 0, 0.24);
+      }
+
+      .input {
+        display: flex;
+        height: 56px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        padding: 0 16px;
+      }
+
+      .plans {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+
+      .plan {
+        display: grid;
+        min-height: 360px;
+        align-content: space-between;
+        padding: 26px;
+      }
+
+      ul {
+        display: grid;
+        gap: 10px;
+        margin: 18px 0 0;
+        padding: 0;
+        color: var(--muted);
+        list-style: none;
+      }
+
+      li::before {
+        content: "✓";
+        margin-right: 8px;
+        color: var(--cyan);
+        font-weight: 950;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="page" data-name="01-login-web">
+        <div class="login-page">
+          <div>
+            <img class="logo-large" src="../public/brand/bw-barber-login-logo.png" alt="BW Barber" />
+            <p class="eyebrow" style="margin-top:42px">Plataforma SaaS</p>
+            <h1 style="max-width:520px;font-size:58px;line-height:.96">Gestão premium para barbearias modernas.</h1>
+            <p style="max-width:520px;margin-top:20px;font-size:17px">Web, PWA, painel cliente, painel barbearia, agenda inteligente e gestão financeira em uma experiência proprietária.</p>
+          </div>
+          <div class="login-card">
+            <p class="eyebrow">Acesso</p>
+            <h2>Bem vindo(a) ao BW Barber</h2>
+            <p>Acesse sua conta para gerenciar horários, clientes e operação.</p>
+            <div><p style="margin-bottom:8px;color:#fff;font-weight:850">Telefone ou Email</p><div class="input">exemplo@exemplo.com</div></div>
+            <div><p style="margin-bottom:8px;color:#fff;font-weight:850">Senha</p><div class="input">Digite sua senha</div></div>
+            <div class="button">Entrar</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" data-name="02-dashboard-web">
+        <div class="app">
+          <aside class="sidebar">
+            <div class="brand"><span class="brand-logo"><img src="../public/brand/bw-barber-login-logo.png" /></span><div><b>Barbearia do Vale</b><small>BW Barber</small></div></div>
+            <nav class="nav">
+              <div class="nav-item active">▦ Dashboard</div>
+              <div class="group">Operação</div>
+              <div class="nav-item">☷ Clientes</div><div class="nav-item">✂ Barbeiros</div><div class="nav-item">✦ Serviços</div><div class="nav-item">▣ Atendimentos</div>
+              <div class="group">Gestão</div>
+              <div class="nav-item">▧ Produtos</div><div class="nav-item">◆ Planos e Fidelidade</div><div class="nav-item">＄ Fluxo de Caixa</div>
+              <div class="group">Sistema</div>
+              <div class="nav-item">⚙ Configurações</div>
+            </nav>
+            <div class="user"><span class="avatar">B</span><div><b>Braian</b><small>Administrador</small></div></div>
+          </aside>
+          <section class="main">
+            <header class="header"><div><p class="eyebrow">Dashboard</p><h2>BW Barber</h2></div><div class="search">⌕ Buscar</div></header>
+            <div class="content">
+              <div class="trial">Seu teste grátis termina em 14 dias.</div>
+              <div class="hero"><div><p class="eyebrow">Painel da barbearia</p><h1>Boa tarde, Braian</h1><p>Hoje você teve <b style="color:#fff">4 atendimentos</b> e faturou <b class="accent">R$ 550,00</b>.</p></div></div>
+              <div class="grid-3"><div class="card stat"><span>Receita Hoje</span><strong>R$ 550,00</strong><span class="green">↗ +18%</span></div><div class="card stat"><span>Lucro Líquido</span><strong>R$ 288,00</strong></div><div class="card stat"><span>Comissões</span><strong>R$ 330,00</strong></div></div>
+              <div class="grid-2"><div class="card chart"><h3>Fluxo de Receita</h3><p>Últimos 6 meses</p><svg viewBox="0 0 620 210" preserveAspectRatio="none"><defs><linearGradient id="webArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#12c6f3" stop-opacity=".32"/><stop offset="1" stop-color="#12c6f3" stop-opacity="0"/></linearGradient></defs><path d="M0 180 L130 180 C185 176 230 96 300 104 C386 114 430 44 620 60 L620 210 L0 210Z" fill="url(#webArea)"/><path d="M0 180 L130 180 C185 176 230 96 300 104 C386 114 430 44 620 60" fill="none" stroke="#12c6f3" stroke-width="5" stroke-linecap="round"/></svg></div><div class="card panel"><h3>Últimos atendimentos</h3><div class="list"><div class="row"><span class="avatar">JS</span><div><b>João Silva</b><small>Corte + Barba · Anderson</small></div><span class="badge green-bg">Confirmado</span></div><div class="row"><span class="avatar">PL</span><div><b>Pedro Lima</b><small>Platinado · Dule</small></div><span class="badge">Agendado</span></div></div></div></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="page light" data-name="03-agendamento-web">
+        <div class="app">
+          <aside class="sidebar"><div class="brand"><span class="brand-logo"><img src="../public/brand/bw-barber-login-logo.png" /></span><div><b>Barbearia do Vale</b><small>BW Barber</small></div></div><nav class="nav"><div class="nav-item">▦ Dashboard</div><div class="group">Cliente</div><div class="nav-item active">▣ Agendamento</div><div class="nav-item">♡ Favoritos</div><div class="nav-item">☻ Perfil</div></nav></aside>
+          <section class="main">
+            <header class="header"><div><p class="eyebrow">Agendamentos</p><h2>Escolha seu horário</h2></div><div class="search">⌕ Buscar barbearia</div></header>
+            <div class="content">
+              <div class="hero"><div><p class="eyebrow">Barbearia do Vale</p><h1>Fluxo de agendamento</h1><p>Serviço, profissional, data e horário com bloqueio visual de indisponibilidade.</p></div><div class="button">Confirmar horário</div></div>
+              <div class="card full-card">
+                <div class="grid-2" style="grid-template-columns:1fr 1fr"><div><p style="font-weight:850;color:#071426;margin-bottom:8px">Serviço</p><div class="filter">Corte + Barba · R$ 80 · 60min</div></div><div><p style="font-weight:850;color:#071426;margin-bottom:8px">Profissional</p><div class="filter">Anderson</div></div></div>
+                <h3 style="margin-top:24px">Horários disponíveis</h3>
+                <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:16px">
+                  <span class="filter">09:00</span><span class="filter" style="background:#fff1f2;color:#be123c;border-color:#fecdd3">09:30</span><span class="filter" style="background:#fff1f2;color:#be123c;border-color:#fecdd3">10:00</span><span class="filter" style="background:#12c6f3;color:#071426;border-color:#12c6f3">10:30</span><span class="filter">11:00</span>
+                  <span class="filter">13:30</span><span class="filter" style="background:#fff1f2;color:#be123c;border-color:#fecdd3">14:00</span><span class="filter" style="background:#fff1f2;color:#be123c;border-color:#fecdd3">14:30</span><span class="filter">15:00</span><span class="filter">15:30</span>
+                </div>
+              </div>
+              <div class="grid-2"><div class="card panel"><h3>Próximo horário</h3><p style="margin-top:12px;color:#008fbd;font-size:28px;font-weight:950">05/06/2026, 16:30</p><p>Barbearia do Vale</p></div><div class="card panel"><h3>Lista de espera</h3><div class="list"><div class="row"><span class="avatar">DL</span><div><b>Debora Lima</b><small>Corte + Barba · tarde</small></div><span class="badge">Aguardando</span></div></div></div></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="page" data-name="04-financeiro-web">
+        <div class="app">
+          <aside class="sidebar"><div class="brand"><span class="brand-logo"><img src="../public/brand/bw-barber-login-logo.png" /></span><div><b>Barbearia do Vale</b><small>BW Barber</small></div></div><nav class="nav"><div class="nav-item">▦ Dashboard</div><div class="group">Gestão</div><div class="nav-item active">＄ Fluxo de Caixa</div><div class="nav-item">▭ Contas a Pagar</div><div class="nav-item">▥ Relatórios</div></nav><div class="user"><span class="avatar">B</span><div><b>Braian</b><small>Administrador</small></div></div></aside>
+          <section class="main">
+            <header class="header"><div><p class="eyebrow">Fluxo de Caixa</p><h2>Entradas e saídas</h2></div><div class="button">+ Nova movimentação</div></header>
+            <div class="content">
+              <div class="grid-3"><div class="card stat"><span>Total de entradas</span><strong class="green">R$ 550,00</strong></div><div class="card stat"><span>Total de saídas</span><strong class="red">R$ 262,00</strong></div><div class="card stat"><span>Saldo atual</span><strong>R$ 288,00</strong></div></div>
+              <div class="card full-card"><div class="table-header"><div><h3>Movimentações financeiras</h3><p>6 lançamentos no período.</p></div><div class="filters"><span class="filter">01/06/2026</span><span class="filter">08/06/2026</span></div></div><div class="list"><div class="row"><span class="avatar">↓</span><div><b>Saída</b><small>Pagamento · Cartão · Despesas</small></div><span class="badge green-bg">Confirmada</span></div><div class="row"><span class="avatar">↑</span><div><b>Entrada</b><small>Atendimento · Platinado</small></div><span class="accent" style="font-weight:950">R$ 250,00</span></div><div class="row"><span class="avatar">↓</span><div><b>Saída</b><small>Pagamento · Internet</small></div><span class="red" style="font-weight:950">R$ 139,00</span></div></div></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="page light" data-name="05-relatorios-web">
+        <div class="app">
+          <aside class="sidebar"><div class="brand"><span class="brand-logo"><img src="../public/brand/bw-barber-login-logo.png" /></span><div><b>Barbearia do Vale</b><small>BW Barber</small></div></div><nav class="nav"><div class="nav-item">▦ Dashboard</div><div class="group">Inteligência</div><div class="nav-item active">▥ Relatórios</div><div class="nav-item">↗ Relatórios Executivos</div></nav></aside>
+          <section class="main">
+            <header class="header"><div><p class="eyebrow">Relatórios</p><h2>Resumo executivo</h2></div><div class="filters"><span class="button">Exportar PDF</span><span class="button">Exportar Excel</span></div></header>
+            <div class="content">
+              <div class="card full-card"><div class="table-header"><div><h3>Filtros do relatório</h3><p>Escolha tipo, período e barbeiro.</p></div></div><div class="filters"><span class="filter" style="background:#12c6f3;color:#071426">Mensal</span><span class="filter">Financeiro</span><span class="filter">Produtos</span><span class="filter">Por barbeiro</span><span class="filter">01/06/2026</span><span class="filter">08/06/2026</span></div></div>
+              <div class="grid-3"><div class="card stat"><span>Receita</span><strong class="accent">R$ 550</strong></div><div class="card stat"><span>Lucro líquido</span><strong>R$ 288</strong></div><div class="card stat"><span>Ticket médio</span><strong>R$ 137</strong></div></div>
+              <div class="grid-2"><div class="card chart"><h3>Evolução mensal</h3><svg viewBox="0 0 620 210" preserveAspectRatio="none"><path d="M20 170 C120 130 200 152 280 92 C350 40 450 64 600 34" fill="none" stroke="#12c6f3" stroke-width="5" stroke-linecap="round"/></svg></div><div class="card panel"><h3>Insights</h3><div class="list"><div class="row"><span class="avatar">↗</span><div><b>Receita em crescimento</b><small>Atendimentos concluídos impulsionaram o caixa.</small></div><span class="badge">+18%</span></div><div class="row"><span class="avatar">★</span><div><b>Anderson em destaque</b><small>Maior faturamento no período.</small></div><span class="badge">Top</span></div></div></div></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="page" data-name="06-assinatura-web">
+        <div class="app">
+          <aside class="sidebar"><div class="brand"><span class="brand-logo"><img src="../public/brand/bw-barber-login-logo.png" /></span><div><b>Barbearia do Vale</b><small>BW Barber</small></div></div><nav class="nav"><div class="nav-item">▦ Dashboard</div><div class="group">Sistema</div><div class="nav-item active">◇ Assinatura</div><div class="nav-item">⚙ Configurações</div></nav></aside>
+          <section class="main">
+            <header class="header"><div><p class="eyebrow">Assinatura</p><h2>Planos BW</h2></div><span class="badge">Trial · 14 dias</span></header>
+            <div class="content">
+              <div class="hero"><div><h1>Escolha o plano ideal para sua operação.</h1><p>Starter, Professional e Premium aparecem para o usuário como BW Start, BW Pro e BW Elite.</p></div></div>
+              <div class="plans">
+                <div class="card plan"><div><h2>BW Start</h2><p>Para barbeiro autônomo.</p><ul><li>1 barbeiro</li><li>Até 300 clientes</li><li>PWA e app cliente</li></ul></div><span class="badge">Entrada</span></div>
+                <div class="card plan" style="border-color:rgba(18,198,243,.48);background:linear-gradient(180deg,rgba(18,198,243,.15),rgba(17,28,49,.96))"><div><h2>BW Pro</h2><p>Para barbearias em crescimento.</p><ul><li>Até 5 barbeiros</li><li>Relatórios executivos</li><li>Lista de espera e fidelidade</li></ul></div><span class="badge">Recomendado</span></div>
+                <div class="card plan"><div><h2>BW Elite</h2><p>Operações maiores. Em breve.</p><ul><li>Multiunidades</li><li>WhatsApp avançado</li><li>Limites ampliados</li></ul></div><span class="badge red-bg">Bloqueado</span></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

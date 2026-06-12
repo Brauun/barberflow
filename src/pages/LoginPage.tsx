@@ -6,6 +6,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AuthFormMessage } from '../components/AuthFormMessage'
 import { useAuth } from '../hooks/useAuth'
 import { signInWithPassword } from '../services/authService'
+import { createAuditLog, handleAppError } from '../services/observabilityService'
 import { loginSchema, type LoginFormData } from '../types/auth'
 
 type LocationState = {
@@ -58,6 +59,13 @@ export function LoginPage() {
       devAuthLog('login sucesso', { userId: authData.user.id })
       const profile = await refreshProfile(authData.session)
       const isClient = authData.user?.user_metadata.role === 'cliente'
+      await createAuditLog({
+        action: 'login',
+        empresaId: profile?.empresa_id ?? null,
+        entityId: authData.user.id,
+        entityType: 'auth',
+        userRole: profile?.papel ?? (isClient ? 'cliente' : null),
+      })
       const redirectTo =
         explicitRedirectTo ??
         (isClient && !profile?.empresa_id ? '/cliente' : '/app/dashboard')
@@ -66,9 +74,7 @@ export function LoginPage() {
 
       navigate(redirectTo, { replace: true })
     } catch (error) {
-      setFormError(
-        error instanceof Error ? error.message : 'Nao foi possivel entrar.',
-      )
+      setFormError(await handleAppError({ area: 'auth_login', error }))
       setIsEntering(false)
     }
   }

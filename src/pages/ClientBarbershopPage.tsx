@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { CalendarPlus, MapPin, RefreshCcw, Route, Star } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
+import { BarbershopLogo } from '../components/BarbershopLogo'
 import { Badge, Card, CardContent } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import {
@@ -25,7 +26,10 @@ export function ClientBarbershopPage() {
     queryFn: () => listFavoriteBarbershops(clientProfile?.id as string),
     queryKey: ['client-favorite-barbershops', clientProfile?.id],
   })
-  const favoriteBarbershops = (favoritesQuery.data ?? []).filter(
+  const favoriteBarbershopsData = Array.isArray(favoritesQuery.data)
+    ? favoritesQuery.data
+    : []
+  const favoriteBarbershops = favoriteBarbershopsData.filter(
     (favorite) => favorite.id !== barbershop?.id,
   )
 
@@ -44,9 +48,11 @@ export function ClientBarbershopPage() {
         <CardContent>
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-50 text-lg font-black text-brand-600">
-                BF
-              </div>
+              <BarbershopLogo
+                className="h-16 w-16 text-lg"
+                logoUrl={barbershop?.logo_url}
+                name={barbershop?.nome}
+              />
               <div>
                 <p className="text-xl font-black text-slate-950">
                   {barbershop?.nome ?? 'Escolha uma barbearia'}
@@ -116,17 +122,11 @@ export function ClientBarbershopPage() {
                 <CardContent>
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-50 text-sm font-black text-brand-600">
-                        {favorite.logo_url ? (
-                          <img
-                            alt={favorite.nome}
-                            className="h-full w-full object-cover"
-                            src={favorite.logo_url}
-                          />
-                        ) : (
-                          'BF'
-                        )}
-                      </div>
+                      <BarbershopLogo
+                        className="h-12 w-12 rounded-2xl"
+                        logoUrl={favorite.logo_url}
+                        name={favorite.nome}
+                      />
                       <div>
                         <p className="font-black text-slate-950">{favorite.nome}</p>
                         <p className="mt-1 text-sm text-slate-500">

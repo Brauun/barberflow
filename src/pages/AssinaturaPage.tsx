@@ -8,14 +8,17 @@ import {
   Sparkles,
 } from 'lucide-react'
 
+import { canManageFinance } from '../auth/permissions'
 import { Badge, Button, Card, CardContent, CardHeader } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
+import { queryKeys } from '../lib/queryKeys'
 import {
   selectSubscriptionPlan,
   type Plan,
   type SubscriptionStatus,
 } from '../services/subscriptionsService'
+import { cn } from '../utils/cn'
 
 type DisplayPlanSlug = 'starter' | 'professional' | 'premium'
 
@@ -52,8 +55,8 @@ const planDisplayDescriptions: Record<DisplayPlanSlug, string> = {
 
 const planFeatureSummary: Record<DisplayPlanSlug, Array<[string, string]>> = {
   premium: [
-    ['Barbeiros', 'ilimitado'],
-    ['Clientes', 'ilimitado'],
+    ['Barbeiros', 'Ilimitado'],
+    ['Clientes', 'Ilimitado'],
     ['Lista de espera', 'incluido'],
     ['Fidelidade', 'incluido'],
     ['Relatorios executivos', 'incluido'],
@@ -62,7 +65,7 @@ const planFeatureSummary: Record<DisplayPlanSlug, Array<[string, string]>> = {
   ],
   professional: [
     ['Barbeiros', '5'],
-    ['Clientes', 'ilimitado'],
+    ['Clientes', 'Ilimitado'],
     ['Lista de espera', 'incluido'],
     ['Fidelidade', 'incluido'],
     ['Relatorios executivos', 'incluido'],
@@ -114,6 +117,14 @@ const statusVariant: Record<SubscriptionStatus, 'default' | 'danger' | 'success'
   TRIAL: 'default',
 }
 
+const statusLabels: Record<SubscriptionStatus, string> = {
+  ACTIVE: 'Ativa',
+  CANCELED: 'Cancelada',
+  EXPIRED: 'Expirada',
+  PAST_DUE: 'Em atraso',
+  TRIAL: 'Trial',
+}
+
 function planIcon(slug: Plan['slug']) {
   const normalized = normalizePlanSlug(slug)
 
@@ -130,15 +141,23 @@ function planIcon(slug: Plan['slug']) {
 
 function featureValue(value: unknown) {
   if (value === 'unlimited') {
-    return 'ilimitado'
+    return 'Ilimitado'
   }
 
   if (value === true) {
-    return 'incluido'
+    return 'Incluido'
   }
 
   if (value === false) {
-    return 'nao incluido'
+    return 'Nao incluido'
+  }
+
+  if (value === 'incluido') {
+    return 'Incluido'
+  }
+
+  if (value === 'nao incluido') {
+    return 'Nao incluido'
   }
 
   return String(value)
@@ -173,11 +192,11 @@ export function AssinaturaPage() {
       })
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['subscription', empresaId] })
+      await queryClient.invalidateQueries({ queryKey: queryKeys.assinatura.detail(empresaId) })
     },
   })
 
-  if (profile?.papel && !['administrador', 'gerente'].includes(profile.papel)) {
+  if (profile?.papel && !canManageFinance(profile.papel)) {
     return (
       <Card>
         <CardContent>
@@ -232,7 +251,11 @@ export function AssinaturaPage() {
                 : 'warning'
           }
         >
-          {!schemaReady ? 'Estrutura pendente' : subscription?.status ?? 'Sem assinatura'}
+          {!schemaReady
+            ? 'Estrutura pendente'
+            : subscription?.status
+              ? statusLabels[subscription.status]
+              : 'Sem assinatura'}
         </Badge>
       </section>
 
@@ -304,15 +327,22 @@ export function AssinaturaPage() {
         {state?.plans.map((plan) => {
           const isCurrent = plan.id === subscription?.plan_id
           const planSlug = normalizePlanSlug(plan.slug)
+          const isLocked = planSlug === 'premium' && !isCurrent
 
           return (
-            <Card className={isCurrent ? 'ring-2 ring-brand-300' : ''} key={plan.id}>
+            <Card
+              className={cn(
+                isCurrent ? 'ring-2 ring-brand-300' : '',
+                isLocked && 'relative opacity-80',
+              )}
+              key={plan.id}
+            >
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-400/10 dark:text-brand-300">
                     {planIcon(plan.slug)}
                   </span>
-                  {isCurrent && <Badge>Atual</Badge>}
+                  {isCurrent ? <Badge>Atual</Badge> : isLocked ? <Badge>Em breve</Badge> : null}
                 </div>
                 <h3 className="mt-5 text-2xl font-black text-slate-950 dark:text-white">
                   {planDisplayName(plan)}
@@ -324,7 +354,7 @@ export function AssinaturaPage() {
               <CardContent>
                 <p className="text-3xl font-black text-slate-950 dark:text-white">
                   {currencyFormatter.format(Number(plan.monthly_price))}
-                  <span className="text-sm font-semibold text-slate-500">/mes</span>
+                  <span className="text-sm font-semibold text-slate-500">/Mes</span>
                 </p>
                 <div className="mt-6 space-y-3">
                   {planFeatureSummary[planSlug].map(([key, value]) => (
@@ -344,15 +374,17 @@ export function AssinaturaPage() {
                 </div>
                 <Button
                   className="mt-6 w-full"
-                  disabled={!schemaReady || selectPlanMutation.isPending || isCurrent}
+                  disabled={!schemaReady || selectPlanMutation.isPending || isCurrent || isLocked}
                   leftIcon={<BadgeCheck size={18} />}
                   onClick={() => selectPlanMutation.mutate(plan)}
                 >
                   {!schemaReady
                     ? 'Migration pendente'
-                    : isCurrent
-                      ? 'Plano atual'
-                      : 'Selecionar plano'}
+                    : isLocked
+                      ? 'Em breve'
+                      : isCurrent
+                        ? 'Plano atual'
+                        : 'Selecionar plano'}
                 </Button>
               </CardContent>
             </Card>

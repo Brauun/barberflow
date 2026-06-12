@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Edit,
   History,
@@ -8,7 +7,7 @@ import {
   Trash2,
   UserRound,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 import {
@@ -27,14 +26,8 @@ import {
   Skeleton,
 } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
-import {
-  createCliente,
-  deleteCliente,
-  getClienteHistorico,
-  listClientes,
-  type Cliente,
-} from '../services/clientesService'
-import { updateCliente } from '../services/clientesService'
+import { useClienteHistorico, useClientes } from '../hooks/useClientes'
+import type { Cliente } from '../services/clientesService'
 import { clienteSchema, type ClienteFormData } from '../types/clientes'
 import { formatPhone, maskPhoneChange } from '../utils/masks'
 
@@ -94,33 +87,26 @@ function getInitials(name: string) {
 export function ClientesPage() {
   const { profile } = useAuth()
   const empresaId = profile?.empresa_id
-  const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState('')
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
   const [historyCliente, setHistoryCliente] = useState<Cliente | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
 
-  const clientesQueryKey = useMemo(
-    () => ['clientes', empresaId, searchTerm],
-    [empresaId, searchTerm],
-  )
-
   const {
-    data: clientes = [],
-    error: clientesError,
-    isLoading: isLoadingClientes,
-  } = useQuery({
-    enabled: Boolean(empresaId),
-    queryFn: () => listClientes(empresaId as string, searchTerm),
-    queryKey: clientesQueryKey,
+    clientes,
+    clientesError,
+    deleteClienteMutation,
+    isLoadingClientes,
+    saveClienteMutation,
+  } = useClientes({
+    empresaId,
+    searchTerm,
   })
 
-  const historicoQuery = useQuery({
-    enabled: Boolean(empresaId && historyCliente),
-    queryFn: () =>
-      getClienteHistorico(empresaId as string, historyCliente?.id as string),
-    queryKey: ['clientes-historico', empresaId, historyCliente?.id],
+  const historicoQuery = useClienteHistorico({
+    clienteId: historyCliente?.id,
+    empresaId,
   })
 
   const {
@@ -142,40 +128,6 @@ export function ClientesPage() {
     reset(emptyFormValues())
   }, [editingCliente, reset])
 
-  const saveMutation = useMutation({
-    mutationFn: async (data: ClienteFormData) => {
-      if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
-      }
-
-      if (editingCliente) {
-        await updateCliente(empresaId, editingCliente.id, data)
-        return
-      }
-
-      await createCliente(empresaId, data)
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['clientes'] })
-      setIsFormOpen(false)
-      setEditingCliente(null)
-      setFormError(null)
-    },
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: async (cliente: Cliente) => {
-      if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
-      }
-
-      await deleteCliente(empresaId, cliente.id)
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['clientes'] })
-    },
-  })
-
   function openCreateModal() {
     setEditingCliente(null)
     setFormError(null)
@@ -192,7 +144,13 @@ export function ClientesPage() {
     setFormError(null)
 
     try {
-      await saveMutation.mutateAsync(data)
+      await saveClienteMutation.mutateAsync({
+        clienteId: editingCliente?.id,
+        data,
+      })
+      setIsFormOpen(false)
+      setEditingCliente(null)
+      setFormError(null)
     } catch (error) {
       setFormError(
         error instanceof Error
@@ -211,7 +169,7 @@ export function ClientesPage() {
       return
     }
 
-    await deleteMutation.mutateAsync(cliente)
+    await deleteClienteMutation.mutateAsync(cliente)
   }
 
   if (!empresaId) {
@@ -362,7 +320,7 @@ export function ClientesPage() {
                         <Button
                           aria-label="Excluir cliente"
                           size="icon-sm"
-                          disabled={deleteMutation.isPending}
+                          disabled={deleteClienteMutation.isPending}
                           onClick={() => void handleDelete(cliente)}
                           variant="ghost"
                         >
@@ -433,8 +391,8 @@ export function ClientesPage() {
             >
               Cancelar
             </Button>
-            <Button disabled={isSubmitting || saveMutation.isPending} type="submit">
-              {saveMutation.isPending ? 'Salvando...' : 'Salvar cliente'}
+            <Button disabled={isSubmitting || saveClienteMutation.isPending} type="submit">
+              {saveClienteMutation.isPending ? 'Salvando...' : 'Salvar cliente'}
             </Button>
           </div>
         </form>

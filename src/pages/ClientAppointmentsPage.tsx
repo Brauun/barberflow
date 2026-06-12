@@ -20,9 +20,13 @@ import {
   listClientAppointments,
   listClientWaitlist,
   rescheduleClientAppointment,
-  type BookingUnavailability,
   type ClientAppointment,
 } from '../services/clientService'
+import {
+  listBusinessHours,
+  listSpecialBusinessHoursForDate,
+} from '../services/businessHoursService'
+import { buildBookingSlots } from '../utils/bookingSlots'
 
 const dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
   dateStyle: 'short',
@@ -36,89 +40,6 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 
 function todayInputValue() {
   return new Date().toISOString().slice(0, 10)
-}
-
-function minutesFromDate(date: Date) {
-  return date.getHours() * 60 + date.getMinutes()
-}
-
-function localDateKey(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
-
-function buildSlots(
-  date: string,
-  durationMinutes: number,
-  appointments: Array<{ starts_at: string; ends_at: string }>,
-  unavailability: BookingUnavailability[],
-) {
-  const slots: Array<{ label: string; value: string; available: boolean }> = []
-  const openHour = 9
-  const closeHour = 19
-  const isAllDayBlocked = unavailability.some((block) => block.all_day)
-
-  function timeToMinutes(value: string) {
-    const [hour, minute] = value.split(':').map(Number)
-
-    return hour * 60 + minute
-  }
-
-  for (
-    let minutes = openHour * 60;
-    minutes <= closeHour * 60 - durationMinutes;
-    minutes += 30
-  ) {
-    const hour = Math.floor(minutes / 60)
-    const minute = minutes % 60
-    const startsAt = new Date(
-      `${date}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`,
-    )
-
-    const hasAppointmentConflict = appointments.some((appointment) => {
-      const busyStart = new Date(appointment.starts_at)
-      const busyEnd = new Date(appointment.ends_at)
-      const busyStartDate = localDateKey(busyStart)
-      const busyEndDate = localDateKey(busyEnd)
-      const busyStartMinutes =
-        busyStartDate === date ? minutesFromDate(busyStart) : openHour * 60
-      const busyEndMinutes =
-        busyEndDate === date ? minutesFromDate(busyEnd) : closeHour * 60
-
-      if (busyStartDate !== date && busyEndDate !== date) {
-        return false
-      }
-
-      return minutes < busyEndMinutes && minutes + durationMinutes > busyStartMinutes
-    })
-    const hasUnavailabilityConflict =
-      isAllDayBlocked ||
-      unavailability.some((block) => {
-        if (block.all_day) {
-          return true
-        }
-
-        if (!block.start_time || !block.end_time) {
-          return true
-        }
-
-        const blockStart = timeToMinutes(block.start_time)
-        const blockEnd = timeToMinutes(block.end_time)
-
-        return minutes < blockEnd && minutes + durationMinutes > blockStart
-      })
-
-    slots.push({
-      available: !hasAppointmentConflict && !hasUnavailabilityConflict,
-      label: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
-      value: startsAt.toISOString(),
-    })
-  }
-
-  return slots
 }
 
 function getStatusVariant(status: string) {
@@ -213,16 +134,46 @@ export function ClientAppointmentsPage() {
     ],
   })
 
-  const slots = useMemo(
-    () =>
-      buildSlots(
+  const businessHoursQuery = useQuery({
+    enabled: Boolean(selectedAppointment?.empresa_id),
+    queryFn: () => listBusinessHours(selectedAppointment?.empresa_id as string),
+    queryKey: ['business-hours', selectedAppointment?.empresa_id],
+  })
+
+  const specialHoursQuery = useQuery({
+    enabled: Boolean(selectedAppointment?.empresa_id && rescheduleDate),
+    queryFn: () =>
+      listSpecialBusinessHoursForDate(
+        selectedAppointment?.empresa_id as string,
         rescheduleDate,
-        duration,
-        busyQuery.data ?? [],
-        unavailabilityQuery.data ?? [],
       ),
-    [busyQuery.data, duration, rescheduleDate, unavailabilityQuery.data],
+    queryKey: [
+      'special-business-hours',
+      selectedAppointment?.empresa_id,
+      rescheduleDate,
+    ],
+  })
+
+  const slotResult = useMemo(
+    () =>
+      buildBookingSlots({
+        appointments: busyQuery.data ?? [],
+        businessHours: businessHoursQuery.data ?? [],
+        date: rescheduleDate,
+        durationMinutes: duration,
+        specialHour: specialHoursQuery.data,
+        unavailability: unavailabilityQuery.data ?? [],
+      }),
+    [
+      busyQuery.data,
+      businessHoursQuery.data,
+      duration,
+      rescheduleDate,
+      specialHoursQuery.data,
+      unavailabilityQuery.data,
+    ],
   )
+  const slots = slotResult.slots
 
   const cancelMutation = useMutation({
     mutationFn: cancelClientAppointment,
@@ -476,6 +427,17 @@ export function ClientAppointmentsPage() {
             <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Novo horario
             </p>
+            {slotResult.message && (
+              <p
+                className={`mt-3 rounded-2xl border px-4 py-3 text-sm font-medium ${
+                  slotResult.status === 'closed'
+                    ? 'border-rose-200/80 bg-rose-50/70 text-rose-700'
+                    : 'border-brand-100 bg-brand-50 text-slate-700'
+                }`}
+              >
+                {slotResult.message}
+              </p>
+            )}
             <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
               {slots.map((item) => (
                 <button

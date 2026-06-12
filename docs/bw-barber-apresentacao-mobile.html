@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BW Barber - Apresentação Mobile</title>
+    <style>
+      @page {
+        size: 390px 844px;
+        margin: 0;
+      }
+
+      :root {
+        --ink: #071426;
+        --surface: #0e1d32;
+        --surface-2: #13243b;
+        --cyan: #12c6f3;
+        --blue: #2b6fff;
+        --muted: #a5b4cb;
+        --paper: #f6f9fc;
+        --white: #ffffff;
+        --line: rgba(255, 255, 255, 0.1);
+        --dark-line: rgba(7, 20, 38, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #0f172a;
+        color: var(--white);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .deck {
+        width: 390px;
+        margin: 0 auto;
+      }
+
+      .slide {
+        position: relative;
+        display: grid;
+        width: 390px;
+        height: 844px;
+        overflow: hidden;
+        page-break-after: always;
+        background:
+          radial-gradient(circle at 88% 6%, rgba(18, 198, 243, 0.2), transparent 30%),
+          radial-gradient(circle at 6% 96%, rgba(43, 111, 255, 0.18), transparent 28%),
+          linear-gradient(160deg, #071426 0%, #0b1728 48%, #050d18 100%);
+      }
+
+      .slide.light {
+        background:
+          radial-gradient(circle at 98% 8%, rgba(18, 198, 243, 0.22), transparent 30%),
+          linear-gradient(160deg, #ffffff 0%, #f4f8fc 100%);
+        color: var(--ink);
+      }
+
+      .slide::after {
+        content: "";
+        position: absolute;
+        right: -88px;
+        bottom: -88px;
+        width: 260px;
+        height: 260px;
+        border: 1px solid rgba(18, 198, 243, 0.18);
+        border-radius: 999px;
+      }
+
+      .content {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        align-content: start;
+        gap: 22px;
+        padding: 42px 28px 34px;
+      }
+
+      .center {
+        align-content: center;
+      }
+
+      .logo {
+        width: 142px;
+        height: auto;
+      }
+
+      .eyebrow {
+        color: var(--cyan);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        color: #fff;
+        font-size: 42px;
+        font-weight: 950;
+        letter-spacing: -0.055em;
+        line-height: 0.98;
+      }
+
+      h2 {
+        color: #fff;
+        font-size: 31px;
+        font-weight: 950;
+        letter-spacing: -0.045em;
+        line-height: 1.02;
+      }
+
+      h3 {
+        color: #fff;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+      }
+
+      .light h1,
+      .light h2,
+      .light h3 {
+        color: var(--ink);
+      }
+
+      .lead {
+        color: #c7d5ea;
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      .light .lead {
+        color: #52637a;
+      }
+
+      .pill {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        border: 1px solid rgba(18, 198, 243, 0.32);
+        border-radius: 999px;
+        background: rgba(18, 198, 243, 0.13);
+        color: #dff9ff;
+        padding: 9px 14px;
+        font-size: 11px;
+        font-weight: 850;
+      }
+
+      .light .pill {
+        color: #02627b;
+      }
+
+      .card,
+      .metric,
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: rgba(14, 29, 50, 0.82);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
+      }
+
+      .light .card,
+      .light .metric,
+      .light .panel {
+        border-color: rgba(7, 20, 38, 0.09);
+        background: rgba(255, 255, 255, 0.93);
+        box-shadow: 0 22px 60px rgba(7, 20, 38, 0.12);
+      }
+
+      .card {
+        display: grid;
+        gap: 10px;
+        padding: 18px;
+      }
+
+      .icon {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 16px;
+        background: rgba(18, 198, 243, 0.13);
+        color: var(--cyan);
+        font-size: 14px;
+        font-weight: 950;
+      }
+
+      .card p,
+      .metric p,
+      .panel p {
+        color: #adc0d9;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .light .card p,
+      .light .metric p,
+      .light .panel p {
+        color: #5d6f89;
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .metric {
+        min-height: 102px;
+        padding: 16px;
+      }
+
+      .metric strong {
+        display: block;
+        color: var(--cyan);
+        font-size: 28px;
+        font-weight: 950;
+        letter-spacing: -0.05em;
+      }
+
+      .mock {
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 30px;
+        background: #081221;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.34);
+      }
+
+      .light .mock {
+        border-color: rgba(7, 20, 38, 0.09);
+        background: #f8fbff;
+        box-shadow: 0 22px 60px rgba(7, 20, 38, 0.13);
+      }
+
+      .mock-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 14px 16px;
+      }
+
+      .light .mock-bar {
+        border-bottom-color: rgba(7, 20, 38, 0.08);
+      }
+
+      .dots {
+        display: flex;
+        gap: 5px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(165, 180, 203, 0.42);
+      }
+
+      .badge {
+        border-radius: 999px;
+        background: rgba(18, 198, 243, 0.14);
+        color: var(--cyan);
+        padding: 6px 9px;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .mock-body {
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+      }
+
+      .mock-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .mock-stat,
+      .mock-chart,
+      .mock-row {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 13px;
+      }
+
+      .light .mock-stat,
+      .light .mock-chart,
+      .light .mock-row {
+        border-color: rgba(7, 20, 38, 0.08);
+        background: #fff;
+      }
+
+      .mock-stat b {
+        display: block;
+        color: var(--cyan);
+        font-size: 20px;
+      }
+
+      .mock-stat span,
+      .mock-row span {
+        display: block;
+        margin-top: 4px;
+        color: #91a3bd;
+        font-size: 11px;
+      }
+
+      .mock-chart {
+        height: 170px;
+      }
+
+      .mock-chart svg {
+        width: 100%;
+        height: 100%;
+      }
+
+      .phone {
+        width: 260px;
+        min-height: 472px;
+        justify-self: center;
+        overflow: hidden;
+        border: 7px solid #0b1728;
+        border-radius: 42px;
+        background: #f7fbff;
+        box-shadow: 0 30px 90px rgba(7, 20, 38, 0.3);
+      }
+
+      .phone.dark {
+        background: #081221;
+      }
+
+      .phone-top {
+        height: 42px;
+        background: #fff;
+        border-bottom: 1px solid rgba(7, 20, 38, 0.08);
+      }
+
+      .phone.dark .phone-top {
+        background: #0e1d32;
+        border-color: rgba(255, 255, 255, 0.08);
+      }
+
+      .phone-body {
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+      }
+
+      .phone-card {
+        border: 1px solid rgba(7, 20, 38, 0.08);
+        border-radius: 22px;
+        background: #fff;
+        padding: 15px;
+      }
+
+      .phone.dark .phone-card {
+        border-color: rgba(255, 255, 255, 0.08);
+        background: #101d33;
+      }
+
+      .phone h3 {
+        color: var(--ink);
+        font-size: 15px;
+      }
+
+      .phone.dark h3 {
+        color: #fff;
+      }
+
+      .slot-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+
+      .slot {
+        border: 1px solid rgba(7, 20, 38, 0.1);
+        border-radius: 999px;
+        padding: 9px 0;
+        color: var(--ink);
+        text-align: center;
+        font-size: 11px;
+        font-weight: 850;
+      }
+
+      .slot.off {
+        border-color: rgba(239, 68, 68, 0.28);
+        background: #fff1f2;
+        color: #be123c;
+      }
+
+      .footer {
+        position: absolute;
+        right: 28px;
+        bottom: 22px;
+        left: 28px;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .light .footer {
+        color: rgba(7, 20, 38, 0.42);
+      }
+
+      .page {
+        color: var(--cyan);
+      }
+
+      .stack {
+        display: grid;
+        gap: 12px;
+      }
+
+      .row-card {
+        display: grid;
+        grid-template-columns: 42px 1fr auto;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 13px;
+      }
+
+      .light .row-card {
+        border-color: rgba(7, 20, 38, 0.08);
+        background: #fff;
+      }
+
+      .avatar {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 999px;
+        background: rgba(18, 198, 243, 0.14);
+        color: var(--cyan);
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .price {
+        color: var(--cyan);
+        font-weight: 950;
+      }
+
+      .plan {
+        display: grid;
+        gap: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 28px;
+        background: rgba(14, 29, 50, 0.86);
+        padding: 20px;
+      }
+
+      .plan.featured {
+        border-color: rgba(18, 198, 243, 0.42);
+        background:
+          linear-gradient(180deg, rgba(18, 198, 243, 0.15), rgba(14, 29, 50, 0.9)),
+          #0e1d32;
+      }
+
+      ul {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        color: #c7d5ea;
+        font-size: 13px;
+        line-height: 1.35;
+        list-style: none;
+      }
+
+      li::before {
+        content: "✓";
+        margin-right: 8px;
+        color: var(--cyan);
+        font-weight: 950;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="deck">
+      <section class="slide">
+        <div class="content center">
+          <img class="logo" src="../public/brand/bw-barber-login-logo.png" alt="BW Barber" />
+          <p class="eyebrow">Apresentação mobile</p>
+          <h1>BW Barber no bolso da barbearia e do cliente.</h1>
+          <p class="lead">
+            Um app instalável para gerenciar operação, agenda, financeiro,
+            equipe, clientes e relacionamento com visual premium.
+          </p>
+          <span class="pill">Web · iOS · Android · PWA</span>
+        </div>
+        <div class="footer"><span>BW Barber</span><span class="page">01</span></div>
+      </section>
+
+      <section class="slide light">
+        <div class="content">
+          <p class="eyebrow">Produto</p>
+          <h2>Dois painéis conectados em uma única experiência.</h2>
+          <p class="lead">
+            A barbearia opera o negócio. O cliente encontra, favorita, agenda,
+            cancela, remarca e volta com facilidade.
+          </p>
+          <div class="metric-grid">
+            <div class="metric"><strong>Gestão</strong><p>Dashboard, agenda, equipe, caixa, contas e relatórios.</p></div>
+            <div class="metric"><strong>Cliente</strong><p>Busca, favoritos, barbearia principal e agendamentos.</p></div>
+            <div class="metric"><strong>PWA</strong><p>Instalável no celular com sessão persistente.</p></div>
+            <div class="metric"><strong>RLS</strong><p>Segurança e isolamento por empresa no Supabase.</p></div>
+          </div>
+        </div>
+        <div class="footer"><span>Visão geral</span><span class="page">02</span></div>
+      </section>
+
+      <section class="slide">
+        <div class="content">
+          <p class="eyebrow">Dashboard</p>
+          <h2>Indicadores claros para decisões rápidas.</h2>
+          <div class="mock">
+            <div class="mock-bar">
+              <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+              <span class="badge">Dashboard</span>
+            </div>
+            <div class="mock-body">
+              <div class="mock-stats">
+                <div class="mock-stat"><b>R$ 550</b><span>Receita</span></div>
+                <div class="mock-stat"><b>R$ 288</b><span>Lucro líquido</span></div>
+                <div class="mock-stat"><b>4</b><span>Atendimentos</span></div>
+                <div class="mock-stat"><b>89</b><span>Score</span></div>
+              </div>
+              <div class="mock-chart">
+                <svg viewBox="0 0 300 160" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="mobileArea" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0" stop-color="#12c6f3" stop-opacity=".32" />
+                      <stop offset="1" stop-color="#12c6f3" stop-opacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M0 132 L70 132 C95 130 114 82 150 84 C190 86 210 38 300 48 L300 160 L0 160Z" fill="url(#mobileArea)" />
+                  <path d="M0 132 L70 132 C95 130 114 82 150 84 C190 86 210 38 300 48" fill="none" stroke="#12c6f3" stroke-width="5" stroke-linecap="round" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span>Dashboard executivo</span><span class="page">03</span></div>
+      </section>
+
+      <section class="slide light">
+        <div class="content">
+          <p class="eyebrow">Agendamento</p>
+          <h2>Horários inteligentes, bloqueios e lista de espera.</h2>
+          <div class="phone">
+            <div class="phone-top"></div>
+            <div class="phone-body">
+              <h3>Agendar horário</h3>
+              <div class="phone-card"><p>Serviço</p><h3>Corte + Barba · 60min</h3></div>
+              <div class="phone-card"><p>Profissional</p><h3>Anderson</h3></div>
+              <div class="slot-grid">
+                <span class="slot">09:00</span>
+                <span class="slot off">09:30</span>
+                <span class="slot off">10:00</span>
+                <span class="slot">10:30</span>
+                <span class="slot">11:00</span>
+                <span class="slot off">14:30</span>
+              </div>
+              <div class="phone-card"><h3>Entrar na lista de espera</h3><p>Receba aviso quando surgir vaga.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span>Agenda mobile</span><span class="page">04</span></div>
+      </section>
+
+      <section class="slide">
+        <div class="content">
+          <p class="eyebrow">Cliente</p>
+          <h2>Favoritos, barbearia principal e rota pelo celular.</h2>
+          <div class="phone dark">
+            <div class="phone-top"></div>
+            <div class="phone-body">
+              <h3>Sua barbearia</h3>
+              <div class="phone-card"><h3>Barbearia do Vale</h3><p>Principal · Rua Exemplo, 123</p></div>
+              <div class="phone-card"><h3>Próximo horário</h3><p>05/06/2026, 16:30 · Corte + Barba</p></div>
+              <div class="phone-card"><h3>Favoritas</h3><p>Barbearia do Vale · Studio Prime</p></div>
+              <div class="phone-card"><h3>Ver rota</h3><p>Abrir no Google Maps ou Apple Maps.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span>Painel cliente</span><span class="page">05</span></div>
+      </section>
+
+      <section class="slide light">
+        <div class="content">
+          <p class="eyebrow">Equipe</p>
+          <h2>Funcionários por convite, sem senha criada pelo administrador.</h2>
+          <div class="stack">
+            <div class="card"><span class="icon">01</span><h3>Convidar funcionário</h3><p>Nome, e-mail, telefone, função, comissão e permissões.</p></div>
+            <div class="card"><span class="icon">02</span><h3>Aceitar convite</h3><p>O funcionário cria a própria senha e fica vinculado à barbearia.</p></div>
+            <div class="card"><span class="icon">03</span><h3>Inativar sem perder histórico</h3><p>Comissões, atendimentos e relatórios seguem íntegros.</p></div>
+          </div>
+        </div>
+        <div class="footer"><span>Equipe e permissões</span><span class="page">06</span></div>
+      </section>
+
+      <section class="slide">
+        <div class="content">
+          <p class="eyebrow">Financeiro</p>
+          <h2>Fluxo de caixa, contas, comissões e descontos.</h2>
+          <div class="metric-grid">
+            <div class="metric"><strong>R$ 550</strong><p>Total de entradas no período.</p></div>
+            <div class="metric"><strong style="color:#ff5d6c">R$ 262</strong><p>Total de saídas e contas pagas.</p></div>
+            <div class="metric"><strong>R$ 288</strong><p>Saldo atual e lucro líquido.</p></div>
+            <div class="metric"><strong>60%</strong><p>Comissão padrão por serviço.</p></div>
+          </div>
+          <div class="stack">
+            <div class="row-card"><span class="avatar">+</span><div><h3>Atendimento</h3><p>Platinado · Cartão</p></div><span class="price">R$ 250</span></div>
+            <div class="row-card"><span class="avatar">-</span><div><h3>Despesa</h3><p>Internet · Pago</p></div><span style="color:#ff5d6c;font-weight:950">R$ 139</span></div>
+          </div>
+        </div>
+        <div class="footer"><span>Gestão financeira</span><span class="page">07</span></div>
+      </section>
+
+      <section class="slide light">
+        <div class="content">
+          <p class="eyebrow">Relatórios</p>
+          <h2>PDF, Excel e visão executiva para o BW Pro.</h2>
+          <div class="mock">
+            <div class="mock-bar">
+              <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+              <span class="badge">PDF premium</span>
+            </div>
+            <div class="mock-body">
+              <div class="mock-stats">
+                <div class="mock-stat"><b>89/100</b><span>Score</span></div>
+                <div class="mock-stat"><b>18%</b><span>Crescimento</span></div>
+              </div>
+              <div class="mock-row"><h3>Panorama do negócio</h3><span>Receita, despesas, lucro, comissões e insights.</span></div>
+              <div class="mock-row"><h3>Equipe e clientes</h3><span>Ranking, retenção, ticket médio e previsões.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span>Relatórios executivos</span><span class="page">08</span></div>
+      </section>
+
+      <section class="slide">
+        <div class="content">
+          <p class="eyebrow">Crescimento</p>
+          <h2>Fidelidade, benefícios, notificações e lista de espera.</h2>
+          <div class="stack">
+            <div class="card"><span class="icon">10x</span><h3>Fidelidade configurável</h3><p>A barbearia define regras, recompensas, validade, serviços e clientes.</p></div>
+            <div class="card"><span class="icon">%</span><h3>Descontos e pacotes</h3><p>Valor, percentual, cupom, cortesia, pacote pré-pago ou clube VIP.</p></div>
+            <div class="card"><span class="icon">🔔</span><h3>Notificações internas</h3><p>Agendamentos, cancelamentos, remarcações e vagas liberadas.</p></div>
+          </div>
+        </div>
+        <div class="footer"><span>Relacionamento</span><span class="page">09</span></div>
+      </section>
+
+      <section class="slide light">
+        <div class="content">
+          <p class="eyebrow">Assinaturas</p>
+          <h2>Planos preparados para monetização SaaS.</h2>
+          <div class="stack">
+            <div class="plan"><h3>BW Start</h3><p>Para barbeiro autônomo.</p><ul><li>1 barbeiro</li><li>Até 300 clientes</li><li>PWA e app cliente</li></ul></div>
+            <div class="plan featured"><h3>BW Pro</h3><p>Para barbearias em crescimento.</p><ul><li>Até 5 barbeiros</li><li>Relatórios executivos</li><li>Lista de espera e fidelidade</li></ul></div>
+            <div class="plan"><h3>BW Elite</h3><p>Operações maiores. Em breve.</p><ul><li>Multiunidades</li><li>WhatsApp avançado</li><li>Limites ampliados</li></ul></div>
+          </div>
+        </div>
+        <div class="footer"><span>Planos BW</span><span class="page">10</span></div>
+      </section>
+
+      <section class="slide">
+        <div class="content center">
+          <img class="logo" src="../public/brand/bw-barber-login-logo.png" alt="BW Barber" />
+          <p class="eyebrow">Arquitetura</p>
+          <h2>React, TypeScript, Supabase, RLS e PWA.</h2>
+          <p class="lead">
+            Uma base moderna, responsiva e preparada para evoluir com pagamentos,
+            WhatsApp, multiunidades e inteligência de gestão.
+          </p>
+          <span class="pill">BW Barber · Sistema de gestão para barbearias</span>
+        </div>
+        <div class="footer"><span>Pronto para crescer</span><span class="page">11</span></div>
+      </section>
+    </main>
+  </body>
+</html>

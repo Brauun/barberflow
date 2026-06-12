@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase'
 import type { Database } from '../types/database'
 import type { FluxoCaixaFormData } from '../types/fluxoCaixa'
+import { createAuditLog } from './observabilityService'
 
 export type MovimentacaoFinanceira =
   Database['public']['Tables']['movimentacoes_financeiras']['Row']
@@ -115,11 +116,25 @@ export async function createMovimentacaoFinanceira(
   empresaId: string,
   data: FluxoCaixaFormData,
 ) {
-  const { error } = await supabase
+  const { data: created, error } = await supabase
     .from('movimentacoes_financeiras')
     .insert(normalizeMovimentacaoInput(data, empresaId))
+    .select('id,tipo,valor,categoria')
+    .single()
 
   if (error) {
     throw new Error(error.message)
   }
+
+  await createAuditLog({
+    action: 'movimentacao_criada',
+    empresaId,
+    entityId: created.id,
+    entityType: 'movimentacoes_financeiras',
+    metadata: {
+      categoria: created.categoria,
+      tipo: created.tipo,
+      valor: created.valor,
+    },
+  })
 }

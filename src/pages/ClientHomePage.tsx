@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { CalendarPlus, MapPin, RefreshCcw, Route, Star } from 'lucide-react'
 import { Link, Navigate } from 'react-router-dom'
 
+import { BarbershopLogo } from '../components/BarbershopLogo'
 import { Badge, Card, CardContent, CardHeader } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import {
@@ -58,7 +59,10 @@ export function ClientHomePage() {
     (appointment) => new Date(appointment.starts_at) >= new Date(),
   )
   const primary = primaryQuery.data
-  const favoriteBarbershops = (favoritesQuery.data ?? []).filter(
+  const favoriteBarbershopsData = Array.isArray(favoritesQuery.data)
+    ? favoritesQuery.data
+    : []
+  const favoriteBarbershops = favoriteBarbershopsData.filter(
     (barbershop) => barbershop.id !== primary?.id,
   )
 
@@ -81,17 +85,11 @@ export function ClientHomePage() {
         <CardContent>
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-50 text-lg font-black text-brand-600 ring-1 ring-brand-100">
-                {primary?.logo_url ? (
-                  <img
-                    alt={primary.nome}
-                    className="h-full w-full rounded-3xl object-cover"
-                    src={primary.logo_url}
-                  />
-                ) : (
-                  'BF'
-                )}
-              </div>
+              <BarbershopLogo
+                className="h-16 w-16 text-lg"
+                logoUrl={primary?.logo_url}
+                name={primary?.nome}
+              />
               <div>
                 <h3 className="text-xl font-black text-slate-950">
                   {primary?.nome ?? 'Carregando...'}
@@ -156,17 +154,11 @@ export function ClientHomePage() {
                   <CardContent>
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-start gap-3">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-50 text-sm font-black text-brand-600 ring-1 ring-brand-100">
-                          {barbershop.logo_url ? (
-                            <img
-                              alt={barbershop.nome}
-                              className="h-full w-full object-cover"
-                              src={barbershop.logo_url}
-                            />
-                          ) : (
-                            'BF'
-                          )}
-                        </div>
+                        <BarbershopLogo
+                          className="h-12 w-12 rounded-2xl"
+                          logoUrl={barbershop.logo_url}
+                          name={barbershop.nome}
+                        />
                         <div>
                           <p className="font-black text-slate-950">
                             {barbershop.nome}

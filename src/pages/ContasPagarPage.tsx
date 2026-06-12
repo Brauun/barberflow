@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, CheckCircle2, Edit, Loader2, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -21,14 +20,8 @@ import {
   TableRow,
 } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
-import {
-  createContaPagar,
-  deleteContaPagar,
-  listContasPagar,
-  marcarContaComoPaga,
-  updateContaPagar,
-  type ContaPagar,
-} from '../services/contasPagarService'
+import { useContasPagar } from '../hooks/useContasPagar'
+import type { ContaPagar } from '../services/contasPagarService'
 import {
   contaPagarSchema,
   type ContaPagarFormData,
@@ -111,7 +104,6 @@ function isNearDue(conta: ContaPagar) {
 export function ContasPagarPage() {
   const { profile } = useAuth()
   const empresaId = profile?.empresa_id
-  const queryClient = useQueryClient()
   const [statusFilter, setStatusFilter] = useState<ContaPagarStatus | 'todos'>(
     'todos',
   )
@@ -120,13 +112,15 @@ export function ContasPagarPage() {
   const [formError, setFormError] = useState<string | null>(null)
 
   const {
-    data: contas = [],
-    error: contasError,
+    contas,
+    contasError,
+    deleteContaMutation,
     isLoading,
-  } = useQuery({
-    enabled: Boolean(empresaId),
-    queryFn: () => listContasPagar(empresaId as string, statusFilter),
-    queryKey: ['contas-pagar', empresaId, statusFilter],
+    payContaMutation,
+    saveContaMutation,
+  } = useContasPagar({
+    empresaId,
+    statusFilter,
   })
 
   const proximasVencimento = useMemo(
@@ -153,68 +147,6 @@ export function ContasPagarPage() {
     reset(emptyFormValues())
   }, [editingConta, reset])
 
-  const saveMutation = useMutation({
-    mutationFn: async (data: ContaPagarFormData) => {
-      if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
-      }
-
-      if (editingConta) {
-        await updateContaPagar(empresaId, editingConta.id, data)
-        return
-      }
-
-      await createContaPagar(empresaId, data)
-    },
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['contas-pagar'] }),
-        queryClient.invalidateQueries({ queryKey: ['fluxo-caixa'] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
-        queryClient.invalidateQueries({ queryKey: ['relatorios'] }),
-      ])
-      setIsFormOpen(false)
-      setEditingConta(null)
-      setFormError(null)
-    },
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: async (conta: ContaPagar) => {
-      if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
-      }
-
-      await deleteContaPagar(empresaId, conta.id)
-    },
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['contas-pagar'] }),
-        queryClient.invalidateQueries({ queryKey: ['fluxo-caixa'] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
-        queryClient.invalidateQueries({ queryKey: ['relatorios'] }),
-      ])
-    },
-  })
-
-  const payMutation = useMutation({
-    mutationFn: async (conta: ContaPagar) => {
-      if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
-      }
-
-      await marcarContaComoPaga(empresaId, conta.id)
-    },
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['contas-pagar'] }),
-        queryClient.invalidateQueries({ queryKey: ['fluxo-caixa'] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
-        queryClient.invalidateQueries({ queryKey: ['relatorios'] }),
-      ])
-    },
-  })
-
   function openCreateModal() {
     setEditingConta(null)
     setFormError(null)
@@ -231,7 +163,13 @@ export function ContasPagarPage() {
     setFormError(null)
 
     try {
-      await saveMutation.mutateAsync(data)
+      await saveContaMutation.mutateAsync({
+        contaId: editingConta?.id,
+        data,
+      })
+      setIsFormOpen(false)
+      setEditingConta(null)
+      setFormError(null)
     } catch (error) {
       setFormError(
         error instanceof Error
@@ -250,11 +188,11 @@ export function ContasPagarPage() {
       return
     }
 
-    await deleteMutation.mutateAsync(conta)
+    await deleteContaMutation.mutateAsync(conta)
   }
 
   async function handlePay(conta: ContaPagar) {
-    await payMutation.mutateAsync(conta)
+    await payContaMutation.mutateAsync(conta)
   }
 
   if (!empresaId) {
@@ -392,7 +330,7 @@ export function ContasPagarPage() {
                           <Button
                             aria-label="Marcar como paga"
                             size="icon-sm"
-                            disabled={payMutation.isPending}
+                            disabled={payContaMutation.isPending}
                             onClick={() => void handlePay(conta)}
                             variant="ghost"
                           >
@@ -410,7 +348,7 @@ export function ContasPagarPage() {
                         <Button
                           aria-label="Excluir conta"
                           size="icon-sm"
-                          disabled={deleteMutation.isPending}
+                          disabled={deleteContaMutation.isPending}
                           onClick={() => void handleDelete(conta)}
                           variant="ghost"
                         >
@@ -486,8 +424,8 @@ export function ContasPagarPage() {
             >
               Cancelar
             </Button>
-            <Button disabled={isSubmitting || saveMutation.isPending} type="submit">
-              {saveMutation.isPending ? 'Salvando...' : 'Salvar conta'}
+            <Button disabled={isSubmitting || saveContaMutation.isPending} type="submit">
+              {saveContaMutation.isPending ? 'Salvando...' : 'Salvar conta'}
             </Button>
           </div>
         </form>

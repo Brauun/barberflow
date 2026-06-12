@@ -177,6 +177,11 @@ export type Database = {
           duration_minutes: number | null
           preco: number
           ativo: boolean
+          categoria: string | null
+          percentual_comissao: number | null
+          status: 'ativo' | 'inativo'
+          allow_barber_create: boolean
+          created_by: string | null
           created_at: string
           updated_at: string
         }
@@ -189,6 +194,11 @@ export type Database = {
           duration_minutes?: number | null
           preco: number
           ativo?: boolean
+          categoria?: string | null
+          percentual_comissao?: number | null
+          status?: 'ativo' | 'inativo'
+          allow_barber_create?: boolean
+          created_by?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -201,6 +211,44 @@ export type Database = {
           duration_minutes?: number | null
           preco?: number
           ativo?: boolean
+          categoria?: string | null
+          percentual_comissao?: number | null
+          status?: 'ativo' | 'inativo'
+          allow_barber_create?: boolean
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      barber_services: {
+        Row: {
+          id: string
+          empresa_id: string
+          barbeiro_id: string
+          service_id: string
+          custom_duration: number | null
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          empresa_id: string
+          barbeiro_id: string
+          service_id: string
+          custom_duration?: number | null
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          barbeiro_id?: string
+          service_id?: string
+          custom_duration?: number | null
+          active?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -751,6 +799,45 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['notification_logs']['Insert']>
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          id: string
+          empresa_id: string | null
+          user_id: string | null
+          user_role: string | null
+          action: string
+          entity_type: string
+          entity_id: string | null
+          metadata: Json
+          ip_address: string | null
+          user_agent: string | null
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['audit_logs']['Row']> & {
+          action: string
+          entity_type: string
+        }
+        Update: Partial<Database['public']['Tables']['audit_logs']['Insert']>
+        Relationships: []
+      }
+      error_logs: {
+        Row: {
+          id: string
+          empresa_id: string | null
+          user_id: string | null
+          area: string
+          message: string
+          stack: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['error_logs']['Row']> & {
+          area: string
+          message: string
+        }
+        Update: Partial<Database['public']['Tables']['error_logs']['Insert']>
+        Relationships: []
+      }
       notifications: {
         Row: {
           id: string
@@ -821,6 +908,53 @@ export type Database = {
         }
         Update: Partial<
           Database['public']['Tables']['barber_unavailability']['Insert']
+        >
+        Relationships: []
+      }
+      barbershop_business_hours: {
+        Row: {
+          id: string
+          empresa_id: string
+          day_of_week: number
+          is_open: boolean
+          open_time: string | null
+          close_time: string | null
+          break_start: string | null
+          break_end: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<
+          Database['public']['Tables']['barbershop_business_hours']['Row']
+        > & {
+          empresa_id: string
+          day_of_week: number
+        }
+        Update: Partial<
+          Database['public']['Tables']['barbershop_business_hours']['Insert']
+        >
+        Relationships: []
+      }
+      barbershop_special_hours: {
+        Row: {
+          id: string
+          empresa_id: string
+          date: string
+          is_closed: boolean
+          open_time: string | null
+          close_time: string | null
+          reason: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<
+          Database['public']['Tables']['barbershop_special_hours']['Row']
+        > & {
+          empresa_id: string
+          date: string
+        }
+        Update: Partial<
+          Database['public']['Tables']['barbershop_special_hours']['Insert']
         >
         Relationships: []
       }
@@ -1064,6 +1198,18 @@ export type Database = {
         }
         Returns: Database['public']['Tables']['contas_pagar']['Row']
       }
+      create_employee_invitation: {
+        Args: {
+          p_empresa_id: string
+          p_nome: string
+          p_email: string
+          p_telefone: string
+          p_role: UserRole
+          p_commission_percentage: number
+          p_created_by: string | null
+        }
+        Returns: Database['public']['Tables']['employee_invitations']['Row']
+      }
       accept_employee_invitation: {
         Args: {
           p_token: string
@@ -1071,6 +1217,29 @@ export type Database = {
           p_telefone: string
         }
         Returns: Database['public']['Tables']['employee_invitations']['Row']
+      }
+      get_booking_busy_slots: {
+        Args: {
+          p_barbershop_id: string
+          p_barbeiro_id: string
+          p_date: string
+          p_exclude_appointment_id?: string | null
+        }
+        Returns: Array<{
+          starts_at: string
+          ends_at: string
+        }>
+      }
+      create_internal_notification: {
+        Args: {
+          p_empresa_id: string
+          p_type: string
+          p_title: string
+          p_message: string
+          p_metadata?: Json
+          p_barber_name?: string | null
+        }
+        Returns: undefined
       }
     }
     Enums: Record<string, never>

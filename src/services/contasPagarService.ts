@@ -1,6 +1,8 @@
 import { supabase } from '../lib/supabase'
 import type { ContaPagarFormData, ContaPagarStatus } from '../types/contasPagar'
 import type { Database } from '../types/database'
+import { toAppError } from '../utils/handleAppError'
+import { createAuditLog } from './observabilityService'
 
 export type ContaPagar = Database['public']['Tables']['contas_pagar']['Row']
 
@@ -24,7 +26,7 @@ async function getContaPagarById(empresaId: string, contaId: string) {
     .maybeSingle()
 
   if (error) {
-    throw new Error(error.message)
+    throw toAppError(error, 'Não foi possível carregar a conta.')
   }
 
   return data as ContaPagar | null
@@ -48,7 +50,7 @@ export async function listContasPagar(
   const { data, error } = await query
 
   if (error) {
-    throw new Error(error.message)
+    throw toAppError(error, 'Não foi possível listar contas a pagar.')
   }
 
   return (data ?? []) as ContaPagar[]
@@ -71,12 +73,24 @@ export async function createContaPagar(
     .single()
 
   if (error) {
-    throw new Error(error.message)
+    throw toAppError(error, 'Não foi possível criar a conta.')
   }
 
   if (shouldMarkAsPaid) {
     await marcarContaComoPaga(empresaId, (conta as ContaPagar).id)
   }
+
+  await createAuditLog({
+    action: 'despesa_criada',
+    empresaId,
+    entityId: (conta as ContaPagar).id,
+    entityType: 'contas_pagar',
+    metadata: {
+      categoria: data.categoria,
+      status: data.status,
+      valor: Number(data.valor),
+    },
+  })
 }
 
 export async function updateContaPagar(
@@ -98,7 +112,7 @@ export async function updateContaPagar(
     .eq('id', contaId)
 
   if (error) {
-    throw new Error(error.message)
+    throw toAppError(error, 'Não foi possível atualizar a conta.')
   }
 
   if (shouldMarkAsPaid) {
@@ -114,7 +128,7 @@ export async function deleteContaPagar(empresaId: string, contaId: string) {
     .eq('id', contaId)
 
   if (error) {
-    throw new Error(error.message)
+    throw toAppError(error, 'Não foi possível excluir a conta.')
   }
 }
 
@@ -125,6 +139,6 @@ export async function marcarContaComoPaga(empresaId: string, contaId: string) {
   })
 
   if (error) {
-    throw new Error(error.message)
+    throw toAppError(error, 'Não foi possível marcar a conta como paga.')
   }
 }

@@ -12,6 +12,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
+import { canInviteEmployee, canManageEmployees } from '../auth/permissions'
 import {
   Badge,
   Button,
@@ -30,6 +31,7 @@ import {
 } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useFeatureAccess } from '../hooks/useSubscription'
+import { queryKeys } from '../lib/queryKeys'
 import {
   createBarberUnavailability,
   deleteBarberUnavailability,
@@ -38,6 +40,7 @@ import {
   type BarberUnavailability,
 } from '../services/barberUnavailabilityService'
 import {
+  inactivateLegacyBarbeiro,
   listBarbeiros,
   updateBarbeiro,
   type BarbeiroWithIndicators,
@@ -166,12 +169,12 @@ export function BarbeirosPage() {
   const [isInviteFormOpen, setIsInviteFormOpen] = useState(false)
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [lastInviteLink, setLastInviteLink] = useState<string | null>(null)
-  const canManageUnavailability =
-    profile?.papel === 'administrador' || profile?.papel === 'gerente'
+  const canManageUnavailability = canManageEmployees(profile?.papel)
+  const canInviteEmployees = canInviteEmployee(profile?.papel)
   const barberLimitAccess = useFeatureAccess('MAX_BARBERS')
 
   const barbeirosQueryKey = useMemo(
-    () => ['barbeiros', empresaId, searchTerm],
+    () => queryKeys.barbeiros.list(empresaId, searchTerm),
     [empresaId, searchTerm],
   )
 
@@ -289,7 +292,7 @@ export function BarbeirosPage() {
       throw new Error('Funcionários devem ser criados somente por convite.')
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['barbeiros'] })
+      await queryClient.invalidateQueries({ queryKey: queryKeys.barbeiros.all })
       setIsFormOpen(false)
       setEditingBarbeiro(null)
       setFormError(null)
@@ -354,7 +357,7 @@ export function BarbeirosPage() {
         throw new Error('Empresa nao encontrada.')
       }
 
-      if (!canManageUnavailability) {
+      if (!canInviteEmployees) {
         throw new Error('Apenas administrador ou gerente pode convidar.')
       }
 
@@ -399,7 +402,24 @@ export function BarbeirosPage() {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['employee-links'] }),
-        queryClient.invalidateQueries({ queryKey: ['barbeiros'] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.barbeiros.all }),
+      ])
+    },
+  })
+
+  const inactivateLegacyBarberMutation = useMutation({
+    mutationFn: async (barbeiro: BarbeiroWithIndicators) => {
+      if (!empresaId) {
+        throw new Error('Empresa nao encontrada.')
+      }
+
+      await inactivateLegacyBarbeiro(empresaId, barbeiro.id)
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.barbeiros.all }),
+        queryClient.invalidateQueries({ queryKey: ['atendimento-barbeiros'] }),
+        queryClient.invalidateQueries({ queryKey: ['booking-barbers'] }),
       ])
     },
   })
@@ -519,6 +539,22 @@ export function BarbeirosPage() {
     await inactivateEmployeeMutation.mutateAsync(link)
   }
 
+  async function handleInactivateLegacyBarber(barbeiro: BarbeiroWithIndicators) {
+    const shouldInactivate = window.confirm(
+      [
+        `Remover ${barbeiro.nome} da equipe ativa?`,
+        'O funcionario sera inativado, mas atendimentos, comissoes e relatorios antigos serao preservados.',
+        'Ele nao aparecera para novos agendamentos.',
+      ].join('\n'),
+    )
+
+    if (!shouldInactivate) {
+      return
+    }
+
+    await inactivateLegacyBarberMutation.mutateAsync(barbeiro)
+  }
+
   if (!empresaId) {
     return (
       <Card>
@@ -549,7 +585,7 @@ export function BarbeirosPage() {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {canManageUnavailability && (
+          {canInviteEmployees && (
             <Button
               leftIcon={<Plus size={18} />}
               onClick={openInviteModal}
@@ -700,6 +736,17 @@ export function BarbeirosPage() {
                         >
                           <Edit size={16} />
                         </Button>
+                        {canManageUnavailability && (
+                          <Button
+                            aria-label="Remover funcionario da equipe ativa"
+                            disabled={inactivateLegacyBarberMutation.isPending}
+                            onClick={() => void handleInactivateLegacyBarber(barbeiro)}
+                            size="icon-sm"
+                            variant="ghost"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -802,7 +849,7 @@ export function BarbeirosPage() {
                       >
                         {invitation.status}
                       </Badge>
-                      {canManageUnavailability &&
+                      {canInviteEmployees &&
                         invitation.status === 'pendente' && (
                           <Button
                             disabled={cancelInvitationMutation.isPending}

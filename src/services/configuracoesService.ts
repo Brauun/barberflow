@@ -5,6 +5,7 @@ import type {
 } from '../types/configuracoes'
 import type { Empresa, Usuario } from '../types/database'
 import { onlyDigits } from '../utils/masks'
+import { createAuditLog } from './observabilityService'
 
 function optionalText(value?: string | null) {
   return value?.trim() || null
@@ -74,6 +75,17 @@ export async function updateEmpresaSettings(
   if (barbershopError) {
     throw new Error(barbershopError.message)
   }
+
+  await createAuditLog({
+    action: 'empresa_atualizada',
+    empresaId,
+    entityId: empresaId,
+    entityType: 'empresas',
+    metadata: {
+      campos: Object.keys(locationPayload),
+    },
+    userRole: 'administrador',
+  })
 }
 
 export async function updateUserProfile(

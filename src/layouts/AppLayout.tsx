@@ -30,9 +30,19 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
+import {
+  canManageAppointments,
+  canManageClients,
+  canManageEmployees,
+  canManageFinance,
+  canManageSettings,
+  canViewFinance,
+  canViewReports,
+} from '../auth/permissions'
 import { Button } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
+import { queryKeys } from '../lib/queryKeys'
 import { resolveAssetUrl } from '../services/assetsService'
 import {
   listNotifications,
@@ -40,9 +50,11 @@ import {
   markNotificationAsRead,
   type InternalNotification,
 } from '../services/notificationsService'
+import type { UserRole } from '../types/database'
 import { cn } from '../utils/cn'
 
 type NavigationItem = {
+  canAccess?: (role: UserRole | undefined) => boolean
   icon: LucideIcon
   label: string
   path: string
@@ -55,44 +67,50 @@ const navigationItems: NavigationItem[] = [
 const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
   {
     items: [
-      { icon: Users, label: 'Clientes', path: '/app/clientes' },
-      { icon: Scissors, label: 'Barbeiros', path: '/app/barbeiros' },
-      { icon: Sparkles, label: 'Servicos', path: '/app/servicos' },
-      { icon: CalendarDays, label: 'Atendimentos', path: '/app/atendimentos' },
+      { canAccess: canManageClients, icon: Users, label: 'Clientes', path: '/app/clientes' },
+      { canAccess: canManageEmployees, icon: Scissors, label: 'Barbeiros', path: '/app/barbeiros' },
+      { canAccess: canManageAppointments, icon: Sparkles, label: 'Serviços', path: '/app/servicos' },
+      { canAccess: canManageAppointments, icon: CalendarDays, label: 'Atendimentos', path: '/app/atendimentos' },
     ],
     label: 'OPERAÇÃO',
   },
   {
     items: [
-      { icon: Package, label: 'Produtos', path: '/app/produtos' },
-      { icon: Gift, label: 'Planos e Fidelidade', path: '/app/planos-fidelidade' },
-      { icon: DollarSign, label: 'Fluxo de Caixa', path: '/app/fluxo-de-caixa' },
-      { icon: CreditCard, label: 'Contas a Pagar', path: '/app/contas-a-pagar' },
+      { canAccess: canViewFinance, icon: Package, label: 'Produtos', path: '/app/produtos' },
+      { canAccess: canManageFinance, icon: Gift, label: 'Planos e Fidelidade', path: '/app/planos-fidelidade' },
+      { canAccess: canViewFinance, icon: DollarSign, label: 'Fluxo de Caixa', path: '/app/fluxo-de-caixa' },
+      { canAccess: canManageFinance, icon: CreditCard, label: 'Contas a Pagar', path: '/app/contas-a-pagar' },
     ],
     label: 'GESTÃO',
   },
   {
     items: [
-      { icon: BarChart3, label: 'Relatorios', path: '/app/relatorios' },
+      { canAccess: canViewReports, icon: BarChart3, label: 'Relatórios', path: '/app/relatorios' },
       {
+        canAccess: canViewReports,
         icon: Activity,
-        label: 'Relatorios Executivos',
+        label: 'Relatórios Executivos',
         path: '/app/relatorios-executivos',
       },
     ],
     label: 'INTELIGÊNCIA',
   },
 ]
-
-const allNavigationItems = [
-  ...navigationItems,
-  ...navigationGroups.flatMap((group) => group.items),
-]
-
 const settingsItem: NavigationItem[] = [
-  { icon: BadgeCheck, label: 'Assinatura', path: '/app/assinatura' },
-  { icon: Settings, label: 'Configuracoes', path: '/app/configuracoes' },
+  { canAccess: canManageFinance, icon: BadgeCheck, label: 'Assinatura', path: '/app/assinatura' },
+  { canAccess: canManageSettings, icon: Settings, label: 'Configurações', path: '/app/configuracoes' },
 ]
+
+function canAccessNavigationItem(item: NavigationItem, role: UserRole | undefined) {
+  return !item.canAccess || item.canAccess(role)
+}
+
+const roleLabels: Record<string, string> = {
+  administrador: 'Administrador',
+  barbeiro: 'Barbeiro',
+  gerente: 'Gerente',
+  recepcao: 'Recepção',
+}
 
 export function AppLayout() {
   const { isLoading, profile, user, userType } = useAuth()
@@ -108,22 +126,62 @@ export function AppLayout() {
 
     return storedState !== 'compact'
   })
+  const userRole = profile?.papel
+  const visibleNavigationItems = useMemo(
+    () => navigationItems.filter((item) => canAccessNavigationItem(item, userRole)),
+    [userRole],
+  )
+  const visibleNavigationGroups = useMemo(
+    () =>
+      navigationGroups
+        .map((group) => ({
+          ...group,
+          items: group.items.filter((item) => canAccessNavigationItem(item, userRole)),
+        }))
+        .filter((group) => group.items.length > 0),
+    [userRole],
+  )
+  const visibleSettingsItems = useMemo(
+    () => settingsItem.filter((item) => canAccessNavigationItem(item, userRole)),
+    [userRole],
+  )
+  const allVisibleNavigationItems = useMemo(
+    () => [
+      ...visibleNavigationItems,
+      ...visibleNavigationGroups.flatMap((group) => group.items),
+    ],
+    [visibleNavigationGroups, visibleNavigationItems],
+  )
+  const canAccessCurrentAppRoute = useMemo(() => {
+    if (!location.pathname.startsWith('/app')) {
+      return true
+    }
+
+    if (location.pathname === '/app' || location.pathname.startsWith('/app/perfil')) {
+      return true
+    }
+
+    return [...allVisibleNavigationItems, ...visibleSettingsItems].some((item) =>
+      location.pathname.startsWith(item.path),
+    )
+  }, [allVisibleNavigationItems, location.pathname, visibleSettingsItems])
 
   const currentItem = useMemo(
     () =>
-      navigationItems.find((item) =>
+      visibleNavigationItems.find((item) =>
         location.pathname.startsWith(item.path),
       ) ??
-      allNavigationItems.find((item) =>
+      allVisibleNavigationItems.find((item) =>
         location.pathname.startsWith(item.path),
       ) ??
-      settingsItem.find((item) => location.pathname.startsWith(item.path)) ??
+      visibleSettingsItems.find((item) => location.pathname.startsWith(item.path)) ??
+      visibleNavigationItems[0] ??
       navigationItems[0],
-    [location.pathname],
+    [allVisibleNavigationItems, location.pathname, visibleNavigationItems, visibleSettingsItems],
   )
 
   const companyName = profile?.empresa?.nome ?? user?.user_metadata.empresa ?? 'BW Barber'
-  const userName = profile?.nome ?? user?.user_metadata.nome ?? 'Usuario'
+  const userName = profile?.nome ?? user?.user_metadata.nome ?? 'Usuário'
   const sidebarWidthClass = isSidebarExpanded ? 'lg:w-[13.75rem]' : 'lg:w-[4.75rem]'
   const contentPaddingClass = isSidebarExpanded ? 'lg:pl-[13.75rem]' : 'lg:pl-[4.75rem]'
   const subscriptionQuery = useSubscription()
@@ -155,7 +213,12 @@ export function AppLayout() {
         papel: profile?.papel as NonNullable<typeof profile>['papel'],
         usuarioId: profile?.id as string,
       }),
-    queryKey: ['notifications', profile?.empresa_id, profile?.id, profile?.papel],
+    queryKey: [
+      ...queryKeys.notificacoes.all,
+      profile?.empresa_id,
+      profile?.id,
+      profile?.papel,
+    ],
     refetchInterval: 30000,
   })
   const notifications = notificationsQuery.data ?? []
@@ -164,14 +227,14 @@ export function AppLayout() {
   const markReadMutation = useMutation({
     mutationFn: markNotificationAsRead,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      await queryClient.invalidateQueries({ queryKey: queryKeys.notificacoes.all })
     },
   })
 
   const markAllReadMutation = useMutation({
     mutationFn: markAllNotificationsAsRead,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      await queryClient.invalidateQueries({ queryKey: queryKeys.notificacoes.all })
     },
   })
 
@@ -258,6 +321,10 @@ export function AppLayout() {
     return <Navigate replace to="/cliente" />
   }
 
+  if (!isLoading && profile && !canAccessCurrentAppRoute) {
+    return <Navigate replace to="/app/dashboard" />
+  }
+
   if (
     isSubscriptionExpired &&
     !allowedExpiredPaths.some((path) => location.pathname.startsWith(path))
@@ -340,16 +407,24 @@ export function AppLayout() {
       >
         <div
           className={cn(
-            'flex h-20 w-full items-center border-b border-slate-100 px-4 dark:border-slate-800',
+            'flex min-h-24 w-full items-center border-b border-slate-100 px-4 py-4 dark:border-slate-800',
             isSidebarExpanded ? 'justify-between' : 'justify-center',
           )}
         >
           <NavLink
             aria-label="BW Barber"
-            className="flex min-w-0 items-center gap-3"
+            className={cn(
+              'flex min-w-0 items-center',
+              isSidebarExpanded ? 'gap-3.5' : 'gap-0',
+            )}
             to="/app/dashboard"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-sm font-black text-slate-950 ring-1 ring-brand-100 dark:bg-brand-400/12 dark:text-white dark:ring-brand-400/30">
+            <span
+              className={cn(
+                'flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-50 font-black text-slate-950 ring-1 ring-brand-100 shadow-[0_12px_30px_rgb(15_23_42/0.08)] dark:bg-brand-400/12 dark:text-white dark:ring-brand-400/30',
+                isSidebarExpanded ? 'h-[3.25rem] w-[3.25rem] text-base' : 'h-11 w-11 text-sm',
+              )}
+            >
               {companyLogoSrc ? (
                 <img
                   alt={String(companyName)}
@@ -366,10 +441,10 @@ export function AppLayout() {
                 isSidebarExpanded ? 'block opacity-100' : 'hidden opacity-0',
               )}
             >
-              <span className="block truncate text-sm font-black text-slate-950 dark:text-white">
+              <span className="line-clamp-2 block text-sm font-black leading-tight text-slate-950 dark:text-white">
                 {companyName}
               </span>
-              <span className="block truncate text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">
+              <span className="mt-1 block truncate text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">
                 BW Barber
               </span>
             </span>
@@ -394,14 +469,14 @@ export function AppLayout() {
 
         <nav
           className={cn(
-            'flex flex-1 flex-col gap-2 overflow-y-auto py-7',
+            'bw-sidebar-scroll flex flex-1 flex-col gap-2 overflow-y-auto py-7',
             isSidebarExpanded ? 'px-3' : 'items-center px-3',
           )}
         >
           <div className="mb-5 w-full space-y-2">
-            {navigationItems.map(renderNavItem)}
+            {visibleNavigationItems.map(renderNavItem)}
           </div>
-          {navigationGroups.map((group) => (
+          {visibleNavigationGroups.map((group) => (
             <div className="w-full space-y-2" key={group.label}>
               <p
                 className={cn(
@@ -441,7 +516,7 @@ export function AppLayout() {
           >
             SISTEMA
           </p>
-          {settingsItem.map(renderNavItem)}
+          {visibleSettingsItems.map(renderNavItem)}
         </div>
 
         <div
@@ -474,7 +549,7 @@ export function AppLayout() {
               {userName}
             </p>
             <p className="truncate text-xs text-slate-500 dark:text-slate-300">
-              {profile?.papel ?? 'perfil'}
+              {profile?.papel ? roleLabels[profile.papel] ?? profile.papel : 'Perfil'}
             </p>
           </div>
           <NavLink
@@ -645,3 +720,4 @@ export function AppLayout() {
     </div>
   )
 }
+

@@ -272,6 +272,7 @@ export function AtendimentosPage() {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['atendimentos'] }),
+        queryClient.invalidateQueries({ queryKey: ['daily-appointments'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
         queryClient.invalidateQueries({ queryKey: ['barbeiros'] }),
       ])
@@ -486,14 +487,14 @@ export function AtendimentosPage() {
               <Loader2 className="animate-spin text-brand-500" size={28} />
             </div>
           ) : !dailyAppointmentsQuery.data?.length ? (
-            <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-6 text-center text-sm font-medium text-slate-500">
+            <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-6 text-center text-sm font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300">
               Nenhum atendimento agendado para esta data.
             </div>
           ) : (
             <div className="space-y-3">
               {dailyAppointmentsQuery.data.map((appointment) => (
                 <div
-                  className="grid gap-4 rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] lg:grid-cols-[5rem_1.2fr_1fr_1fr_auto]"
+                  className="grid gap-4 rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 lg:grid-cols-[5rem_1.2fr_1fr_1fr_auto]"
                   key={`${appointment.source}-${appointment.id}`}
                 >
                   <div>
@@ -508,18 +509,18 @@ export function AtendimentosPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="font-black text-slate-950">
+                    <p className="font-black text-slate-950 dark:text-white">
                       {appointment.cliente}
                     </p>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                       {appointment.servico}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-950">
+                    <p className="text-sm font-semibold text-slate-950 dark:text-white">
                       {appointment.barbeiro}
                     </p>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                       {appointment.duration_minutes}min
                     </p>
                   </div>
@@ -639,7 +640,7 @@ export function AtendimentosPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           {!waitlistAccess.isLoading && !waitlistAccess.canUse ? (
-            <div className="rounded-[1.35rem] border border-brand-100 bg-brand-50/70 p-6 text-sm font-semibold text-slate-700">
+            <div className="rounded-[1.35rem] border border-brand-100 bg-brand-50/70 p-6 text-sm font-semibold text-slate-700 dark:border-brand-400/20 dark:bg-brand-400/10 dark:text-brand-100">
               A lista de espera nao esta disponivel no seu plano atual. Faça
               upgrade em Assinatura para liberar este recurso.
             </div>
@@ -650,28 +651,28 @@ export function AtendimentosPage() {
               <Loader2 className="animate-spin text-brand-500" size={24} />
             </div>
           ) : !waitlistQuery.data?.length ? (
-            <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-6 text-center text-sm font-medium text-slate-500">
+            <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-6 text-center text-sm font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300">
               Nenhum cliente na lista de espera.
             </div>
           ) : (
             waitlistQuery.data.map((entry) => (
               <div
-                className="grid gap-4 rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] lg:grid-cols-[1fr_1fr_1fr_auto]"
+                className="grid gap-4 rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 lg:grid-cols-[1fr_1fr_1fr_auto]"
                 key={entry.id}
               >
                 <div>
-                  <p className="font-black text-slate-950">
+                  <p className="font-black text-slate-950 dark:text-white">
                     {entry.client?.nome ?? 'Cliente'}
                   </p>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     {entry.client?.telefone ?? 'Telefone nao informado'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-950">
+                  <p className="text-sm font-semibold text-slate-950 dark:text-white">
                     {entry.service?.nome ?? 'Servico'}
                   </p>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     {entry.barber?.nome ?? 'Qualquer profissional'}
                   </p>
                 </div>
@@ -994,11 +995,11 @@ export function AtendimentosPage() {
               ['Status', getStatusLabel(selectedDailyAppointment.status)],
             ].map(([label, value]) => (
               <div
-                className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/70"
                 key={label}
               >
-                <span className="font-semibold text-slate-500">{label}</span>
-                <span className="text-right font-bold text-slate-950">
+                <span className="font-semibold text-slate-500 dark:text-slate-400">{label}</span>
+                <span className="text-right font-bold text-slate-950 dark:text-white">
                   {value}
                 </span>
               </div>
@@ -1034,11 +1035,11 @@ export function AtendimentosPage() {
             />
           </div>
           {rescheduleAppointment && (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
-              <p className="font-semibold text-slate-950">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-800 dark:bg-slate-950/70">
+              <p className="font-semibold text-slate-950 dark:text-white">
                 {rescheduleAppointment.cliente}
               </p>
-              <p className="mt-1 text-slate-500">
+              <p className="mt-1 text-slate-500 dark:text-slate-400">
                 {rescheduleAppointment.servico} ·{' '}
                 {rescheduleAppointment.duration_minutes}min
               </p>

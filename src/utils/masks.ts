@@ -40,10 +40,24 @@ export function formatCpf(value: string | null | undefined) {
   return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
 }
 
+export function formatCep(value: string | null | undefined) {
+  const digits = onlyDigits(value).slice(0, 8)
+
+  if (digits.length <= 5) {
+    return digits
+  }
+
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`
+}
+
 export function maskPhoneChange(event: ChangeEvent<HTMLInputElement>) {
   event.target.value = formatPhone(event.target.value)
 }
 
 export function maskCpfChange(event: ChangeEvent<HTMLInputElement>) {
   event.target.value = formatCpf(event.target.value)
+}
+
+export function maskCepChange(event: ChangeEvent<HTMLInputElement>) {
+  event.target.value = formatCep(event.target.value)
 }

@@ -38,6 +38,7 @@ export async function listBarbeiros(
     .from('barbeiros')
     .select('*')
     .eq('empresa_id', empresaId)
+    .eq('status', 'ativo')
     .order('nome', { ascending: true })
 
   const normalizedSearch = search.trim()
@@ -98,6 +99,21 @@ export async function listBarbeiros(
       ),
     }
   })
+}
+
+export async function inactivateLegacyBarbeiro(
+  empresaId: string,
+  barbeiroId: string,
+) {
+  const { error } = await supabase
+    .from('barbeiros')
+    .update({ status: 'inativo' })
+    .eq('empresa_id', empresaId)
+    .eq('id', barbeiroId)
+
+  if (error) {
+    throw new Error(error.message)
+  }
 }
 
 export async function updateBarbeiro(

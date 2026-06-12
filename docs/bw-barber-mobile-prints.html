@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BW Barber - Prints Mobile</title>
+    <style>
+      @page {
+        size: 390px 844px;
+        margin: 0;
+      }
+
+      :root {
+        --ink: #071426;
+        --bg: #08111f;
+        --surface: #101d33;
+        --surface-2: #13243b;
+        --cyan: #12c6f3;
+        --blue: #2b6fff;
+        --text: #ffffff;
+        --muted: #a5b4cb;
+        --line: rgba(255, 255, 255, 0.1);
+        --paper: #f6f9fc;
+        --dark: #050b14;
+        --green: #00d69b;
+        --red: #ff6477;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #111827;
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .deck {
+        display: grid;
+        justify-content: center;
+      }
+
+      .screen {
+        position: relative;
+        width: 390px;
+        height: 844px;
+        overflow: hidden;
+        page-break-after: always;
+        background: var(--dark);
+      }
+
+      .screen.light {
+        background: #f7fafc;
+        color: var(--ink);
+      }
+
+      .statusbar {
+        position: relative;
+        z-index: 5;
+        display: flex;
+        height: 44px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        color: inherit;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .status-icons {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: inherit;
+        font-size: 12px;
+      }
+
+      .shell {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        gap: 18px;
+        padding: 18px;
+      }
+
+      .safe-bottom {
+        padding-bottom: 34px;
+      }
+
+      .brand-bg {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 84% 0%, rgba(18, 198, 243, 0.22), transparent 34%),
+          radial-gradient(circle at 8% 100%, rgba(43, 111, 255, 0.18), transparent 32%),
+          linear-gradient(160deg, #071426 0%, #0b1728 54%, #050b14 100%);
+      }
+
+      .brand-bg::after {
+        content: "";
+        position: absolute;
+        right: -120px;
+        bottom: -90px;
+        width: 280px;
+        height: 280px;
+        border: 1px solid rgba(18, 198, 243, 0.18);
+        border-radius: 999px;
+      }
+
+      .logo {
+        width: 142px;
+        height: auto;
+        justify-self: center;
+      }
+
+      .login-card {
+        display: grid;
+        gap: 18px;
+        margin-top: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 34px;
+        background: rgba(14, 29, 50, 0.88);
+        padding: 26px 22px;
+        box-shadow: 0 32px 80px rgba(0, 0, 0, 0.28);
+      }
+
+      .eyebrow {
+        color: var(--cyan);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        color: #fff;
+        font-size: 34px;
+        font-weight: 950;
+        letter-spacing: -0.05em;
+        line-height: 1.02;
+      }
+
+      h2 {
+        color: inherit;
+        font-size: 27px;
+        font-weight: 950;
+        letter-spacing: -0.045em;
+        line-height: 1.05;
+      }
+
+      h3 {
+        color: inherit;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+      }
+
+      p {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .field {
+        display: grid;
+        gap: 8px;
+      }
+
+      label {
+        color: #fff;
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .input {
+        display: flex;
+        height: 52px;
+        align-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 18px;
+        background: rgba(7, 20, 38, 0.48);
+        color: #6f809a;
+        padding: 0 15px;
+        font-size: 14px;
+      }
+
+      .button {
+        display: flex;
+        height: 52px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 18px;
+        background: var(--cyan);
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 950;
+        box-shadow: 0 20px 50px rgba(18, 198, 243, 0.22);
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .mini-logo {
+        display: grid;
+        width: 44px;
+        height: 44px;
+        place-items: center;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(18, 198, 243, 0.1);
+        border: 1px solid rgba(18, 198, 243, 0.3);
+      }
+
+      .mini-logo img {
+        width: 38px;
+        height: 38px;
+        object-fit: contain;
+      }
+
+      .icon-button {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        font-weight: 900;
+      }
+
+      .hero-card,
+      .card,
+      .list-card {
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: rgba(16, 29, 51, 0.92);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+      }
+
+      .light .hero-card,
+      .light .card,
+      .light .list-card {
+        border-color: rgba(7, 20, 38, 0.08);
+        background: #fff;
+        box-shadow: 0 22px 60px rgba(7, 20, 38, 0.1);
+      }
+
+      .hero-card {
+        display: grid;
+        gap: 12px;
+        padding: 22px;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .stat {
+        min-height: 112px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 16px;
+      }
+
+      .light .stat {
+        border-color: rgba(7, 20, 38, 0.08);
+        background: #fff;
+      }
+
+      .stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .stat strong {
+        display: block;
+        margin-top: 8px;
+        color: var(--cyan);
+        font-size: 25px;
+        font-weight: 950;
+        letter-spacing: -0.05em;
+      }
+
+      .chart {
+        height: 206px;
+        padding: 18px;
+      }
+
+      .chart svg {
+        width: 100%;
+        height: 100%;
+      }
+
+      .section-title {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+      }
+
+      .section-title a {
+        color: var(--cyan);
+        font-size: 12px;
+        font-weight: 850;
+        text-decoration: none;
+      }
+
+      .list-card {
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 46px 1fr auto;
+        align-items: center;
+        gap: 12px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 12px;
+      }
+
+      .light .row {
+        background: #f5f8fb;
+      }
+
+      .avatar {
+        display: grid;
+        width: 46px;
+        height: 46px;
+        place-items: center;
+        border-radius: 18px;
+        background: rgba(18, 198, 243, 0.13);
+        color: var(--cyan);
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .round-avatar {
+        border-radius: 999px;
+      }
+
+      .row b {
+        display: block;
+        color: inherit;
+        font-size: 14px;
+      }
+
+      .row small {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .price {
+        color: var(--cyan);
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .badge {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        border: 1px solid rgba(18, 198, 243, 0.28);
+        border-radius: 999px;
+        background: rgba(18, 198, 243, 0.12);
+        color: var(--cyan);
+        padding: 6px 10px;
+        font-size: 11px;
+        font-weight: 850;
+      }
+
+      .badge.green {
+        border-color: rgba(0, 214, 155, 0.28);
+        background: rgba(0, 214, 155, 0.11);
+        color: var(--green);
+      }
+
+      .badge.red {
+        border-color: rgba(255, 100, 119, 0.28);
+        background: rgba(255, 100, 119, 0.12);
+        color: var(--red);
+      }
+
+      .slot-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .slot {
+        display: flex;
+        min-height: 44px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(7, 20, 38, 0.1);
+        border-radius: 18px;
+        background: #fff;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .slot.selected {
+        border-color: var(--cyan);
+        background: var(--cyan);
+        color: var(--ink);
+      }
+
+      .slot.off {
+        border-color: rgba(239, 68, 68, 0.25);
+        background: #fff1f2;
+        color: #be123c;
+      }
+
+      .bottom-nav {
+        position: absolute;
+        right: 18px;
+        bottom: 18px;
+        left: 18px;
+        z-index: 4;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: rgba(16, 29, 51, 0.92);
+        padding: 10px;
+        backdrop-filter: blur(16px);
+      }
+
+      .bottom-nav span {
+        display: grid;
+        place-items: center;
+        border-radius: 16px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 850;
+        padding: 9px 0;
+      }
+
+      .bottom-nav .active {
+        background: rgba(18, 198, 243, 0.13);
+        color: var(--cyan);
+      }
+
+      .white-bg {
+        background:
+          radial-gradient(circle at 100% 0%, rgba(18, 198, 243, 0.2), transparent 34%),
+          #f7fafc;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="deck">
+      <section class="screen" data-name="01-login">
+        <div class="brand-bg"></div>
+        <div class="statusbar"><span>18:41</span><span class="status-icons">5G ◐ 35%</span></div>
+        <div class="shell safe-bottom">
+          <img class="logo" src="../public/brand/bw-barber-login-logo.png" alt="BW Barber" />
+          <div class="login-card">
+            <div>
+              <p class="eyebrow">Acesso</p>
+              <h1>Bem vindo(a) ao BW Barber</h1>
+              <p>Acesse sua conta para gerenciar horários, clientes e operação.</p>
+            </div>
+            <div class="field">
+              <label>Telefone ou Email</label>
+              <div class="input">exemplo@exemplo.com</div>
+            </div>
+            <div class="field">
+              <label>Senha</label>
+              <div class="input">Digite sua senha</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <p>□ Lembrar acesso</p>
+              <p style="color:var(--cyan);font-weight:850">Esqueci minha senha</p>
+            </div>
+            <div class="button">Entrar</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" data-name="02-dashboard-barbearia">
+        <div class="brand-bg"></div>
+        <div class="statusbar"><span>18:42</span><span class="status-icons">5G ◐ 35%</span></div>
+        <div class="shell">
+          <div class="topbar">
+            <div style="display:flex;gap:12px;align-items:center">
+              <div class="mini-logo"><img src="../public/brand/bw-barber-login-logo.png" alt="" /></div>
+              <div><p class="eyebrow">Dashboard</p><h3>BW Barber</h3></div>
+            </div>
+            <div class="icon-button">🔔</div>
+          </div>
+          <div class="hero-card">
+            <span class="badge">Teste grátis termina em 14 dias</span>
+            <h2>Boa tarde, Braian</h2>
+            <p>Hoje você teve <b style="color:#fff">4 atendimentos</b> e faturou <b style="color:var(--cyan)">R$ 550,00</b>.</p>
+          </div>
+          <div class="stats">
+            <div class="stat"><span>Receita hoje</span><strong>R$ 550</strong><span style="color:var(--green)">↗ +18%</span></div>
+            <div class="stat"><span>Lucro líquido</span><strong>R$ 288</strong><span>no período</span></div>
+          </div>
+          <div class="card chart">
+            <div class="section-title"><h3>Fluxo de Receita</h3><span class="badge">6 meses</span></div>
+            <svg viewBox="0 0 310 150" preserveAspectRatio="none">
+              <defs><linearGradient id="areaDash" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#12c6f3" stop-opacity=".3"/><stop offset="1" stop-color="#12c6f3" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0 130 L70 130 C100 126 118 72 155 76 C198 80 216 32 310 40 L310 150 L0 150Z" fill="url(#areaDash)" />
+              <path d="M0 130 L70 130 C100 126 118 72 155 76 C198 80 216 32 310 40" fill="none" stroke="#12c6f3" stroke-width="5" stroke-linecap="round" />
+            </svg>
+          </div>
+        </div>
+        <nav class="bottom-nav"><span class="active">Início</span><span>Agenda</span><span>Caixa</span><span>Menu</span></nav>
+      </section>
+
+      <section class="screen light white-bg" data-name="03-agendamento-cliente">
+        <div class="statusbar"><span>18:43</span><span class="status-icons">5G ◐ 35%</span></div>
+        <div class="shell">
+          <div class="topbar">
+            <div><p class="eyebrow">Agendamento</p><h2>Escolha seu horário</h2></div>
+            <div class="icon-button" style="background:#fff;border-color:rgba(7,20,38,.08)">↗</div>
+          </div>
+          <div class="hero-card">
+            <div class="row" style="background:transparent;padding:0">
+              <span class="avatar">BF</span>
+              <div><b>Barbearia do Vale</b><small>Rua Exemplo, 123 · Centro</small></div>
+              <span class="badge">★ 5</span>
+            </div>
+          </div>
+          <div class="list-card">
+            <label style="color:var(--ink)">Serviço</label>
+            <div class="input" style="background:#fff;color:var(--ink);border-color:rgba(7,20,38,.1)">Corte + Barba · R$ 80 · 60min</div>
+            <label style="color:var(--ink)">Profissional</label>
+            <div class="input" style="background:#fff;color:var(--ink);border-color:rgba(7,20,38,.1)">Anderson</div>
+            <label style="color:var(--ink)">Horário</label>
+            <div class="slot-grid">
+              <span class="slot">09:00</span>
+              <span class="slot off">09:30</span>
+              <span class="slot off">10:00</span>
+              <span class="slot selected">10:30</span>
+              <span class="slot">11:00</span>
+              <span class="slot off">14:30</span>
+              <span class="slot">15:00</span>
+              <span class="slot">15:30</span>
+              <span class="slot">16:00</span>
+            </div>
+            <div class="button">Confirmar horário</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" data-name="04-home-cliente">
+        <div class="brand-bg"></div>
+        <div class="statusbar"><span>18:44</span><span class="status-icons">5G ◐ 35%</span></div>
+        <div class="shell">
+          <div class="topbar">
+            <div style="display:flex;gap:12px;align-items:center">
+              <span class="avatar round-avatar">D</span>
+              <div><p class="eyebrow">Cliente</p><h3>debora</h3></div>
+            </div>
+            <div class="icon-button">↪</div>
+          </div>
+          <div>
+            <p class="eyebrow">Sua barbearia</p>
+            <h2>Barbearia do Vale</h2>
+            <p>Acesse sua barbearia principal, acompanhe horários e agende sem procurar tudo de novo.</p>
+          </div>
+          <div class="hero-card">
+            <div class="row" style="background:transparent;padding:0">
+              <span class="avatar">BF</span>
+              <div><b>Barbearia do Vale</b><small>Endereço não informado</small></div>
+              <span class="badge">★5</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="button">Agendar</div>
+              <div class="icon-button" style="width:auto;height:52px">Trocar</div>
+            </div>
+          </div>
+          <div class="stats">
+            <div class="stat"><span>Próximo horário</span><strong style="font-size:20px">16:30</strong><span>05/06/2026</span></div>
+            <div class="stat"><span>Histórico</span><strong>2</strong><span>agendamentos</span></div>
+          </div>
+          <div class="list-card">
+            <div class="section-title"><h3>Favoritas</h3><a>Ver todas</a></div>
+            <div class="row"><span class="avatar">SP</span><div><b>Studio Prime</b><small>1,4 km de você</small></div><span class="price">♥</span></div>
+          </div>
+        </div>
+        <nav class="bottom-nav"><span class="active">Início</span><span>Horários</span><span>Barbearia</span><span>Perfil</span></nav>
+      </section>
+
+      <section class="screen" data-name="05-fluxo-caixa">
+        <div class="brand-bg"></div>
+        <div class="statusbar"><span>18:45</span><span class="status-icons">5G ◐ 35%</span></div>
+        <div class="shell">
+          <div class="topbar">
+            <div><p class="eyebrow">Fluxo de Caixa</p><h2>Entradas e saídas</h2></div>
+            <div class="icon-button">+</div>
+          </div>
+          <div class="stats">
+            <div class="stat"><span>Entradas</span><strong style="color:var(--green)">R$ 550</strong></div>
+            <div class="stat"><span>Saídas</span><strong style="color:var(--red)">R$ 262</strong></div>
+            <div class="stat"><span>Saldo atual</span><strong>R$ 288</strong></div>
+            <div class="stat"><span>Lucro líquido</span><strong>R$ 288</strong></div>
+          </div>
+          <div class="list-card">
+            <div class="section-title"><h3>Movimentações</h3><span class="badge">Junho</span></div>
+            <div class="row"><span class="avatar">↓</span><div><b>Saída</b><small>Pagamento · Cartão</small></div><span class="badge green">Confirmada</span></div>
+            <div class="row"><span class="avatar">↑</span><div><b>Entrada</b><small>Atendimento · Platinado</small></div><span class="price">R$ 250</span></div>
+            <div class="row"><span class="avatar">↓</span><div><b>Saída</b><small>Internet</small></div><span style="color:var(--red);font-weight:950">R$ 139</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" data-name="06-equipe-comissoes">
+        <div class="brand-bg"></div>
+        <div class="statusbar"><span>18:46</span><span class="status-icons">5G ◐ 35%</span></div>
+        <div class="shell">
+          <div class="topbar">
+            <div><p class="eyebrow">Barbeiros</p><h2>Equipe e comissões</h2></div>
+            <div class="icon-button">+</div>
+          </div>
+          <div class="hero-card">
+            <p>Convide funcionários, acompanhe desempenho e gerencie comissões.</p>
+            <div class="button">Convidar funcionário</div>
+          </div>
+          <div class="stats">
+            <div class="stat"><span>Atendimentos</span><strong>4</strong></div>
+            <div class="stat"><span>Faturado</span><strong>R$ 550</strong></div>
+          </div>
+          <div class="list-card">
+            <div class="section-title"><h3>Funcionários ativos</h3><span class="badge">2 vinculados</span></div>
+            <div class="row"><span class="avatar round-avatar">A</span><div><b>Anderson</b><small>(51) 9 9582-7543 · 30%</small></div><span class="badge green">Ativo</span></div>
+            <div class="row"><span class="avatar round-avatar">D</span><div><b>Dule</b><small>(51) 9 9999-9999 · 60%</small></div><span class="badge green">Ativo</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen light white-bg" data-name="07-relatorios">
+        <div class="statusbar"><span>18:47</span><span class="status-icons">5G ◐ 35%</span></div>
+        <div class="shell">
+          <div class="topbar">
+            <div><p class="eyebrow">Relatórios</p><h2>Resumo executivo</h2></div>
+            <span class="badge">BW Pro</span>
+          </div>
+          <div class="hero-card">
+            <h3>Panorama do negócio</h3>
+            <p>Receita, despesas, lucro, comissões, ticket médio e insights automáticos.</p>
+          </div>
+          <div class="stats">
+            <div class="stat"><span>Receita</span><strong>R$ 550</strong></div>
+            <div class="stat"><span>Margem</span><strong>52%</strong></div>
+            <div class="stat"><span>Ticket</span><strong>R$ 137</strong></div>
+            <div class="stat"><span>Score</span><strong>89/100</strong></div>
+          </div>
+          <div class="list-card">
+            <div class="section-title"><h3>Insights</h3><a>PDF</a></div>
+            <div class="row"><span class="avatar">↗</span><div><b>Receita em crescimento</b><small>Atendimentos concluídos impulsionaram o caixa.</small></div><span class="price">+18%</span></div>
+            <div class="row"><span class="avatar">★</span><div><b>Anderson em destaque</b><small>Maior faturamento do período.</small></div><span class="badge">Top</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" data-name="08-assinatura">
+        <div class="brand-bg"></div>
+        <div class="statusbar"><span>18:48</span><span class="status-icons">5G ◐ 35%</span></div>
+        <div class="shell">
+          <div class="topbar">
+            <div><p class="eyebrow">Assinatura</p><h2>Plano atual</h2></div>
+            <span class="badge">Trial</span>
+          </div>
+          <div class="hero-card">
+            <h2>BW Pro</h2>
+            <p>Seu teste grátis termina em 14 dias. Pagamento será integrado em uma próxima etapa.</p>
+            <div class="button">Escolher plano</div>
+          </div>
+          <div class="list-card">
+            <div class="section-title"><h3>Recursos disponíveis</h3><span class="badge green">Ativo</span></div>
+            <div class="row"><span class="avatar">✓</span><div><b>Relatórios Executivos</b><small>PDF profissional e insights.</small></div><span class="price">Pro</span></div>
+            <div class="row"><span class="avatar">✓</span><div><b>Lista de Espera</b><small>Clientes aguardando vaga.</small></div><span class="price">Pro</span></div>
+            <div class="row"><span class="avatar">✓</span><div><b>Planos e Fidelidade</b><small>Benefícios configuráveis.</small></div><span class="price">Pro</span></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

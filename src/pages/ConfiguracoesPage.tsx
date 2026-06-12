@@ -1,8 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Building2,
   ChevronRight,
+  ClipboardList,
+  Download,
+  FileJson,
   ImagePlus,
   Monitor,
   Moon,
@@ -13,16 +16,32 @@ import {
   UserRound,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
+import { canExportData } from '../auth/permissions'
 import { Button, Card, CardContent, CardHeader, Input } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
+import { queryKeys } from '../lib/queryKeys'
 import {
   updateEmpresaSettings,
   updateUserProfile,
 } from '../services/configuracoesService'
+import {
+  exportAtendimentosCsv,
+  exportClientesCsv,
+  exportEmpresaJson,
+  exportFinanceiroCsv,
+  exportProdutosCsv,
+} from '../services/backupService'
+import { listAuditLogs, type AuditLog } from '../services/observabilityService'
+import { lookupCep } from '../services/cepService'
+import {
+  defaultBusinessHours,
+  listBusinessHours,
+  saveBusinessHours,
+} from '../services/businessHoursService'
 import {
   resolveAssetUrl,
   uploadCompanyLogo,
@@ -36,7 +55,19 @@ import {
   type UserProfileFormData,
   type UserProfileFormInput,
 } from '../types/configuracoes'
-import { formatPhone, maskPhoneChange } from '../utils/masks'
+import {
+  businessHoursSchema,
+  type BusinessHourFormData,
+  weekDays,
+} from '../types/businessHours'
+import {
+  formatCep,
+  formatPhone,
+  maskCepChange,
+  maskPhoneChange,
+  onlyDigits,
+} from '../utils/masks'
+import { handleAppError } from '../utils/handleAppError'
 
 type SettingsRowProps = {
   description: string
@@ -44,6 +75,36 @@ type SettingsRowProps = {
   title: string
   value?: string
 }
+
+const roleLabels: Record<string, string> = {
+  administrador: 'Administrador',
+  barbeiro: 'Barbeiro',
+  gerente: 'Gerente',
+  recepcao: 'Recepcao',
+}
+
+const auditActionLabels: Record<string, string> = {
+  atendimento_cancelado: 'Atendimento cancelado',
+  atendimento_concluido: 'Atendimento concluido',
+  atendimento_remarcado: 'Atendimento remarcado',
+  convite_funcionario: 'Convite de funcionario',
+  despesa_criada: 'Despesa criada',
+  empresa_atualizada: 'Empresa atualizada',
+  exportacao_dados: 'Exportacao de dados',
+  exportacao_dados_completa: 'Exportacao completa',
+  funcionario_inativado: 'Funcionario inativado',
+  login: 'Login',
+  logout: 'Logout',
+  movimentacao_criada: 'Movimentacao financeira',
+  servico_criado: 'Servico criado',
+  servico_editado: 'Servico editado',
+  servico_inativado: 'Servico inativado',
+}
+
+const auditDateFormatter = new Intl.DateTimeFormat('pt-BR', {
+  dateStyle: 'short',
+  timeStyle: 'short',
+})
 
 function SettingsRow({ description, icon, title, value }: SettingsRowProps) {
   return (
@@ -67,6 +128,10 @@ function SettingsRow({ description, icon, title, value }: SettingsRowProps) {
   )
 }
 
+function auditLabel(log: AuditLog) {
+  return auditActionLabels[log.action] ?? log.action
+}
+
 export function ConfiguracoesPage() {
   const { profile, refreshProfile } = useAuth()
   const { resolvedTheme, setTheme, theme } = useTheme()
@@ -77,9 +142,18 @@ export function ConfiguracoesPage() {
   const [companyLogoPreview, setCompanyLogoPreview] = useState<string | null>(null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [businessHours, setBusinessHours] = useState<BusinessHourFormData[]>(
+    () => defaultBusinessHours(),
+  )
+  const [businessHoursError, setBusinessHoursError] = useState<string | null>(
+    null,
+  )
+  const [cepStatus, setCepStatus] = useState<string | null>(null)
+  const lastCepLookupRef = useRef('')
 
   const empresaId = profile?.empresa_id
   const empresa = profile?.empresa
+  const isAdmin = canExportData(profile?.papel)
 
   const empresaForm = useForm<
     EmpresaSettingsFormInput,
@@ -105,11 +179,27 @@ export function ConfiguracoesPage() {
     control: perfilForm.control,
     name: 'avatar_url',
   })
+  const watchedCep = useWatch({
+    control: empresaForm.control,
+    name: 'cep',
+  })
+
+  const businessHoursQuery = useQuery({
+    enabled: Boolean(empresaId),
+    queryFn: () => listBusinessHours(empresaId as string),
+    queryKey: ['business-hours', empresaId],
+  })
+
+  const auditLogsQuery = useQuery({
+    enabled: Boolean(empresaId && isAdmin),
+    queryFn: () => listAuditLogs(empresaId as string),
+    queryKey: queryKeys.configuracoes.auditLogs(empresaId),
+  })
 
   useEffect(() => {
     empresaForm.reset({
       bairro: empresa?.bairro ?? '',
-      cep: empresa?.cep ?? '',
+      cep: formatCep(empresa?.cep),
       cidade: empresa?.cidade ?? '',
       complemento: empresa?.complemento ?? '',
       email: empresa?.email ?? '',
@@ -125,6 +215,71 @@ export function ConfiguracoesPage() {
       telefone: formatPhone(empresa?.telefone),
     })
   }, [empresa, empresaForm])
+
+  useEffect(() => {
+    const cep = onlyDigits(watchedCep)
+
+    if (cep.length !== 8) {
+      lastCepLookupRef.current = ''
+      queueMicrotask(() => setCepStatus(null))
+      return
+    }
+
+    if (lastCepLookupRef.current === cep) {
+      return
+    }
+
+    let active = true
+    lastCepLookupRef.current = cep
+    queueMicrotask(() => setCepStatus('Consultando CEP...'))
+
+    const timeoutId = window.setTimeout(() => {
+      void lookupCep(cep)
+        .then((address) => {
+          if (!active) {
+            return
+          }
+
+          empresaForm.setValue('cep', formatCep(address.cep), {
+            shouldDirty: true,
+          })
+          empresaForm.setValue('cidade', address.cidade, {
+            shouldDirty: true,
+            shouldValidate: true,
+          })
+          empresaForm.setValue('estado', address.estado, {
+            shouldDirty: true,
+            shouldValidate: true,
+          })
+
+          if (address.rua) {
+            empresaForm.setValue('rua', address.rua, { shouldDirty: true })
+          }
+
+          if (address.bairro) {
+            empresaForm.setValue('bairro', address.bairro, {
+              shouldDirty: true,
+            })
+          }
+
+          setCepStatus('Cidade e estado preenchidos pelo CEP.')
+        })
+        .catch((error) => {
+          if (active) {
+            setCepStatus(
+              error instanceof Error
+                ? error.message
+                : 'Nao foi possivel consultar o CEP.',
+            )
+          }
+        })
+    }, 350)
+
+    return () => {
+      active = false
+      window.clearTimeout(timeoutId)
+    }
+  }, [empresaForm, watchedCep])
 
   useEffect(() => {
     let active = true
@@ -170,6 +325,42 @@ export function ConfiguracoesPage() {
     }
   }, [avatarFile, profile?.avatar_url])
 
+  useEffect(() => {
+    const storedHours = businessHoursQuery.data
+
+    if (!storedHours) {
+      return
+    }
+
+    if (storedHours.length === 0) {
+      queueMicrotask(() => setBusinessHours(defaultBusinessHours()))
+      return
+    }
+
+    const storedByDay = new Map(
+      storedHours.map((hour) => [hour.day_of_week, hour]),
+    )
+
+    const nextHours = defaultBusinessHours().map((defaultHour) => {
+      const stored = storedByDay.get(defaultHour.day_of_week)
+
+      if (!stored) {
+        return defaultHour
+      }
+
+      return {
+        break_end: stored.break_end ?? '',
+        break_start: stored.break_start ?? '',
+        close_time: stored.close_time ?? '',
+        day_of_week: stored.day_of_week,
+        is_open: stored.is_open,
+        open_time: stored.open_time ?? '',
+      }
+    })
+
+    queueMicrotask(() => setBusinessHours(nextHours))
+  }, [businessHoursQuery.data])
+
   const empresaMutation = useMutation({
     mutationFn: async (data: EmpresaSettingsFormData) => {
       if (!empresaId) {
@@ -196,6 +387,66 @@ export function ConfiguracoesPage() {
     onSuccess: async () => {
       await refreshProfile()
       setPerfilError(null)
+    },
+  })
+
+  const businessHoursMutation = useMutation({
+    mutationFn: async () => {
+      if (!empresaId) {
+        throw new Error('Empresa nao encontrada.')
+      }
+
+      const parsedHours = businessHoursSchema.parse(businessHours)
+
+      await saveBusinessHours(empresaId, parsedHours)
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['business-hours'] })
+      setBusinessHoursError(null)
+    },
+  })
+
+  const exportMutation = useMutation({
+    mutationFn: async (kind: 'atendimentos' | 'clientes' | 'financeiro' | 'produtos' | 'completo') => {
+      if (!empresaId || !isAdmin) {
+        throw new Error('Apenas administradores podem exportar dados.')
+      }
+
+      if (kind === 'clientes') {
+        await exportClientesCsv(empresaId)
+        return
+      }
+
+      if (kind === 'atendimentos') {
+        await exportAtendimentosCsv(empresaId)
+        return
+      }
+
+      if (kind === 'financeiro') {
+        await exportFinanceiroCsv(empresaId)
+        return
+      }
+
+      if (kind === 'produtos') {
+        await exportProdutosCsv(empresaId)
+        return
+      }
+
+      await exportEmpresaJson(empresaId)
+    },
+    onError: async (error) => {
+      setEmpresaError(
+        await handleAppError({
+          area: 'backup_exportacao',
+          empresaId,
+          error,
+        }),
+      )
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.configuracoes.auditLogsAll,
+      })
     },
   })
 
@@ -251,6 +502,54 @@ export function ConfiguracoesPage() {
     setAvatarFile(null)
     setAvatarPreview(null)
     perfilForm.setValue('avatar_url', '')
+  }
+
+  function updateBusinessHour(
+    dayOfWeek: number,
+    patch: Partial<BusinessHourFormData>,
+  ) {
+    setBusinessHours((current) =>
+      current.map((hour) =>
+        hour.day_of_week === dayOfWeek ? { ...hour, ...patch } : hour,
+      ),
+    )
+  }
+
+  function copyWeekdayHours() {
+    const monday = businessHours.find((hour) => hour.day_of_week === 1)
+
+    if (!monday) {
+      return
+    }
+
+    setBusinessHours((current) =>
+      current.map((hour) =>
+        hour.day_of_week >= 1 && hour.day_of_week <= 5
+          ? {
+              ...hour,
+              break_end: monday.break_end,
+              break_start: monday.break_start,
+              close_time: monday.close_time,
+              is_open: monday.is_open,
+              open_time: monday.open_time,
+            }
+          : hour,
+      ),
+    )
+  }
+
+  async function handleSaveBusinessHours() {
+    setBusinessHoursError(null)
+
+    try {
+      await businessHoursMutation.mutateAsync()
+    } catch (error) {
+      setBusinessHoursError(
+        error instanceof Error
+          ? error.message
+          : 'Nao foi possivel salvar os horarios.',
+      )
+    }
   }
 
   if (!empresaId) {
@@ -340,9 +639,264 @@ export function ConfiguracoesPage() {
                 }
                 icon={<UserRound size={19} />}
                 title={profile?.nome ?? 'Usuario'}
-                value={profile?.papel ?? 'perfil'}
+                value={profile?.papel ? roleLabels[profile.papel] ?? profile.papel : 'Perfil'}
               />
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {isAdmin && (
+        <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Download
+                  className="text-brand-600 dark:text-brand-400"
+                  size={22}
+                />
+                <div>
+                  <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+                    Backup e exportação
+                  </h3>
+                  <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                    Exporte dados da sua empresa sem senhas ou tokens sensíveis.
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="grid gap-3 sm:grid-cols-2">
+              <Button
+                disabled={exportMutation.isPending}
+                leftIcon={<Download size={18} />}
+                onClick={() => exportMutation.mutate('clientes')}
+                type="button"
+                variant="secondary"
+              >
+                Exportar clientes
+              </Button>
+              <Button
+                disabled={exportMutation.isPending}
+                leftIcon={<Download size={18} />}
+                onClick={() => exportMutation.mutate('financeiro')}
+                type="button"
+                variant="secondary"
+              >
+                Exportar financeiro
+              </Button>
+              <Button
+                disabled={exportMutation.isPending}
+                leftIcon={<Download size={18} />}
+                onClick={() => exportMutation.mutate('atendimentos')}
+                type="button"
+                variant="secondary"
+              >
+                Exportar atendimentos
+              </Button>
+              <Button
+                disabled={exportMutation.isPending}
+                leftIcon={<Download size={18} />}
+                onClick={() => exportMutation.mutate('produtos')}
+                type="button"
+                variant="secondary"
+              >
+                Exportar produtos
+              </Button>
+              <div className="sm:col-span-2">
+                <Button
+                  disabled={exportMutation.isPending}
+                  leftIcon={<FileJson size={18} />}
+                  onClick={() => exportMutation.mutate('completo')}
+                  type="button"
+                >
+                  {exportMutation.isPending
+                    ? 'Preparando exportação...'
+                    : 'Exportar dados da empresa'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <ClipboardList
+                  className="text-brand-600 dark:text-brand-400"
+                  size={22}
+                />
+                <div>
+                  <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+                    Auditoria
+                  </h3>
+                  <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                    Últimas ações sensíveis registradas no sistema.
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {auditLogsQuery.isLoading ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Carregando auditoria...
+                </p>
+              ) : auditLogsQuery.data?.length ? (
+                <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
+                  {auditLogsQuery.data.slice(0, 12).map((log) => (
+                    <div
+                      className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/70"
+                      key={log.id}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="font-black text-slate-950 dark:text-slate-50">
+                          {auditLabel(log)}
+                        </p>
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          {auditDateFormatter.format(new Date(log.created_at))}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        {log.entity_type}
+                        {log.entity_id ? ` #${log.entity_id}` : ''}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400">
+                  Nenhum evento de auditoria registrado ainda.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+                Horarios de funcionamento
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Defina os dias, expediente e pausas que liberam a agenda do cliente.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={copyWeekdayHours}
+                type="button"
+                variant="secondary"
+              >
+                Copiar segunda a sexta
+              </Button>
+              <Button
+                disabled={businessHoursMutation.isPending}
+                onClick={() => void handleSaveBusinessHours()}
+                type="button"
+              >
+                {businessHoursMutation.isPending
+                  ? 'Salvando...'
+                  : 'Salvar horarios'}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {businessHoursError && (
+            <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {businessHoursError}
+            </p>
+          )}
+          {businessHoursMutation.isSuccess && (
+            <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              Horarios salvos com sucesso.
+            </p>
+          )}
+          <div className="grid gap-3 lg:grid-cols-2">
+            {weekDays.map((day) => {
+              const hour =
+                businessHours.find((item) => item.day_of_week === day.value) ??
+                defaultBusinessHours()[day.value]
+
+              return (
+                <div
+                  className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70"
+                  key={day.value}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-black text-slate-950 dark:text-slate-50">
+                        {day.label}
+                      </p>
+                      <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        {hour.is_open ? 'Aberto' : 'Fechado'}
+                      </p>
+                    </div>
+                    <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                      <input
+                        checked={hour.is_open}
+                        className="h-4 w-4 accent-brand-500"
+                        onChange={(event) =>
+                          updateBusinessHour(day.value, {
+                            is_open: event.target.checked,
+                          })
+                        }
+                        type="checkbox"
+                      />
+                      Aberto
+                    </label>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <Input
+                      disabled={!hour.is_open}
+                      label="Inicio"
+                      onChange={(event) =>
+                        updateBusinessHour(day.value, {
+                          open_time: event.target.value,
+                        })
+                      }
+                      type="time"
+                      value={hour.open_time ?? ''}
+                    />
+                    <Input
+                      disabled={!hour.is_open}
+                      label="Fim"
+                      onChange={(event) =>
+                        updateBusinessHour(day.value, {
+                          close_time: event.target.value,
+                        })
+                      }
+                      type="time"
+                      value={hour.close_time ?? ''}
+                    />
+                    <Input
+                      disabled={!hour.is_open}
+                      label="Intervalo inicio"
+                      onChange={(event) =>
+                        updateBusinessHour(day.value, {
+                          break_start: event.target.value,
+                        })
+                      }
+                      type="time"
+                      value={hour.break_start ?? ''}
+                    />
+                    <Input
+                      disabled={!hour.is_open}
+                      label="Intervalo fim"
+                      onChange={(event) =>
+                        updateBusinessHour(day.value, {
+                          break_end: event.target.value,
+                        })
+                      }
+                      type="time"
+                      value={hour.break_end ?? ''}
+                    />
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </CardContent>
       </Card>
@@ -421,7 +975,9 @@ export function ConfiguracoesPage() {
                     inputMode="numeric"
                     label="CEP"
                     placeholder="00000-000"
-                    {...empresaForm.register('cep')}
+                    {...empresaForm.register('cep', {
+                      onChange: maskCepChange,
+                    })}
                   />
                   <Input
                     error={empresaForm.formState.errors.rua?.message}
@@ -460,23 +1016,12 @@ export function ConfiguracoesPage() {
                     placeholder="Sala, andar ou referencia"
                     {...empresaForm.register('complemento')}
                   />
-                  <Input
-                    error={empresaForm.formState.errors.latitude?.message}
-                    label="Latitude"
-                    placeholder="-30.034647"
-                    step="0.0000001"
-                    type="number"
-                    {...empresaForm.register('latitude')}
-                  />
-                  <Input
-                    error={empresaForm.formState.errors.longitude?.message}
-                    label="Longitude"
-                    placeholder="-51.217658"
-                    step="0.0000001"
-                    type="number"
-                    {...empresaForm.register('longitude')}
-                  />
                 </div>
+                {cepStatus && (
+                  <p className="mt-3 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-brand-400/20 dark:bg-brand-400/10 dark:text-brand-100">
+                    {cepStatus}
+                  </p>
+                )}
               </div>
 
               <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">

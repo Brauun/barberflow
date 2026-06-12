@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { useAuth } from './useAuth'
+import { queryKeys } from '../lib/queryKeys'
 import {
   canUseFeature,
   getFeatureLimit,
@@ -17,7 +18,7 @@ export function useSubscription() {
   const query = useQuery({
     enabled: Boolean(empresaId),
     queryFn: () => getSubscriptionState(empresaId as string),
-    queryKey: ['subscription', empresaId],
+    queryKey: queryKeys.assinatura.detail(empresaId),
   })
 
   const subscription = query.data?.subscription ?? null
