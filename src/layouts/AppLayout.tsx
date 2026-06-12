@@ -340,10 +340,10 @@ export function AppLayout() {
         aria-label={item.label}
         className={({ isActive }) =>
           cn(
-            'group relative flex h-11 w-full items-center rounded-2xl text-slate-600 transition duration-[180ms] hover:translate-x-1 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-800/80 dark:hover:text-white',
+            'group relative flex h-10 w-full items-center rounded-xl text-slate-500 transition duration-150 hover:bg-slate-50 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200',
             isSidebarExpanded ? 'justify-start gap-3 px-3.5' : 'justify-center px-0',
             isActive &&
-              'bg-brand-50/70 text-brand-600 shadow-[0_10px_28px_rgb(6_182_212/0.10)] ring-1 ring-brand-100/80 dark:bg-brand-400/15 dark:text-white dark:ring-brand-400/25',
+              'bg-brand-50 text-brand-600 dark:bg-brand-400/12 dark:text-brand-300',
           )
         }
         key={item.path}
@@ -704,14 +704,17 @@ export function AppLayout() {
 
         <main className="px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:px-10 lg:py-9 xl:px-12">
           {subscriptionQuery.subscription?.status === 'TRIAL' && (
-            <div className="mb-6 rounded-[1.35rem] border border-brand-100 bg-brand-50/80 px-5 py-4 text-sm font-semibold text-slate-700 dark:border-brand-400/20 dark:bg-brand-400/10 dark:text-brand-100">
-              Seu teste gratis termina em {trialDaysRemaining ?? 0} dias.
+            <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-brand-100 bg-brand-50/60 px-4 py-3 text-sm text-slate-600 dark:border-brand-400/15 dark:bg-brand-400/8 dark:text-brand-200">
+              <span className="shrink-0 text-brand-500 dark:text-brand-400">⏳</span>
+              Seu teste gratis termina em{' '}
+              <span className="font-semibold text-brand-600 dark:text-brand-300">{trialDaysRemaining ?? 0} dias</span>.
+              Assine para continuar usando todos os recursos.
             </div>
           )}
           {isSubscriptionExpired && (
-            <div className="mb-6 rounded-[1.35rem] border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-200">
-              Seu periodo de teste terminou. Escolha um plano para continuar
-              usando o BW Barber.
+            <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/8 dark:text-red-300">
+              <span className="shrink-0">⚠️</span>
+              Seu periodo de teste terminou. Escolha um plano para continuar usando o BW Barber.
             </div>
           )}
           <Outlet />
