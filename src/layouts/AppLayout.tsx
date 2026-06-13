@@ -616,9 +616,59 @@ export function AppLayout() {
               </h1>
             </div>
 
-            <div className="hidden h-11 w-full max-w-xs items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500 md:flex">
-              <Search size={16} />
-              <span>Buscar</span>
+            <div className="relative hidden w-full max-w-xs md:block">
+              <div className="flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500 transition focus-within:border-brand-200 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-100/70 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:focus-within:border-brand-400/40 dark:focus-within:bg-slate-950 dark:focus-within:ring-brand-400/10">
+                <Search size={16} />
+                <input
+                  aria-label="Buscar no BW Barber"
+                  className="h-full w-full min-w-0 bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-500 dark:text-slate-100 dark:placeholder:text-slate-400"
+                  onChange={(event) => {
+                    setGlobalSearchTerm(event.target.value)
+                    setIsGlobalSearchOpen(true)
+                  }}
+                  onFocus={() => setIsGlobalSearchOpen(true)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && globalSearchResults[0]) {
+                      openGlobalSearchItem(globalSearchResults[0])
+                    }
+
+                    if (event.key === 'Escape') {
+                      setIsGlobalSearchOpen(false)
+                      setGlobalSearchTerm('')
+                    }
+                  }}
+                  placeholder="Buscar"
+                  type="search"
+                  value={globalSearchTerm}
+                />
+              </div>
+
+              {isGlobalSearchOpen && (
+                <div className="absolute right-0 top-12 z-50 w-full overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white p-2 shadow-[0_24px_80px_rgb(15_23_42/0.16)] dark:border-slate-800 dark:bg-slate-950">
+                  {globalSearchResults.length > 0 ? (
+                    globalSearchResults.map((item) => {
+                      const Icon = item.icon
+
+                      return (
+                        <button
+                          className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-semibold text-slate-600 transition hover:bg-brand-50 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-brand-400/10 dark:hover:text-white"
+                          key={item.path}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => openGlobalSearchItem(item)}
+                          type="button"
+                        >
+                          <Icon className="shrink-0 text-brand-600 dark:text-brand-300" size={16} />
+                          <span className="min-w-0 truncate">{item.label}</span>
+                        </button>
+                      )
+                    })
+                  ) : (
+                    <p className="px-3 py-4 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
+                      Nenhum resultado encontrado.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="relative">
@@ -718,15 +768,17 @@ export function AppLayout() {
               )}
             </div>
 
-            <Button
-              aria-label="Fechar menu"
-              className="lg:hidden"
-              onClick={() => setIsMobileMenuOpen(false)}
-              size="icon-md"
-              variant="ghost"
-            >
-              <X size={16} />
-            </Button>
+            {isMobileMenuOpen && (
+              <Button
+                aria-label="Fechar menu"
+                className="lg:hidden"
+                onClick={() => setIsMobileMenuOpen(false)}
+                size="icon-md"
+                variant="ghost"
+              >
+                <X size={16} />
+              </Button>
+            )}
           </div>
         </header>
 
