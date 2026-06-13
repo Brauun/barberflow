@@ -351,7 +351,11 @@ export function DashboardPage() {
 
   const userName = profile?.nome ?? user?.user_metadata.nome ?? 'Usuário'
   const todayRevenue = data.metrics[0]
-  const appointments = data.metrics[5] ?? data.metrics[1]
+  const appointments = {
+    helper: 'Atendimentos concluídos hoje',
+    label: 'Atendimentos Hoje',
+    value: String(data.todayAppointments),
+  }
   const monthRevenue = data.metrics[2]
   const netProfit = data.metrics[3]
   const ticketMedio =
@@ -359,7 +363,7 @@ export function DashboardPage() {
     Math.max(1, Number(String(appointments?.value ?? '1').replace(/\D/g, '')))
 
   const popularServices = Object.values(
-    data.latestAppointments.reduce<
+    data.popularServicesToday.reduce<
       Record<string, { count: number; name: string; total: number }>
     >((acc, appointment) => {
       const name = appointment.servicos?.nome ?? 'Serviço'

@@ -57,6 +57,8 @@ export type DashboardData = {
   metrics: DashboardMetric[]
   monthlyFinance: MonthlyFinancePoint[]
   latestAppointments: LatestAppointment[]
+  popularServicesToday: LatestAppointment[]
+  todayAppointments: number
   dueBills: DueBill[]
 }
 
@@ -70,7 +72,11 @@ function formatCurrency(value: number) {
 }
 
 function toDateInputValue(date: Date) {
-  return date.toISOString().slice(0, 10)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
 }
 
 function startOfDay(date: Date) {
@@ -193,7 +199,9 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
     movementsResponse,
     commissionsResponse,
     activeClientsResponse,
+    completedTodayResponse,
     completedServicesResponse,
+    popularServicesTodayResponse,
     latestAppointmentsResponse,
     dueBillsResponse,
     paidBillsResponse,
@@ -222,6 +230,13 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
       .select('id', { count: 'exact', head: true })
       .eq('empresa_id', empresaId)
       .in('status', ['concluido', 'concluido_automatico'])
+      .gte('data_hora_inicio', today.toISOString())
+      .lt('data_hora_inicio', tomorrow.toISOString()),
+    supabase
+      .from('atendimentos')
+      .select('id', { count: 'exact', head: true })
+      .eq('empresa_id', empresaId)
+      .in('status', ['concluido', 'concluido_automatico'])
       .gte('data_hora_inicio', monthStart.toISOString())
       .lt('data_hora_inicio', nextMonth.toISOString()),
     supabase
@@ -230,6 +245,18 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
         'id,data_hora_inicio,valor,status,clientes(nome),barbeiros(nome),servicos(nome)',
       )
       .eq('empresa_id', empresaId)
+      .in('status', ['concluido', 'concluido_automatico'])
+      .gte('data_hora_inicio', today.toISOString())
+      .lt('data_hora_inicio', tomorrow.toISOString())
+      .order('data_hora_inicio', { ascending: false })
+      .limit(20),
+    supabase
+      .from('atendimentos')
+      .select(
+        'id,data_hora_inicio,valor,status,clientes(nome),barbeiros(nome),servicos(nome)',
+      )
+      .eq('empresa_id', empresaId)
+      .in('status', ['concluido', 'concluido_automatico'])
       .order('data_hora_inicio', { ascending: false })
       .limit(6),
     supabase
@@ -252,7 +279,9 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
     movementsResponse,
     commissionsResponse,
     activeClientsResponse,
+    completedTodayResponse,
     completedServicesResponse,
+    popularServicesTodayResponse,
     latestAppointmentsResponse,
     dueBillsResponse,
     paidBillsResponse,
@@ -315,6 +344,9 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
     dueBills: (dueBillsResponse.data ?? []) as DueBill[],
     latestAppointments:
       (latestAppointmentsResponse.data ?? []) as unknown as LatestAppointment[],
+    popularServicesToday:
+      (popularServicesTodayResponse.data ?? []) as unknown as LatestAppointment[],
+    todayAppointments: completedTodayResponse.count ?? 0,
     metrics: [
       {
         label: 'Faturamento Hoje',
