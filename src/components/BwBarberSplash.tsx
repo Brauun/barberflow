@@ -21,20 +21,15 @@ export function BwBarberSplash({ isLeaving = false }: BwBarberSplashProps) {
       {/* Conteúdo central */}
       <div className="relative flex flex-col items-center gap-0">
 
-        {/* Anel decorativo + logo, sem sobreposição */}
-        <div className="bw-splash-ring relative flex h-52 w-52 items-center justify-center rounded-full border border-[#12C6F3]/18 sm:h-60 sm:w-60">
-          {/* Glow interno */}
-          <div className="absolute inset-0 rounded-full bg-[#12C6F3]/5 blur-xl" />
-
-          {/* Logo */}
-          <div className="bw-splash-logo relative z-10 flex h-36 w-36 items-center justify-center sm:h-44 sm:w-44">
-            <img
-              alt="BW Barber"
-              className="h-full w-full object-contain"
-              decoding="async"
-              src="/brand/bw-barber-login-logo.png"
-            />
-          </div>
+        {/* Logo — mix-blend-mode screen elimina o fundo branco do PNG */}
+        <div className="bw-splash-logo relative flex h-48 w-48 items-center justify-center sm:h-56 sm:w-56">
+          <div className="absolute inset-0 rounded-full bg-[#12C6F3]/6 blur-2xl" />
+          <img
+            alt="BW Barber"
+            className="relative h-full w-full object-contain mix-blend-screen"
+            decoding="async"
+            src="/brand/bw-barber-login-logo.png"
+          />
         </div>
 
         {/* Textos */}
@@ -47,9 +42,9 @@ export function BwBarberSplash({ isLeaving = false }: BwBarberSplashProps) {
           </p>
         </div>
 
-        {/* Barra de progresso */}
-        <div className="bw-splash-progress mt-8 h-[2px] w-40 overflow-hidden rounded-full bg-white/8">
-          <span className="block h-full rounded-full bg-gradient-to-r from-[#12C6F3]/60 via-[#12C6F3] to-[#12C6F3]/60" />
+        {/* Barra de progresso shimmer */}
+        <div className="bw-splash-progress mt-8 h-[2px] w-48 overflow-hidden rounded-full bg-white/10">
+          <span className="bw-progress-bar block h-full w-full rounded-full" />
         </div>
 
         {/* Três pontos animados */}
