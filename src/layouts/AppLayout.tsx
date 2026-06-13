@@ -488,6 +488,15 @@ export function AppLayout() {
               <PanelLeftOpen size={17} />
             )}
           </button>
+
+          <button
+            aria-label="Fechar menu"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-slate-500 transition duration-[180ms] hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white lg:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+            type="button"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         <nav
@@ -622,6 +631,9 @@ export function AppLayout() {
                 <input
                   aria-label="Buscar no BW Barber"
                   className="h-full w-full min-w-0 bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-500 dark:text-slate-100 dark:placeholder:text-slate-400"
+                  onBlur={() => {
+                    window.setTimeout(() => setIsGlobalSearchOpen(false), 120)
+                  }}
                   onChange={(event) => {
                     setGlobalSearchTerm(event.target.value)
                     setIsGlobalSearchOpen(true)
@@ -767,18 +779,6 @@ export function AppLayout() {
                 </div>
               )}
             </div>
-
-            {isMobileMenuOpen && (
-              <Button
-                aria-label="Fechar menu"
-                className="lg:hidden"
-                onClick={() => setIsMobileMenuOpen(false)}
-                size="icon-md"
-                variant="ghost"
-              >
-                <X size={16} />
-              </Button>
-            )}
           </div>
         </header>
 
