@@ -125,7 +125,7 @@ function CompactTimeInput({ disabled, label, onChange, value }: CompactTimeInput
         </span>
       )}
       <input
-        className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm tabular-nums text-slate-950 outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100/80 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50 dark:disabled:bg-slate-800/50"
+        className="h-9 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-2 text-base tabular-nums text-slate-950 outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100/80 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 sm:h-8 sm:text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50 dark:disabled:bg-slate-800/50"
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         type="time"
@@ -137,7 +137,7 @@ function CompactTimeInput({ disabled, label, onChange, value }: CompactTimeInput
 
 function SettingsRow({ description, icon, title, value }: SettingsRowProps) {
   return (
-    <div className="flex items-center gap-4 rounded-[1.35rem] border border-slate-200/70 bg-white p-4 shadow-[0_12px_44px_rgb(15_23_42/0.025)] transition duration-200 hover:-translate-y-0.5 hover:border-slate-300">
+    <div className="flex min-w-0 items-center gap-4 rounded-[1.1rem] border border-slate-200/70 bg-white p-3 shadow-[0_12px_44px_rgb(15_23_42/0.025)] transition duration-200 hover:border-slate-300 sm:rounded-[1.35rem] sm:p-4 sm:hover:-translate-y-0.5">
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-brand-100 bg-brand-50 text-brand-600">
         {icon}
       </span>
@@ -648,8 +648,8 @@ export function ConfiguracoesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <section>
+    <div className="min-w-0 space-y-5 overflow-x-hidden pb-[env(safe-area-inset-bottom)] sm:space-y-6">
+      <section className="min-w-0">
         <p className="text-sm font-semibold uppercase text-brand-600 dark:text-brand-400">
           Configurações
         </p>
@@ -729,7 +729,7 @@ export function ConfiguracoesPage() {
       </Card>
 
       {isAdmin && (
-        <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] xl:gap-6">
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -747,7 +747,7 @@ export function ConfiguracoesPage() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2">
+            <CardContent className="grid min-w-0 gap-3 sm:grid-cols-2">
               <Button
                 className="border-slate-200 bg-white text-slate-950 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 dark:border-transparent dark:bg-slate-950 dark:text-white dark:hover:border-transparent dark:hover:bg-slate-900"
                 disabled={exportMutation.isPending}
@@ -788,9 +788,9 @@ export function ConfiguracoesPage() {
               >
                 Exportar produtos
               </Button>
-              <div className="sm:col-span-2">
+              <div className="min-w-0 sm:col-span-2">
                 <Button
-                  className="border-transparent bg-slate-950 text-white hover:border-transparent hover:bg-slate-800 dark:border-transparent dark:bg-white dark:text-slate-950 dark:hover:border-transparent dark:hover:bg-slate-200"
+                  className="w-full border-transparent bg-slate-950 text-white hover:border-transparent hover:bg-slate-800 sm:w-auto dark:border-transparent dark:bg-white dark:text-slate-950 dark:hover:border-transparent dark:hover:bg-slate-200"
                   disabled={exportMutation.isPending}
                   leftIcon={<FileJson size={18} />}
                   onClick={() => exportMutation.mutate('completo')}
@@ -827,7 +827,7 @@ export function ConfiguracoesPage() {
                   Carregando auditoria...
                 </p>
               ) : auditLogsQuery.data?.length ? (
-                <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
+                <div className="max-h-80 min-w-0 space-y-2 overflow-y-auto pr-1">
                   {auditLogsQuery.data.slice(0, 12).map((log) => (
                     <div
                       className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/70"
@@ -860,7 +860,7 @@ export function ConfiguracoesPage() {
 
       <Card>
   <CardHeader>
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
           Horários de funcionamento
@@ -869,9 +869,9 @@ export function ConfiguracoesPage() {
           Dias, expediente e pausas que liberam a agenda.
         </p>
       </div>
-      <div className="flex gap-2">
+      <div className="grid w-full gap-2 sm:flex sm:w-auto">
         <Button
-          className="border-slate-200 bg-white text-slate-950 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 dark:border-transparent dark:bg-slate-950 dark:text-white dark:hover:border-transparent dark:hover:bg-slate-900"
+          className="w-full border-slate-200 bg-white text-slate-950 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 sm:w-auto dark:border-transparent dark:bg-slate-950 dark:text-white dark:hover:border-transparent dark:hover:bg-slate-900"
           onClick={copyWeekdayHours}
           type="button"
           variant="secondary"
@@ -879,7 +879,7 @@ export function ConfiguracoesPage() {
           Seg → Sex
         </Button>
         <Button
-          className="border-transparent bg-slate-950 text-white hover:border-transparent hover:bg-slate-800 dark:border-transparent dark:bg-white dark:text-slate-950 dark:hover:border-transparent dark:hover:bg-slate-200"
+          className="w-full border-transparent bg-slate-950 text-white hover:border-transparent hover:bg-slate-800 sm:w-auto dark:border-transparent dark:bg-white dark:text-slate-950 dark:hover:border-transparent dark:hover:bg-slate-200"
           disabled={businessHoursMutation.isPending}
           onClick={() => void handleSaveBusinessHours()}
           type="button"
@@ -890,7 +890,7 @@ export function ConfiguracoesPage() {
     </div>
   </CardHeader>
 
-  <CardContent className="space-y-1.5">
+  <CardContent className="min-w-0 space-y-1.5">
     {businessHoursError && (
       <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
         {businessHoursError}
@@ -903,7 +903,7 @@ export function ConfiguracoesPage() {
     )}
 
     {/* Cabeçalho das colunas — visível apenas em telas médias+ */}
-    <div className="hidden grid-cols-[7rem_1fr_1fr_1fr_1fr_2rem] gap-x-2 px-2 sm:grid">
+    <div className="hidden min-w-0 grid-cols-[7rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_2rem] gap-x-2 px-2 sm:grid">
       <span />
       <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">Abertura</span>
       <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">Fechamento</span>
@@ -921,7 +921,7 @@ export function ConfiguracoesPage() {
         <div
           key={day.value}
           className={[
-            'rounded-2xl border px-3 py-2.5 transition-colors',
+            'min-w-0 rounded-2xl border px-3 py-2.5 transition-colors',
             hour.is_open
               ? 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60'
               : 'border-slate-100 bg-slate-50/60 dark:border-slate-800/60 dark:bg-slate-900/30',
@@ -988,7 +988,7 @@ export function ConfiguracoesPage() {
           )}
 
           {/* Layout desktop: linha única */}
-          <div className="hidden grid-cols-[7rem_1fr_1fr_1fr_1fr_2rem] items-center gap-x-2 sm:grid">
+          <div className="hidden min-w-0 grid-cols-[7rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_2rem] items-center gap-x-2 sm:grid">
             <p className="text-sm font-bold text-slate-950 dark:text-slate-50">
               {day.label}
             </p>
@@ -1042,7 +1042,7 @@ export function ConfiguracoesPage() {
               </p>
             </div>
             <Button
-              className="border-transparent bg-slate-950 text-white hover:border-transparent hover:bg-slate-800 dark:border-transparent dark:bg-white dark:text-slate-950 dark:hover:border-transparent dark:hover:bg-slate-200"
+              className="w-full border-transparent bg-slate-950 text-white hover:border-transparent hover:bg-slate-800 sm:w-auto dark:border-transparent dark:bg-white dark:text-slate-950 dark:hover:border-transparent dark:hover:bg-slate-200"
               disabled={appointmentAutomationMutation.isPending}
               onClick={() => void handleSaveAppointmentAutomation()}
               type="button"
@@ -1064,7 +1064,7 @@ export function ConfiguracoesPage() {
               Automação salva com sucesso.
             </p>
           )}
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid min-w-0 gap-4 lg:grid-cols-3">
             <Select
               label="Finalização automatica"
               onChange={(event) => {
@@ -1129,7 +1129,7 @@ export function ConfiguracoesPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+      <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] xl:gap-6">
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -1162,7 +1162,7 @@ export function ConfiguracoesPage() {
                 {...empresaForm.register('nome')}
               />
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid min-w-0 gap-4 sm:grid-cols-2">
                 <Input
                   error={empresaForm.formState.errors.telefone?.message}
                   inputMode="numeric"
@@ -1197,7 +1197,7 @@ export function ConfiguracoesPage() {
                     Esses dados aparecem para o cliente e alimentam o botao Ver rota.
                   </p>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid min-w-0 gap-4 sm:grid-cols-2">
                   <Input
                     error={empresaForm.formState.errors.cep?.message}
                     inputMode="numeric"
@@ -1253,7 +1253,7 @@ export function ConfiguracoesPage() {
               </div>
 
               <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
                   <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-3xl border border-brand-100 bg-brand-50 text-brand-600 dark:border-brand-400/20 dark:bg-brand-400/10 dark:text-brand-200">
                     {companyLogoPreview ? (
                       <img
@@ -1278,8 +1278,8 @@ export function ConfiguracoesPage() {
                       </p>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <label className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">
+                  <div className="grid w-full gap-2 sm:flex sm:w-auto sm:flex-wrap">
+                    <label className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 text-base font-semibold text-white transition hover:bg-slate-800 sm:h-10 sm:w-auto sm:text-sm dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">
                       <ImagePlus size={16} />
                       Trocar
                       <input
@@ -1325,6 +1325,7 @@ export function ConfiguracoesPage() {
 
               <div className="flex justify-end">
                 <Button
+                  className="w-full sm:w-auto"
                   disabled={empresaMutation.isPending}
                   leftIcon={<Save size={18} />}
                   type="submit"
@@ -1346,8 +1347,8 @@ export function ConfiguracoesPage() {
                 Ajuste a aparência do sistema.
               </p>
             </CardHeader>
-            <CardContent>
-              <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+          <CardContent>
+              <div className="grid min-w-0 gap-3 sm:grid-cols-3 xl:grid-cols-1">
                 <Button
                   leftIcon={<Sun size={18} />}
                   onClick={() => setTheme('light')}
@@ -1409,7 +1410,7 @@ export function ConfiguracoesPage() {
                 />
 
                 <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
                     <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-brand-100 bg-brand-50 text-brand-600 dark:border-brand-400/20 dark:bg-brand-400/10 dark:text-brand-200">
                       {avatarPreview ? (
                         <img
@@ -1429,8 +1430,8 @@ export function ConfiguracoesPage() {
                         Usada na sidebar e no perfil do usuário.
                       </p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <label className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">
+                    <div className="grid w-full gap-2 sm:flex sm:w-auto sm:flex-wrap">
+                      <label className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 text-base font-semibold text-white transition hover:bg-slate-800 sm:h-10 sm:w-auto sm:text-sm dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">
                         <ImagePlus size={16} />
                         Trocar
                         <input
@@ -1472,6 +1473,7 @@ export function ConfiguracoesPage() {
 
                 <div className="flex justify-end">
                   <Button
+                    className="w-full sm:w-auto"
                     disabled={perfilMutation.isPending}
                     leftIcon={<Save size={18} />}
                     type="submit"

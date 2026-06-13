@@ -62,7 +62,20 @@
     box-sizing: border-box;
   }
 
+  html,
+  #root {
+    min-width: 320px;
+    min-height: 100%;
+    overflow-x: hidden;
+    background: var(--bf-background);
+  }
+
+  #root {
+    min-height: 100dvh;
+  }
+
   body {
+    width: 100%;
     min-width: 320px;
     min-height: 100dvh;
     margin: 0;
@@ -91,7 +104,16 @@
   input,
   textarea,
   select {
+    min-width: 0;
     font: inherit;
+  }
+
+  @media (max-width: 640px) {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
   }
 }
 
@@ -287,5 +309,145 @@
       );
     border: 2px solid transparent;
     background-clip: padding-box;
+  }
+
+  .bw-splash {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem);
+    animation: bwSplashHold 2800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    will-change: opacity, filter;
+  }
+
+  .bw-splash-leaving {
+    pointer-events: none;
+    animation: bwSplashExit 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .bw-splash-logo {
+    opacity: 0;
+    transform: translateY(10px) scale(0.94);
+    filter: drop-shadow(0 22px 55px rgb(18 198 243 / 0.12));
+    animation: bwSplashLogo 1280ms cubic-bezier(0.22, 1, 0.36, 1) 360ms forwards;
+  }
+
+  .bw-splash-line {
+    stroke-dasharray: 260;
+    stroke-dashoffset: 260;
+    filter: drop-shadow(0 0 10px rgb(18 198 243 / 0.22));
+    animation: bwSplashDraw 1320ms cubic-bezier(0.65, 0, 0.35, 1) 180ms forwards;
+  }
+
+  .bw-splash-line-soft {
+    opacity: 0.46;
+    animation-delay: 60ms;
+  }
+
+  .bw-splash-line-bright {
+    animation-delay: 300ms;
+  }
+
+  .bw-splash-symbol {
+    opacity: 0;
+    animation: bwSplashSymbol 1680ms cubic-bezier(0.22, 1, 0.36, 1) 80ms forwards;
+  }
+
+  .bw-splash-orbit {
+    opacity: 0;
+    transform: scale(0.82);
+    animation: bwSplashOrbit 1800ms cubic-bezier(0.22, 1, 0.36, 1) 420ms forwards;
+  }
+
+  .bw-splash-text {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: bwSplashText 760ms cubic-bezier(0.22, 1, 0.36, 1) 1180ms forwards;
+  }
+
+  .bw-splash-progress span {
+    transform: translateX(-100%);
+    animation: bwSplashProgress 2200ms cubic-bezier(0.22, 1, 0.36, 1) 360ms forwards;
+  }
+
+  @keyframes bwSplashHold {
+    0%,
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes bwSplashExit {
+    to {
+      opacity: 0;
+      filter: blur(10px);
+    }
+  }
+
+  @keyframes bwSplashDraw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes bwSplashSymbol {
+    0% {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+
+    40%,
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes bwSplashLogo {
+    0% {
+      opacity: 0;
+      transform: translateY(10px) scale(0.94);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes bwSplashText {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes bwSplashOrbit {
+    0% {
+      opacity: 0;
+      transform: scale(0.82);
+    }
+
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes bwSplashProgress {
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bw-splash,
+    .bw-splash-leaving,
+    .bw-splash-logo,
+    .bw-splash-line,
+    .bw-splash-symbol,
+    .bw-splash-orbit,
+    .bw-splash-text,
+    .bw-splash-progress span {
+      animation-duration: 1ms !important;
+      animation-delay: 0ms !important;
+    }
   }
 }

@@ -19,7 +19,7 @@ export function Input({ className, error, id, label, ...props }: InputProps) {
       )}
       <input
         className={cn(
-          'mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-base text-slate-950 outline-none transition duration-200 placeholder:text-slate-400 focus:border-brand-300 focus:ring-4 focus:ring-brand-100/80 sm:text-sm dark:border-slate-200 dark:bg-white dark:text-slate-950',
+          'mt-2 h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 text-base text-slate-950 outline-none transition duration-200 placeholder:text-slate-400 focus:border-brand-300 focus:ring-4 focus:ring-brand-100/80 sm:text-sm dark:border-slate-200 dark:bg-white dark:text-slate-950',
           error && 'border-red-400 focus:border-red-500 focus:ring-red-100',
           className,
         )}

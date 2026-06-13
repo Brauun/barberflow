@@ -8,7 +8,7 @@ type TableProps = HTMLAttributes<HTMLTableElement> & {
 
 export function Table({ children, className, ...props }: TableProps) {
   return (
-    <div className="w-full p-4 sm:p-5">
+    <div className="w-full min-w-0 overflow-x-auto p-4 sm:p-5">
       <table
         className={cn(
           'block w-full min-w-0 border-separate border-spacing-y-3 text-left text-sm',

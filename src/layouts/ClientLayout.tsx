@@ -45,7 +45,7 @@ export function ClientLayout() {
 
   if (isLoading || profileLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-surface px-6">
+      <main className="flex min-h-[100dvh] items-center justify-center bg-surface px-6">
         <p className="text-sm font-medium text-ink-700">Carregando...</p>
       </main>
     )
@@ -56,9 +56,9 @@ export function ClientLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-surface text-slate-950 dark:text-slate-50">
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/82 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/88">
-        <div className="mx-auto flex h-20 max-w-7xl items-center gap-4 px-5">
+    <div className="min-h-[100dvh] overflow-x-hidden bg-surface text-slate-950 dark:text-slate-50">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/82 pt-[env(safe-area-inset-top)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/88">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:h-20 sm:gap-4 sm:px-5">
           <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-brand-600 ring-1 ring-brand-100 dark:bg-brand-400/12 dark:text-brand-100 dark:ring-brand-400/20">
             {avatarSrc ? (
               <img
@@ -123,7 +123,7 @@ export function ClientLayout() {
         </div>
       </header>
 
-      <main className="mx-auto grid w-full max-w-7xl gap-8 px-5 py-8 pb-28 xl:grid-cols-[14rem_minmax(0,1fr)]">
+      <main className="mx-auto grid w-full min-w-0 max-w-7xl gap-6 overflow-x-hidden px-4 py-6 pb-[calc(env(safe-area-inset-bottom)+6.5rem)] sm:px-5 sm:py-8 xl:grid-cols-[14rem_minmax(0,1fr)]">
         <aside className="hidden self-start rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-[0_18px_70px_rgb(15_23_42/0.05)] dark:border-slate-800 dark:bg-slate-950 xl:block">
           <div className="mb-3 flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
             <MapPin size={14} />
@@ -155,12 +155,12 @@ export function ClientLayout() {
           </div>
         </aside>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-x-hidden">
           <Outlet />
         </div>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/88 px-3 py-3 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/88 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 md:hidden">
         <div className="grid grid-cols-4 gap-2">
           {clientNavigation.map((item) => {
             const Icon = item.icon

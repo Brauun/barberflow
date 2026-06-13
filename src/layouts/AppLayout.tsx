@@ -119,6 +119,8 @@ export function AppLayout() {
   const queryClient = useQueryClient()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false)
+  const [globalSearchTerm, setGlobalSearchTerm] = useState('')
   const [companyLogoSrc, setCompanyLogoSrc] = useState<string | null>(null)
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null)
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(() => {
@@ -152,6 +154,21 @@ export function AppLayout() {
     ],
     [visibleNavigationGroups, visibleNavigationItems],
   )
+  const globalSearchItems = useMemo(
+    () => [...allVisibleNavigationItems, ...visibleSettingsItems],
+    [allVisibleNavigationItems, visibleSettingsItems],
+  )
+  const globalSearchResults = useMemo(() => {
+    const normalizedTerm = globalSearchTerm.trim().toLocaleLowerCase('pt-BR')
+
+    if (!normalizedTerm) {
+      return globalSearchItems.slice(0, 6)
+    }
+
+    return globalSearchItems
+      .filter((item) => item.label.toLocaleLowerCase('pt-BR').includes(normalizedTerm))
+      .slice(0, 6)
+  }, [globalSearchItems, globalSearchTerm])
   const canAccessCurrentAppRoute = useMemo(() => {
     if (!location.pathname.startsWith('/app')) {
       return true
@@ -317,6 +334,12 @@ export function AppLayout() {
     })
   }
 
+  function openGlobalSearchItem(item: NavigationItem) {
+    setGlobalSearchTerm('')
+    setIsGlobalSearchOpen(false)
+    navigate(item.path)
+  }
+
   if (!isLoading && userType === 'cliente') {
     return <Navigate replace to="/cliente" />
   }
@@ -388,7 +411,7 @@ export function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-surface text-slate-950">
+    <div className="min-h-[100dvh] overflow-x-hidden bg-surface text-slate-950">
       {isMobileMenuOpen && (
         <button
           aria-label="Fechar menu"
@@ -400,7 +423,7 @@ export function AppLayout() {
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-[13.75rem] flex-col border-r border-slate-200 bg-white transition-[width,transform] duration-300 dark:border-slate-800 dark:bg-slate-950 lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[13.75rem] flex-col border-r border-slate-200 bg-white pt-[env(safe-area-inset-top)] transition-[width,transform] duration-300 dark:border-slate-800 dark:bg-slate-950 lg:translate-x-0',
           sidebarWidthClass,
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
         )}
@@ -566,8 +589,13 @@ export function AppLayout() {
         </div>
       </aside>
 
-      <div className={cn('transition-[padding] duration-300', contentPaddingClass)}>
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/82 backdrop-blur-xl">
+      <div
+        className={cn(
+          'min-h-[100dvh] min-w-0 overflow-x-hidden transition-[padding] duration-300',
+          contentPaddingClass,
+        )}
+      >
+        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/82 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
           <div className="flex h-16 items-center gap-3 px-4 sm:h-20 sm:px-6 md:px-8 lg:px-10 xl:px-12">
             <Button
               aria-label="Abrir menu"
@@ -702,7 +730,7 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:px-10 lg:py-9 xl:px-12">
+        <main className="min-w-0 overflow-x-hidden px-4 py-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:px-6 sm:py-8 sm:pb-[calc(env(safe-area-inset-bottom)+2rem)] md:px-8 lg:px-10 lg:py-9 xl:px-12">
           {subscriptionQuery.subscription?.status === 'TRIAL' && (
             <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-brand-100 bg-brand-50/60 px-4 py-3 text-sm text-slate-600 dark:border-brand-400/15 dark:bg-brand-400/8 dark:text-brand-200">
               <span className="shrink-0 text-brand-500 dark:text-brand-400">⏳</span>

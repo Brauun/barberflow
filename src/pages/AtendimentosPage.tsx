@@ -419,9 +419,9 @@ export function AtendimentosPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+    <div className="min-w-0 space-y-5 overflow-x-hidden pb-[env(safe-area-inset-bottom)] sm:space-y-6">
+      <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <p className="text-sm font-semibold uppercase text-brand-600 dark:text-brand-400">
             Atendimentos
           </p>
@@ -435,6 +435,7 @@ export function AtendimentosPage() {
         </div>
 
         <Button
+          className="w-full sm:w-auto"
           leftIcon={<Plus size={18} />}
           onClick={() => {
             reset(emptyFormValues())
@@ -446,7 +447,7 @@ export function AtendimentosPage() {
         </Button>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid min-w-0 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:gap-4">
         <Card>
           <CardContent>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -481,8 +482,8 @@ export function AtendimentosPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+          <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
               <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
                 Atendimentos do dia
               </h3>
@@ -490,7 +491,7 @@ export function AtendimentosPage() {
                 Consulte a agenda por data, barbeiro e status.
               </p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid w-full min-w-0 gap-3 sm:grid-cols-2 lg:w-auto lg:grid-cols-3">
               <Input
                 label="Data"
                 onChange={(event) => setDailyDate(event.target.value)}
@@ -531,7 +532,7 @@ export function AtendimentosPage() {
             <div className="space-y-3">
               {dailyAppointmentsQuery.data.map((appointment) => (
                 <div
-                  className="grid gap-4 rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 lg:grid-cols-[5rem_1.2fr_1fr_1fr_auto]"
+                  className="grid min-w-0 gap-4 rounded-[1.1rem] border border-slate-200 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-[1.35rem] lg:grid-cols-[5rem_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
                   key={`${appointment.source}-${appointment.id}`}
                 >
                   <div>
@@ -569,9 +570,9 @@ export function AtendimentosPage() {
                       {getStatusLabel(appointment.status)}
                     </Badge>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2 lg:justify-end">
                     <Select
-                      className="min-w-44"
+                      className="min-w-0 sm:min-w-44"
                       onChange={(event) =>
                         updateStatusMutation.mutate({
                           appointment,
@@ -721,11 +722,11 @@ export function AtendimentosPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-start gap-3 sm:items-center">
             <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
               <Bell size={20} />
             </span>
-            <div>
+            <div className="min-w-0">
               <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
                 Lista de espera
               </h3>
@@ -754,7 +755,7 @@ export function AtendimentosPage() {
           ) : (
             waitlistQuery.data.map((entry) => (
               <div
-                className="grid gap-4 rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 lg:grid-cols-[1fr_1fr_1fr_auto]"
+                className="grid min-w-0 gap-4 rounded-[1.1rem] border border-slate-200 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-[1.35rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
                 key={entry.id}
               >
                 <div>
@@ -794,8 +795,9 @@ export function AtendimentosPage() {
                     </Badge>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                <div className="flex min-w-0 flex-wrap items-center gap-2 lg:justify-end">
                   <Button
+                    className="w-full sm:w-auto"
                     disabled={notifyWaitlistMutation.isPending}
                     leftIcon={<Bell size={14} />}
                     onClick={() =>
@@ -811,6 +813,7 @@ export function AtendimentosPage() {
                     Avisar
                   </Button>
                   <Button
+                    className="w-full sm:w-auto"
                     disabled={removeWaitlistMutation.isPending}
                     leftIcon={<X size={14} />}
                     onClick={() =>
@@ -834,11 +837,11 @@ export function AtendimentosPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-start gap-3 sm:items-center">
             <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
               <CalendarPlus size={20} />
             </span>
-            <div>
+            <div className="min-w-0">
               <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
                 Atendimentos registrados
               </h3>
@@ -1060,15 +1063,20 @@ export function AtendimentosPage() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
             <Button
+              className="w-full sm:w-auto"
               onClick={() => setIsFormOpen(false)}
               type="button"
               variant="secondary"
             >
               Cancelar
             </Button>
-            <Button disabled={isSubmitting || saveMutation.isPending} type="submit">
+            <Button
+              className="w-full sm:w-auto"
+              disabled={isSubmitting || saveMutation.isPending}
+              type="submit"
+            >
               {saveMutation.isPending ? 'Salvando...' : 'Salvar atendimento'}
             </Button>
           </div>
@@ -1142,8 +1150,9 @@ export function AtendimentosPage() {
               </p>
             </div>
           )}
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button
+              className="w-full sm:w-auto"
               onClick={() => setRescheduleAppointment(null)}
               type="button"
               variant="secondary"
@@ -1151,6 +1160,7 @@ export function AtendimentosPage() {
               Fechar
             </Button>
             <Button
+              className="w-full sm:w-auto"
               disabled={rescheduleMutation.isPending}
               onClick={() => rescheduleMutation.mutate()}
               type="button"

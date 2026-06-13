@@ -60,7 +60,7 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition duration-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60',
+        'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl font-semibold transition duration-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60 sm:min-h-0',
         tooltip &&
           'relative overflow-visible before:pointer-events-none before:absolute before:z-50 before:whitespace-nowrap before:rounded-lg before:bg-slate-950 before:px-2.5 before:py-1.5 before:text-xs before:font-semibold before:text-white before:opacity-0 before:shadow-lg before:transition before:duration-150 before:content-[attr(data-tooltip)] after:pointer-events-none after:absolute after:z-50 after:h-2 after:w-2 after:rotate-45 after:bg-slate-950 after:opacity-0 after:transition after:duration-150 hover:before:opacity-100 hover:after:opacity-100 focus-visible:before:opacity-100 focus-visible:after:opacity-100 dark:before:bg-white dark:before:text-slate-950 dark:after:bg-white',
         tooltip && tooltipPositionClasses[tooltipPosition],
