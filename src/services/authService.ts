@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { logger } from '../lib/logger'
 import type { UserRole, Usuario } from '../types/database'
 
 type SignInInput = {
@@ -133,7 +134,15 @@ export async function signUpWithCompany(input: SignUpInput) {
     throw new Error('Informe o CPF do responsavel com 11 digitos.')
   }
 
-  console.info('Iniciando cadastro BW Barber: criando usuario no Supabase Auth.')
+  logger.info({
+    action: 'signup_barbershop_started',
+    area: 'auth',
+    message: 'Iniciando cadastro BW Barber.',
+    metadata: {
+      hasEmail: Boolean(input.email),
+      hasPhone: Boolean(telefoneUsuario),
+    },
+  })
 
   const { data, error } = await supabase.auth.signUp({
     email: input.email as string,
@@ -150,7 +159,15 @@ export async function signUpWithCompany(input: SignUpInput) {
   })
 
   if (error) {
-    console.error('Falha ao criar usuario no Supabase Auth:', error.message)
+    logger.error({
+      action: 'signup_auth_user_failed',
+      area: 'auth',
+      error,
+      message: 'Falha ao criar usuario no Supabase Auth.',
+      metadata: {
+        accountType: 'barbearia',
+      },
+    })
     throw new Error(`Falha ao criar usuario no Supabase Auth: ${error.message}`)
   }
 
@@ -164,9 +181,12 @@ export async function signUpWithCompany(input: SignUpInput) {
     }
   }
 
-  console.info(
-    'Usuario criado no Auth. Criando empresa e vinculo em public.usuarios.',
-  )
+  logger.info({
+    action: 'signup_company_link_started',
+    area: 'auth',
+    message: 'Usuario criado no Auth. Criando empresa e vinculo.',
+    userId: data.user.id,
+  })
 
   const usuario = await createCompanyUser({
     nomeEmpresa,
@@ -196,7 +216,15 @@ export async function signUpClient(input: SignUpInput) {
 
   const authEmail = input.email?.trim() || clientPhoneAuthEmail(telefone)
 
-  console.info('Iniciando cadastro de cliente BW Barber.')
+  logger.info({
+    action: 'signup_client_started',
+    area: 'auth',
+    message: 'Iniciando cadastro de cliente BW Barber.',
+    metadata: {
+      hasEmail: Boolean(input.email),
+      hasPhone: Boolean(telefone),
+    },
+  })
 
   await assertClientSchemaReady()
 
@@ -214,6 +242,15 @@ export async function signUpClient(input: SignUpInput) {
   })
 
   if (error) {
+    logger.error({
+      action: 'signup_client_auth_failed',
+      area: 'auth',
+      error,
+      message: 'Falha ao criar cliente no Supabase Auth.',
+      metadata: {
+        hasEmail: Boolean(input.email),
+      },
+    })
     throw new Error(`Falha ao criar cliente no Supabase Auth: ${error.message}`)
   }
 
@@ -275,7 +312,15 @@ export async function createCompanyUser(input: CreateCompanyUserInput) {
     })
 
   if (error) {
-    console.error('Falha ao criar empresa/usuario no banco:', error)
+    logger.error({
+      action: 'signup_company_user_rpc_failed',
+      area: 'auth',
+      error,
+      message: 'Falha ao criar empresa/usuario no banco.',
+      metadata: {
+        papelUsuario: input.papelUsuario,
+      },
+    })
     throw new Error(
       `Falha ao criar empresa e usuario no banco: ${error.message}`,
     )

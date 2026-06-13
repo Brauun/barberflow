@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { AuthFormMessage } from '../components/AuthFormMessage'
 import { useAuth } from '../hooks/useAuth'
+import { logger } from '../lib/logger'
 import { signInWithPassword } from '../services/authService'
 import { createAuditLog, handleAppError } from '../services/observabilityService'
 import { loginSchema, type LoginFormData } from '../types/auth'
@@ -20,12 +21,12 @@ function devAuthLog(message: string, details?: unknown) {
     return
   }
 
-  if (details === undefined) {
-    console.info(`[BW Barber Auth] ${message}`)
-    return
-  }
-
-  console.info(`[BW Barber Auth] ${message}`, details)
+  logger.info({
+    action: 'auth_login_debug',
+    area: 'auth',
+    message,
+    metadata: details ? { details } : {},
+  })
 }
 
 export function LoginPage() {
@@ -74,7 +75,14 @@ export function LoginPage() {
 
       navigate(redirectTo, { replace: true })
     } catch (error) {
-      setFormError(await handleAppError({ area: 'auth_login', error }))
+      setFormError(
+        await handleAppError({
+          action: 'login_failed',
+          area: 'auth_login',
+          error,
+          level: 'warn',
+        }),
+      )
       setIsEntering(false)
     }
   }

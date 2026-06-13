@@ -1,3 +1,5 @@
+import { logger } from '../lib/logger'
+
 type LazyFactory<T> = () => Promise<T>
 
 const reloadKey = 'bw-barber:lazy-reload'
@@ -40,10 +42,30 @@ export function lazyWithRetry<T>(factory: LazyFactory<T>): LazyFactory<T> {
         isChunkLoadError(error) &&
         sessionStorage.getItem(reloadKey) !== 'true'
       ) {
+        logger.warn({
+          action: 'lazy_chunk_load_failed_retry',
+          area: 'routing',
+          error,
+          message: 'Falha ao carregar pacote dinamico. Limpando caches e recarregando.',
+          metadata: {
+            hasServiceWorker: 'serviceWorker' in navigator,
+            willReload: true,
+          },
+        })
         sessionStorage.setItem(reloadKey, 'true')
         await clearAppCaches()
         window.location.reload()
       }
+
+      logger.error({
+        action: 'lazy_chunk_load_failed',
+        area: 'routing',
+        error,
+        message: 'Falha ao carregar rota dinamica.',
+        metadata: {
+          alreadyRetried: sessionStorage.getItem(reloadKey) === 'true',
+        },
+      })
 
       throw error
     }

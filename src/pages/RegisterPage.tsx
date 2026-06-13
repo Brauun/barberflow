@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { AuthFormMessage } from '../components/AuthFormMessage'
 import { useAuth } from '../hooks/useAuth'
 import { signUpWithCompany } from '../services/authService'
+import { handleAppError } from '../services/observabilityService'
 import {
   registerSchema,
   type RegisterFormData,
@@ -65,9 +66,16 @@ export function RegisterPage() {
 
       navigate('/app/dashboard', { replace: true })
     } catch (error) {
-      console.error('Erro no cadastro do BW Barber:', error)
       setFormError(
-        error instanceof Error ? error.message : 'Nao foi possivel cadastrar.',
+        await handleAppError({
+          action: 'signup_failed',
+          area: 'auth_signup',
+          error,
+          level: 'error',
+          metadata: {
+            accountType: data.accountType,
+          },
+        }),
       )
     }
   }

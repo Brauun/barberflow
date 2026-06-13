@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { logger } from '../lib/logger'
 import type { Database } from '../types/database'
 import { createInternalNotification } from './notificationsService'
 
@@ -43,10 +44,16 @@ async function tryCreateInternalNotification(
   try {
     await createInternalNotification(input)
   } catch (error) {
-    console.error(
-      'Erro ao criar notificacao interna:',
-      error instanceof Error ? error.message : error,
-    )
+    logger.warn({
+      action: 'notification_internal_create_failed',
+      area: 'notifications',
+      error,
+      message: 'Erro ao criar notificacao interna.',
+      metadata: {
+        notificationType: input.type,
+      },
+      empresaId: input.empresaId,
+    })
   }
 }
 

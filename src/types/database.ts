@@ -844,9 +844,13 @@ export type Database = {
           empresa_id: string | null
           user_id: string | null
           area: string
+          action: string | null
+          level: 'info' | 'warn' | 'error' | 'fatal'
           message: string
+          request_id: string | null
           stack: string | null
           metadata: Json
+          user_agent: string | null
           created_at: string
         }
         Insert: Partial<Database['public']['Tables']['error_logs']['Row']> & {

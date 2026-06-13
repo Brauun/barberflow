@@ -1,3 +1,5 @@
+import { logger } from './logger'
+
 export function registerServiceWorker() {
   if (!('serviceWorker' in navigator) || import.meta.env.DEV) {
     return
@@ -25,7 +27,12 @@ export function registerServiceWorker() {
         })
       })
       .catch((error) => {
-        console.error('Falha ao registrar service worker:', error)
+        logger.warn({
+          action: 'service_worker_register_failed',
+          area: 'pwa',
+          error,
+          message: 'Falha ao registrar service worker.',
+        })
       })
   })
 

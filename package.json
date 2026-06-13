@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "docs:visual": "node scripts/generate-visual-pdf.mjs",
+    "docs:manual": "node scripts/generate-functional-manual.mjs",
+    "docs:all": "npm run docs:manual && npm run docs:visual",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -33,7 +36,9 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "pdfkit": "^0.19.1",
     "postcss": "^8.5.15",
+    "puppeteer": "^25.1.0",
     "supabase": "^2.104.0",
     "tailwindcss": "^4.3.0",
     "typescript": "~6.0.2",

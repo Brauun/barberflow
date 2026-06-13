@@ -14,6 +14,7 @@ import {
   type UserProfile,
 } from './authContextValue'
 import { supabase } from '../lib/supabase'
+import { logger } from '../lib/logger'
 import { createClientProfile, createCompanyUser } from '../services/authService'
 import type { UserRole } from '../types/database'
 
@@ -24,12 +25,12 @@ function devAuthLog(message: string, details?: unknown) {
     return
   }
 
-  if (details === undefined) {
-    console.info(`[BW Barber Auth] ${message}`)
-    return
-  }
-
-  console.info(`[BW Barber Auth] ${message}`, details)
+  logger.info({
+    action: 'auth_debug',
+    area: 'auth',
+    message,
+    metadata: { details },
+  })
 }
 
 function isMissingClientSchemaError(message: string) {
@@ -73,7 +74,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         papelUsuario: papel,
       })
     } catch (error) {
-      console.error(error instanceof Error ? error.message : error)
+      logger.error({
+        action: 'auth_create_profile_from_metadata_failed',
+        area: 'auth',
+        error,
+        message: 'Falha ao criar perfil de barbearia a partir dos metadados.',
+        metadata: {
+          hasCompanyMetadata: Boolean(empresa),
+          papel,
+        },
+        userId: user.id,
+      })
       return null
     }
   }, [])
@@ -97,7 +108,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .maybeSingle()
 
       if (error) {
-        console.error('Erro ao carregar perfil do usuario:', error.message)
+        logger.error({
+          action: 'auth_load_user_profile_failed',
+          area: 'auth',
+          error,
+          message: 'Erro ao carregar perfil do usuario.',
+          userId: user.id,
+        })
         setProfile(null)
         return null
       }
@@ -123,12 +140,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (clientError) {
         if (isMissingClientSchemaError(clientError.message)) {
+          logger.warn({
+            action: 'auth_client_schema_missing',
+            area: 'auth',
+            error: clientError,
+            message: 'Schema de cliente ausente ao carregar perfil.',
+            userId: user.id,
+          })
           setProfile(null)
           setClientProfile(null)
           return null
         }
 
-        console.error('Erro ao carregar perfil de cliente:', clientError.message)
+        logger.error({
+          action: 'auth_load_client_profile_failed',
+          area: 'auth',
+          error: clientError,
+          message: 'Erro ao carregar perfil de cliente.',
+          userId: user.id,
+        })
       }
 
       if (clientData) {
@@ -150,7 +180,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
             telefone: String(user.user_metadata.telefone ?? '') || null,
           })
         } catch (error) {
-          console.error(error instanceof Error ? error.message : error)
+          logger.error({
+            action: 'auth_create_client_profile_failed',
+            area: 'auth',
+            error,
+            message: 'Erro ao criar perfil de cliente durante carregamento.',
+            userId: user.id,
+          })
           setProfile(null)
           setClientProfile(null)
           return null
@@ -189,10 +225,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .maybeSingle()
 
       if (profileError) {
-        console.error(
-          'Erro ao carregar perfil criado no cadastro:',
-          profileError.message,
-        )
+        logger.error({
+          action: 'auth_load_created_profile_failed',
+          area: 'auth',
+          error: profileError,
+          message: 'Erro ao carregar perfil criado no cadastro.',
+          userId: user.id,
+        })
         setProfile(null)
         return null
       }
@@ -250,10 +289,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           await loadProfile(data.session.user)
         }
       } catch (error) {
-        console.error(
-          'Erro ao inicializar autenticação:',
-          error instanceof Error ? error.message : error,
-        )
+        logger.fatal({
+          action: 'auth_initialization_failed',
+          area: 'auth',
+          error,
+          message: 'Erro ao inicializar autenticacao.',
+        })
         setProfile(null)
         setClientProfile(null)
       } finally {

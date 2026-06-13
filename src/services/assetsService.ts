@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import { supabase } from '../lib/supabase'
 
 const allowedImageTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
@@ -52,7 +53,13 @@ export async function resolveAssetUrl(
     .createSignedUrl(value, 60 * 60)
 
   if (error) {
-    console.error(`Falha ao carregar imagem do bucket ${bucket}:`, error.message)
+    logger.warn({
+      action: 'asset_signed_url_failed',
+      area: 'assets',
+      error,
+      message: 'Falha ao carregar imagem do storage.',
+      metadata: { bucket },
+    })
     return null
   }
 

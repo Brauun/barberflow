@@ -1,4 +1,10 @@
 import { supabase } from '../lib/supabase'
+import {
+  createRequestId,
+  logger,
+  sanitizeLogData,
+  type LogLevel,
+} from '../lib/logger'
 import type { Database, UserRole } from '../types/database'
 
 export type AuditLog = Database['public']['Tables']['audit_logs']['Row']
@@ -13,10 +19,13 @@ type AuditInput = {
 }
 
 type ErrorInput = {
+  action?: string
   area: string
   empresaId?: string | null
   error: unknown
+  level?: LogLevel
   metadata?: Record<string, unknown>
+  requestId?: string
 }
 
 function userAgent() {
@@ -37,6 +46,14 @@ export async function createAuditLog(input: AuditInput) {
   } = await supabase.auth.getUser()
 
   if (!user) {
+    logger.warn({
+      action: input.action,
+      area: 'audit',
+      empresaId: input.empresaId,
+      message: 'Auditoria ignorada porque nao ha usuario autenticado.',
+      metadata: input.metadata,
+      userRole: input.userRole,
+    })
     return
   }
 
@@ -45,39 +62,77 @@ export async function createAuditLog(input: AuditInput) {
     empresa_id: input.empresaId ?? null,
     entity_id: input.entityId ?? null,
     entity_type: input.entityType,
-    metadata: (input.metadata ?? {}) as never,
+    metadata: sanitizeLogData(input.metadata ?? {}) as never,
     user_agent: userAgent(),
     user_id: user.id,
     user_role: input.userRole ?? null,
   })
 
-  if (error && import.meta.env.DEV) {
-    console.warn('[BW Barber Audit] Falha ao registrar auditoria:', error.message)
+  if (error) {
+    logger.warn({
+      action: input.action,
+      area: 'audit',
+      empresaId: input.empresaId,
+      error,
+      message: 'Falha ao registrar auditoria.',
+      metadata: input.metadata,
+      userId: user.id,
+      userRole: input.userRole,
+    })
   }
 }
 
 export async function createErrorLog(input: ErrorInput) {
+  const requestId = input.requestId ?? createRequestId(input.area)
+  const level = input.level ?? 'error'
   const {
     data: { user },
   } = await supabase.auth.getUser()
   const message = errorMessage(input.error)
   const stack = input.error instanceof Error ? input.error.stack : null
 
+  logger[level]({
+    action: input.action,
+    area: input.area,
+    empresaId: input.empresaId,
+    error: input.error,
+    message,
+    metadata: input.metadata,
+    requestId,
+    userId: user?.id ?? null,
+  })
+
   if (!user) {
     return
   }
 
   const { error } = await supabase.from('error_logs').insert({
+    action: input.action ?? null,
     area: input.area,
     empresa_id: input.empresaId ?? null,
-    message,
-    metadata: (input.metadata ?? {}) as never,
-    stack,
+    level,
+    message: sanitizeLogData(message) as string,
+    metadata: sanitizeLogData(input.metadata ?? {}) as never,
+    request_id: requestId,
+    stack: stack ? (sanitizeLogData(stack) as string) : null,
+    user_agent: userAgent(),
     user_id: user.id,
   })
 
-  if (error && import.meta.env.DEV) {
-    console.warn('[BW Barber ErrorLog] Falha ao registrar erro:', error.message)
+  if (error) {
+    logger.warn({
+      action: 'error_log_insert_failed',
+      area: 'observability',
+      empresaId: input.empresaId,
+      error,
+      message: 'Falha ao registrar erro no banco.',
+      metadata: {
+        originalArea: input.area,
+        originalRequestId: requestId,
+      },
+      requestId,
+      userId: user.id,
+    })
   }
 }
 
