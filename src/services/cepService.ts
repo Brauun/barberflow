@@ -27,7 +27,7 @@ export async function lookupCep(value: string): Promise<CepAddress> {
   const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
 
   if (!response.ok) {
-    throw new Error('Nao foi possivel consultar o CEP agora.')
+    throw new Error('Não foi possivel consultar o CEP agora.')
   }
 
   const data = (await response.json()) as ViaCepResponse

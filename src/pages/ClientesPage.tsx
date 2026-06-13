@@ -155,14 +155,14 @@ export function ClientesPage() {
       setFormError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel salvar o cliente.',
+          : 'Não foi possível salvar o cliente.',
       )
     }
   }
 
   async function handleDelete(cliente: Cliente) {
     const shouldDelete = window.confirm(
-      `Excluir o cliente ${cliente.nome}? Esta acao nao pode ser desfeita.`,
+      `Excluir o cliente ${cliente.nome}? Esta ação não pode ser desfeita.`,
     )
 
     if (!shouldDelete) {
@@ -274,8 +274,8 @@ export function ClientesPage() {
                         <p className="mt-1 text-sm text-slate-500">
                           {cliente.telefone
                             ? formatPhone(cliente.telefone)
-                            : 'Telefone nao informado'} ·{' '}
-                          {cliente.email ?? 'Email nao informado'}
+                            : 'Telefone não informado'} ·{' '}
+                          {cliente.email ?? 'Email não informado'}
                         </p>
                         <p className="mt-2 text-xs font-medium text-slate-400">
                           Nascimento:{' '}
@@ -283,7 +283,7 @@ export function ClientesPage() {
                             ? dateFormatter.format(
                                 new Date(cliente.data_nascimento),
                               )
-                            : 'Nao informado'}
+                            : 'Não informado'}
                         </p>
                       </div>
                     </div>

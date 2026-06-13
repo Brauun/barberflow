@@ -52,7 +52,7 @@ function isMissingSchemaTableError(message: string) {
 
 function missingClientSchemaMessage() {
   return [
-    'As tabelas do módulo Cliente ainda não existem no Supabase.',
+    'As tabelas do modulo Cliente ainda não existem no Supabase.',
     'Aplique a migration supabase/migrations/20260605090000_client_booking_evolution.sql no banco e recarregue o schema cache antes de cadastrar clientes.',
   ].join(' ')
 }

@@ -332,9 +332,9 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
         helper: 'Entradas confirmadas no mês',
       },
       {
-        label: 'Lucro Líquido',
+        label: 'Lucro Liquido',
         value: formatCurrency(faturamentoMes - saidasMes - comissoesMes),
-        helper: 'Entradas menos saídas e comissões',
+        helper: 'Entradas menos saídas e comissoes',
       },
       {
         label: 'Clientes Ativos',
@@ -342,9 +342,9 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
         helper: 'Clientes ativos na empresa',
       },
       {
-        label: 'Serviços Realizados',
+        label: 'Servicos Realizados',
         value: String(completedServicesResponse.count ?? 0),
-        helper: 'Atendimentos concluídos no mês',
+        helper: 'Atendimentos concluidos no mês',
       },
       {
         label: 'Produtos Vendidos',

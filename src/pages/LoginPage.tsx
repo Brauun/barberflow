@@ -54,7 +54,7 @@ export function LoginPage() {
     try {
       const authData = await signInWithPassword(data)
       if (!authData.session || !authData.user) {
-        throw new Error('Login realizado, mas a sessao nao foi retornada.')
+        throw new Error('Login realizado, mas a sessão não foi retornada.')
       }
 
       devAuthLog('login sucesso', { userId: authData.user.id })
@@ -98,7 +98,7 @@ export function LoginPage() {
         Bem vindo(a) ao BW Barber
       </h1>
       <p className="mt-2 text-sm leading-6 text-[#A5B4CB] sm:text-[0.95rem]">
-        Acesse sua conta para gerenciar horarios, clientes e operacao.
+        Acesse sua conta para gerenciar horários, clientes e operação.
       </p>
 
       <form className="mt-5 space-y-4 sm:mt-8 sm:space-y-5" onSubmit={handleSubmit(onSubmit)}>

@@ -75,7 +75,7 @@ export function ClientProfilePage() {
   const profileMutation = useMutation({
     mutationFn: async (data: ClientProfileFormData) => {
       if (!clientProfile) {
-        throw new Error('Perfil de cliente nao encontrado.')
+        throw new Error('Perfil de cliente não encontrado.')
       }
 
       let avatarUrl = data.avatar_url
@@ -104,7 +104,7 @@ export function ClientProfilePage() {
       await profileMutation.mutateAsync(data)
     } catch (error) {
       setFormError(
-        error instanceof Error ? error.message : 'Nao foi possivel salvar.',
+        error instanceof Error ? error.message : 'Não foi possível salvar.',
       )
     }
   }
@@ -162,7 +162,7 @@ export function ClientProfilePage() {
                     Foto de perfil
                   </p>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    PNG, JPG, JPEG ou WEBP ate 2MB.
+                    PNG, JPG, JPEG ou WEBP até 2MB.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">

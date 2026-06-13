@@ -40,7 +40,7 @@ export function useServicos(input: {
       }
 
       if (!canManage) {
-        throw new Error('Apenas administradores podem gerenciar serviços.')
+        throw new Error('Apenas administradores podem gerenciar servicos.')
       }
 
       if (payload.servicoId) {
@@ -72,7 +72,7 @@ export function useServicos(input: {
       }
 
       if (!canManage) {
-        throw new Error('Apenas administradores podem gerenciar serviços.')
+        throw new Error('Apenas administradores podem gerenciar servicos.')
       }
 
       await deleteServico(input.empresaId, servico.id)

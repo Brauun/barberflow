@@ -76,7 +76,7 @@ export function ClientHomePage() {
           {primary?.nome ?? 'Barbearia selecionada'}
         </h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-          Acesse sua barbearia principal, acompanhe horarios e agende sem
+          Acesse sua barbearia principal, acompanhe horários e agende sem
           procurar tudo de novo.
         </p>
       </section>
@@ -113,7 +113,7 @@ export function ClientHomePage() {
                 to="/cliente/agendar"
               >
                 <CalendarPlus size={18} />
-                Agendar Horario
+                Agendar Horário
               </Link>
               <Link
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:bg-brand-50/70"
@@ -198,7 +198,7 @@ export function ClientHomePage() {
         <Card>
           <CardHeader>
             <h3 className="text-base font-semibold text-slate-950">
-              Proximo horario
+              Próximo horário
             </h3>
           </CardHeader>
           <CardContent>
@@ -213,7 +213,7 @@ export function ClientHomePage() {
               </div>
             ) : (
               <p className="text-sm text-slate-500">
-                Nenhum agendamento futuro. Escolha um horario para voltar com
+                Nenhum agendamento futuro. Escolha um horário para voltar com
                 estilo.
               </p>
             )}
@@ -222,7 +222,7 @@ export function ClientHomePage() {
 
         <Card>
           <CardHeader>
-            <h3 className="text-base font-semibold text-slate-950">Historico</h3>
+            <h3 className="text-base font-semibold text-slate-950">Histórico</h3>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-black text-slate-950">

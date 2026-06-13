@@ -595,7 +595,7 @@ export function AppLayout() {
 
             <div className="relative">
               <Button
-                aria-label="Notificacoes"
+                aria-label="Notificações"
                 onClick={() => setIsNotificationsOpen((current) => !current)}
                 size="icon-md"
                 tooltipPosition="bottom"
@@ -614,10 +614,10 @@ export function AppLayout() {
                   <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
                     <div>
                       <p className="text-sm font-black text-slate-950 dark:text-white">
-                        Notificacoes
+                        Notificações
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {unreadCount} nao lida{unreadCount === 1 ? '' : 's'}
+                        {unreadCount} não lida{unreadCount === 1 ? '' : 's'}
                       </p>
                     </div>
                     <button
@@ -643,11 +643,11 @@ export function AppLayout() {
                   <div className="max-h-[28rem] overflow-y-auto p-2">
                     {notificationsQuery.isLoading ? (
                       <p className="px-3 py-6 text-center text-sm text-slate-500">
-                        Carregando notificacoes...
+                        Carregando notificações...
                       </p>
                     ) : notifications.length === 0 ? (
                       <p className="px-3 py-6 text-center text-sm text-slate-500">
-                        Nenhuma notificacao por enquanto.
+                        Nenhuma notificação por enquanto.
                       </p>
                     ) : (
                       notifications.map((notification) => (
@@ -706,7 +706,7 @@ export function AppLayout() {
           {subscriptionQuery.subscription?.status === 'TRIAL' && (
             <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-brand-100 bg-brand-50/60 px-4 py-3 text-sm text-slate-600 dark:border-brand-400/15 dark:bg-brand-400/8 dark:text-brand-200">
               <span className="shrink-0 text-brand-500 dark:text-brand-400">⏳</span>
-              Seu teste gratis termina em{' '}
+              Seu teste grátis termina em{' '}
               <span className="font-semibold text-brand-600 dark:text-brand-300">{trialDaysRemaining ?? 0} dias</span>.
               Assine para continuar usando todos os recursos.
             </div>
@@ -714,7 +714,7 @@ export function AppLayout() {
           {isSubscriptionExpired && (
             <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/8 dark:text-red-300">
               <span className="shrink-0">⚠️</span>
-              Seu periodo de teste terminou. Escolha um plano para continuar usando o BW Barber.
+              Seu período de teste terminou. Escolha um plano para continuar usando o BW Barber.
             </div>
           )}
           <Outlet />
@@ -723,4 +723,3 @@ export function AppLayout() {
     </div>
   )
 }
-

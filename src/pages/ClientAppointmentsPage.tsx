@@ -189,13 +189,13 @@ export function ClientAppointmentsPage() {
   const rescheduleMutation = useMutation({
     mutationFn: async () => {
       if (!selectedAppointment || !selectedSlot) {
-        throw new Error('Selecione um novo horario.')
+        throw new Error('Selecione um novo horário.')
       }
 
       const slot = slots.find((item) => item.value === selectedSlot)
 
       if (!slot?.available) {
-        throw new Error('Este horario nao esta disponivel.')
+        throw new Error('Este horário não está disponível.')
       }
 
       const startsAt = new Date(selectedSlot)
@@ -232,14 +232,14 @@ export function ClientAppointmentsPage() {
           Agendamentos
         </p>
         <h2 className="mt-3 text-3xl font-black text-slate-950 dark:text-white">
-          Seus horarios
+          Seus horários
         </h2>
       </section>
 
       <Card>
         <CardHeader>
           <h3 className="text-base font-semibold text-slate-950 dark:text-white">
-            Historico e proximos horarios
+            Histórico e próximos horários
           </h3>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -269,7 +269,7 @@ export function ClientAppointmentsPage() {
                     <p className="mt-1 text-xs font-semibold text-slate-400">
                       {appointment.barbeiro?.nome ?? 'Profissional'} ·{' '}
                       {appointment.items?.map((item) => item.nome).join(' + ') ??
-                        'Servico'}
+                        'Serviço'}
                     </p>
                   </div>
                 </div>
@@ -304,7 +304,7 @@ export function ClientAppointmentsPage() {
 
                           if (
                             !window.confirm(
-                              'Tem certeza que deseja cancelar este horario?',
+                              'Tem certeza que deseja cancelar este horário?',
                             )
                           ) {
                             return
@@ -317,7 +317,7 @@ export function ClientAppointmentsPage() {
                                 setActionError(
                                   error instanceof Error
                                     ? error.message
-                                    : 'Nao foi possivel cancelar.',
+                                    : 'Não foi possível cancelar.',
                                 ),
                             },
                           )
@@ -360,13 +360,13 @@ export function ClientAppointmentsPage() {
                   </span>
                   <div>
                     <p className="font-black text-slate-950 dark:text-white">
-                      {entry.service?.nome ?? 'Servico'}
+                      {entry.service?.nome ?? 'Serviço'}
                     </p>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                       {new Date(`${entry.desired_date}T00:00:00`).toLocaleDateString(
                         'pt-BR',
                       )}{' '}
-                      · {entry.preferred_period ?? 'qualquer horario'}
+                      · {entry.preferred_period ?? 'qualquer horário'}
                     </p>
                   </div>
                 </div>
@@ -396,7 +396,7 @@ export function ClientAppointmentsPage() {
             ))
           ) : (
             <p className="text-sm text-slate-500">
-              Voce ainda nao entrou em nenhuma lista de espera.
+              Você ainda não entrou em nenhuma lista de espera.
             </p>
           )}
         </CardContent>
@@ -405,7 +405,7 @@ export function ClientAppointmentsPage() {
       <Modal
         isOpen={Boolean(selectedAppointment)}
         onClose={() => setSelectedAppointment(null)}
-        title="Remarcar horario"
+        title="Remarcar horário"
       >
         <div className="space-y-4">
           {rescheduleMutation.error && (
@@ -425,7 +425,7 @@ export function ClientAppointmentsPage() {
           />
           <div>
             <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Novo horario
+              Novo horário
             </p>
             {slotResult.message && (
               <p

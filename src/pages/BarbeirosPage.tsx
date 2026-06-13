@@ -281,7 +281,7 @@ export function BarbeirosPage() {
   const saveMutation = useMutation({
     mutationFn: async (data: BarbeiroFormData) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       if (editingBarbeiro) {
@@ -302,7 +302,7 @@ export function BarbeirosPage() {
   const saveUnavailabilityMutation = useMutation({
     mutationFn: async (data: BarberUnavailabilityFormData) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       if (!canManageUnavailability) {
@@ -334,7 +334,7 @@ export function BarbeirosPage() {
   const deleteUnavailabilityMutation = useMutation({
     mutationFn: async (block: BarberUnavailability) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       if (!canManageUnavailability) {
@@ -354,7 +354,7 @@ export function BarbeirosPage() {
   const createInvitationMutation = useMutation({
     mutationFn: async (data: EmployeeInvitationFormData) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       if (!canInviteEmployees) {
@@ -381,7 +381,7 @@ export function BarbeirosPage() {
   const cancelInvitationMutation = useMutation({
     mutationFn: async (invitation: EmployeeInvitation) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       await cancelEmployeeInvitation(empresaId, invitation.id)
@@ -394,7 +394,7 @@ export function BarbeirosPage() {
   const inactivateEmployeeMutation = useMutation({
     mutationFn: async (link: EmployeeLink) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       await inactivateEmployeeLink(empresaId, link)
@@ -410,7 +410,7 @@ export function BarbeirosPage() {
   const inactivateLegacyBarberMutation = useMutation({
     mutationFn: async (barbeiro: BarbeiroWithIndicators) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       await inactivateLegacyBarbeiro(empresaId, barbeiro.id)
@@ -431,7 +431,7 @@ export function BarbeirosPage() {
       barbeiros.length >= barberLimitAccess.limit
     ) {
       setInviteError(
-        `Seu plano atual permite ate ${barberLimitAccess.limit} barbeiro. Faça upgrade para adicionar mais.`,
+        `Seu plano atual permite até ${barberLimitAccess.limit} barbeiro. Faça upgrade para adicionar mais.`,
       )
       return
     }
@@ -470,7 +470,7 @@ export function BarbeirosPage() {
       setFormError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel salvar o barbeiro.',
+          : 'Não foi possível salvar o barbeiro.',
       )
     }
   }
@@ -484,7 +484,7 @@ export function BarbeirosPage() {
       setUnavailabilityError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel salvar a indisponibilidade.',
+          : 'Não foi possível salvar a indisponibilidade.',
       )
     }
   }
@@ -496,7 +496,7 @@ export function BarbeirosPage() {
       await createInvitationMutation.mutateAsync(data)
     } catch (error) {
       setInviteError(
-        error instanceof Error ? error.message : 'Nao foi possivel convidar.',
+        error instanceof Error ? error.message : 'Não foi possível convidar.',
       )
     }
   }
@@ -527,7 +527,7 @@ export function BarbeirosPage() {
     const shouldInactivate = window.confirm(
       [
         `Inativar ${link.employee?.nome ?? 'funcionário'}?`,
-        'Atendimentos e comissoes antigos serao preservados.',
+        'Atendimentos e comissões antigos seráo preservados.',
         'Agendamentos futuros deverao ser redistribuidos manualmente.',
       ].join('\n'),
     )
@@ -543,7 +543,7 @@ export function BarbeirosPage() {
     const shouldInactivate = window.confirm(
       [
         `Remover ${barbeiro.nome} da equipe ativa?`,
-        'O funcionario sera inativado, mas atendimentos, comissoes e relatorios antigos serao preservados.',
+        'O funcionário será inativado, mas atendimentos, comissões e relatórios antigos seráo preservados.',
         'Ele nao aparecera para novos agendamentos.',
       ].join('\n'),
     )
@@ -738,7 +738,7 @@ export function BarbeirosPage() {
                         </Button>
                         {canManageUnavailability && (
                           <Button
-                            aria-label="Remover funcionario da equipe ativa"
+                            aria-label="Remover funcionário da equipe ativa"
                             disabled={inactivateLegacyBarberMutation.isPending}
                             onClick={() => void handleInactivateLegacyBarber(barbeiro)}
                             size="icon-sm"
@@ -764,15 +764,15 @@ export function BarbeirosPage() {
               Funcionários e convites
             </h3>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              Convide funcionários para criarem a propria senha e preserve o
-              historico ao inativar.
+              Convide funcionários para criarem a própria senha e preserve o
+              histórico ao inativar.
             </p>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
             <p className="mb-3 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-              Vinculos ativos
+              Vínculos ativos
             </p>
             {employeeLinksQuery.isLoading ? (
               <div className="flex min-h-24 items-center justify-center">
@@ -927,7 +927,7 @@ export function BarbeirosPage() {
                 <TableRow>
                   <TableHeaderCell>Barbeiro</TableHeaderCell>
                   <TableHeaderCell>Data</TableHeaderCell>
-                  <TableHeaderCell>Horario</TableHeaderCell>
+                  <TableHeaderCell>Horário</TableHeaderCell>
                   <TableHeaderCell>Motivo</TableHeaderCell>
                   <TableHeaderCell>Criado por</TableHeaderCell>
                   {canManageUnavailability && (
@@ -1099,7 +1099,7 @@ export function BarbeirosPage() {
           />
           <Input
             error={invitationForm.formState.errors.commission_percentage?.message}
-            label="Comissao padrao (%)"
+            label="Comissão padrão (%)"
             max={100}
             min={0}
             step="0.01"

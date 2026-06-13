@@ -48,7 +48,7 @@ export async function listServicos(
   const { data, error } = await query
 
   if (error) {
-    throw toAppError(error, 'Não foi possível listar serviços.')
+    throw toAppError(error, 'Não foi possível listar servicos.')
   }
 
   return (data ?? []) as Servico[]
@@ -62,7 +62,7 @@ export async function createServico(empresaId: string, data: ServicoFormData) {
     .single()
 
   if (error) {
-    throw toAppError(error, 'Não foi possível criar o serviço.')
+    throw toAppError(error, 'Não foi possível criar o servico.')
   }
 
   await linkServicoToActiveBarbers({
@@ -98,7 +98,7 @@ export async function linkServicoToActiveBarbers(input: {
   if (barbersError) {
     throw toAppError(
       barbersError,
-      'Não foi possível listar barbeiros para vincular o serviço.',
+      'Não foi possível listar barbeiros para vincular o servico.',
     )
   }
 
@@ -118,7 +118,7 @@ export async function linkServicoToActiveBarbers(input: {
   })
 
   if (error) {
-    throw toAppError(error, 'Não foi possível vincular barbeiros ao serviço.')
+    throw toAppError(error, 'Não foi possível vincular barbeiros ao servico.')
   }
 }
 
@@ -134,7 +134,7 @@ export async function updateServico(
     .eq('id', servicoId)
 
   if (error) {
-    throw toAppError(error, 'Não foi possível atualizar o serviço.')
+    throw toAppError(error, 'Não foi possível atualizar o servico.')
   }
 
   await createAuditLog({
@@ -158,7 +158,7 @@ export async function deleteServico(empresaId: string, servicoId: string) {
     .eq('id', servicoId)
 
   if (error) {
-    throw toAppError(error, 'Não foi possível inativar o serviço.')
+    throw toAppError(error, 'Não foi possível inativar o servico.')
   }
 
   await createAuditLog({
@@ -180,7 +180,7 @@ export async function listServiceBarbers(
     .order('nome', { ascending: true })
 
   if (error) {
-    throw toAppError(error, 'Não foi possível listar barbeiros para o serviço.')
+    throw toAppError(error, 'Não foi possível listar barbeiros para o servico.')
   }
 
   return (data ?? []) as ServiceBarberOption[]
@@ -198,7 +198,7 @@ export async function listServicoBarberIds(
     .eq('active', true)
 
   if (error) {
-    throw toAppError(error, 'Não foi possível carregar vínculos do serviço.')
+    throw toAppError(error, 'Não foi possível carregar vinculos do servico.')
   }
 
   return new Set((data ?? []).map((item) => item.barbeiro_id))
@@ -216,7 +216,7 @@ export async function saveServicoBarberLinks(input: {
     .eq('service_id', input.servicoId)
 
   if (existingError) {
-    throw toAppError(existingError, 'Não foi possível carregar vínculos do serviço.')
+    throw toAppError(existingError, 'Não foi possível carregar vinculos do servico.')
   }
 
   const selectedIds = new Set(input.barbeiroIds)
@@ -245,6 +245,6 @@ export async function saveServicoBarberLinks(input: {
   const failed = responses.find((response) => response.error)
 
   if (failed?.error) {
-    throw toAppError(failed.error, 'Não foi possível salvar barbeiros do serviço.')
+    throw toAppError(failed.error, 'Não foi possível salvar barbeiros do servico.')
   }
 }

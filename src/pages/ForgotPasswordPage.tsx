@@ -28,12 +28,12 @@ export function ForgotPasswordPage() {
 
     try {
       await sendPasswordResetEmail(data.email)
-      setSuccessMessage('Enviamos as instrucoes de recuperacao para seu e-mail.')
+      setSuccessMessage('Enviamos as instrucoes de recuperação para seu e-mail.')
     } catch (error) {
       setFormError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel enviar a recuperacao.',
+          : 'Não foi possível enviar a recuperação.',
       )
     }
   }
@@ -41,7 +41,7 @@ export function ForgotPasswordPage() {
   return (
     <div className="mx-auto w-full max-w-md">
       <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#12C6F3]">
-        Recuperacao
+        Recuperação
       </p>
       <h1 className="mt-2 text-[1.85rem] font-black leading-[1.08] tracking-normal text-white sm:mt-3 sm:text-3xl">
         Recuperar senha
@@ -74,7 +74,7 @@ export function ForgotPasswordPage() {
           disabled={isSubmitting}
           type="submit"
         >
-          {isSubmitting ? 'Enviando...' : 'Enviar recuperacao'}
+          {isSubmitting ? 'Enviando...' : 'Enviar recuperação'}
         </button>
       </form>
 

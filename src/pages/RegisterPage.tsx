@@ -46,7 +46,7 @@ export function RegisterPage() {
         setSuccessMessage(
           data.accountType === 'cliente' && !data.email
             ? 'Cadastro recebido, mas o Supabase exigiu confirmação de e-mail. Para cliente sem e-mail, desative confirmação de e-mail no Supabase Auth ou informe um e-mail real.'
-            : 'Cadastro recebido. O vinculo sera concluido automaticamente apos confirmar seu e-mail.',
+            : 'Cadastro recebido. O vínculo será concluído automaticamente após confirmar seu e-mail.',
         )
         return
       }
@@ -60,7 +60,7 @@ export function RegisterPage() {
 
       if (!profile?.empresa_id) {
         throw new Error(
-          'Conta criada no Auth, mas o vinculo com empresa nao foi encontrado. Verifique se a migration de cadastro foi aplicada no Supabase.',
+          'Conta criada no Auth, mas o vínculo com empresa não foi encontrado. Verifique se a migration de cadastro foi aplicada no Supabase.',
         )
       }
 
@@ -91,7 +91,7 @@ export function RegisterPage() {
         Criar conta BW Barber
       </h1>
       <p className="mt-2 text-sm leading-6 text-[#A5B4CB] sm:text-[0.95rem]">
-        Escolha seu perfil e ative sua experiencia no sistema.
+        Escolha seu perfil e ative sua experiência no sistema.
       </p>
 
       <form className="mt-5 space-y-3.5 transition-all duration-300 sm:mt-8 sm:space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -172,7 +172,7 @@ export function RegisterPage() {
         {accountType === 'barbearia' && (
           <label className="block animate-[fadeIn_240ms_ease-out]">
             <span className="text-sm font-semibold text-white">
-              CPF do responsavel
+              CPF do responsável
             </span>
             <input
               className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
@@ -259,7 +259,7 @@ export function RegisterPage() {
       </form>
 
       <p className="mt-5 text-center text-sm text-[#A5B4CB] sm:mt-7">
-        Ja tem conta?{' '}
+        Já tem conta?{' '}
         <Link className="font-bold text-[#12C6F3] transition hover:text-white" to="/login">
           Entrar
         </Link>

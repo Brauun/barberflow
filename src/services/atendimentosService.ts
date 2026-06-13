@@ -443,7 +443,7 @@ export async function rescheduleDailyAppointment(input: {
   })
 
   if (hasConflict) {
-    throw new Error('Este horario nao esta disponivel para remarcacao.')
+    throw new Error('Este horário nao esta disponivel para remarcacao.')
   }
 
   const {
@@ -547,7 +547,7 @@ export async function notifyWaitlistEntry(input: {
   entry: AdminWaitlistEntry
   barbershopName?: string | null
 }) {
-  const message = `Ola, ${input.entry.client?.nome ?? 'cliente'}! Surgiu uma possibilidade de horario na ${input.barbershopName ?? 'barbearia'} para ${new Date(`${input.entry.desired_date}T00:00:00`).toLocaleDateString('pt-BR')}. Acesse o app BW Barber para confirmar seu agendamento.`
+  const message = `Olá, ${input.entry.client?.nome ?? 'cliente'}! Surgiu uma possibilidade de horário na ${input.barbershopName ?? 'barbearia'} para ${new Date(`${input.entry.desired_date}T00:00:00`).toLocaleDateString('pt-BR')}. Acesse o app BW Barber para confirmar seu agendamento.`
 
   const { error: notificationError } = await supabase
     .from('notification_logs')

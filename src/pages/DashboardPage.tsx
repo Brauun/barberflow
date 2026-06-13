@@ -181,7 +181,7 @@ function RevenueChart({ data }: { data: MonthlyFinancePoint[] }) {
           <TrendingUp size={20} />
         </div>
         <p className="mt-3 text-sm font-semibold text-slate-950 dark:text-white">
-          Ainda nao existem receitas concluidas.
+          Ainda não existem receitas concluidas.
         </p>
         <p className="mt-1 max-w-xs text-xs text-slate-500 dark:text-slate-400">
           Conclua atendimentos para visualizar o fluxo de receita.
@@ -327,7 +327,7 @@ export function DashboardPage() {
       <Card>
         <CardContent>
           <p className="text-sm text-slate-600">
-            Complete o vinculo do usuario com uma empresa para visualizar o Dashboard.
+            Complete o vínculo do usuário com uma empresa para visualizar o Dashboard.
           </p>
         </CardContent>
       </Card>
@@ -340,7 +340,7 @@ export function DashboardPage() {
     return (
       <Card>
         <CardContent>
-          <p className="text-sm font-medium text-red-600">Nao foi possivel carregar o Dashboard.</p>
+          <p className="text-sm font-medium text-red-600">Não foi possível carregar o Dashboard.</p>
           <p className="mt-2 text-sm text-slate-600">{error.message}</p>
         </CardContent>
       </Card>
@@ -349,7 +349,7 @@ export function DashboardPage() {
 
   if (!data) return null
 
-  const userName = profile?.nome ?? user?.user_metadata.nome ?? 'Usuario'
+  const userName = profile?.nome ?? user?.user_metadata.nome ?? 'Usuário'
   const todayRevenue = data.metrics[0]
   const appointments = data.metrics[5] ?? data.metrics[1]
   const monthRevenue = data.metrics[2]
@@ -362,7 +362,7 @@ export function DashboardPage() {
     data.latestAppointments.reduce<
       Record<string, { count: number; name: string; total: number }>
     >((acc, appointment) => {
-      const name = appointment.servicos?.nome ?? 'Servico'
+      const name = appointment.servicos?.nome ?? 'Serviço'
       const current = acc[name] ?? { count: 0, name, total: 0 }
       current.count += 1
       current.total += Number(appointment.valor)
@@ -382,7 +382,7 @@ export function DashboardPage() {
           {getGreeting()}, {String(userName).split(' ')[0]}
         </h2>
         <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-          Hoje voce teve{' '}
+          Hoje você teve{' '}
           <span className="font-semibold text-slate-950 dark:text-white">{appointments?.value}</span>{' '}
           atendimentos e faturou{' '}
           <span className="font-semibold text-brand-500">{todayRevenue?.value}</span>
@@ -411,7 +411,7 @@ export function DashboardPage() {
           deltaUp={false}
           icon={CreditCard}
           iconColor="amber"
-          label="Ticket medio"
+          label="Ticket médio"
           value={formatCurrency(ticketMedio / 100)}
         />
       </section>
@@ -432,11 +432,11 @@ export function DashboardPage() {
 
         <div className="rounded-2xl border border-slate-100 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-5">
-            <h3 className="text-base font-semibold text-slate-950 dark:text-white">Servicos Populares</h3>
+            <h3 className="text-base font-semibold text-slate-950 dark:text-white">Serviços Populares</h3>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Hoje</p>
           </div>
           {popularServices.length === 0 ? (
-            <p className="text-sm text-slate-500">Nenhum servico registrado ainda.</p>
+            <p className="text-sm text-slate-500">Nenhum serviço registrado ainda.</p>
           ) : (
             <div className="space-y-5">
               {popularServices.map((service) => (
@@ -477,7 +477,7 @@ export function DashboardPage() {
             <TableHead>
               <TableRow>
                 <TableHeaderCell>Cliente</TableHeaderCell>
-                <TableHeaderCell>Servico</TableHeaderCell>
+                <TableHeaderCell>Serviço</TableHeaderCell>
                 <TableHeaderCell>Barbeiro</TableHeaderCell>
                 <TableHeaderCell>Data</TableHeaderCell>
                 <TableHeaderCell>Valor</TableHeaderCell>
@@ -490,7 +490,7 @@ export function DashboardPage() {
                   <TableCell className="font-semibold text-slate-950 dark:text-white">
                     {appointment.clientes?.nome ?? 'Cliente'}
                   </TableCell>
-                  <TableCell>{appointment.servicos?.nome ?? 'Servico'}</TableCell>
+                  <TableCell>{appointment.servicos?.nome ?? 'Serviço'}</TableCell>
                   <TableCell>{appointment.barbeiros?.nome ?? 'Barbeiro'}</TableCell>
                   <TableCell>
                     {dateTimeFormatter.format(new Date(appointment.data_hora_inicio))}

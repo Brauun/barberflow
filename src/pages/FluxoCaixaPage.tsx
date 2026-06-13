@@ -131,7 +131,7 @@ export function FluxoCaixaPage() {
   const saveMutation = useMutation({
     mutationFn: async (data: FluxoCaixaFormData) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       await createMovimentacaoFinanceira(empresaId, data)
@@ -140,7 +140,7 @@ export function FluxoCaixaPage() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['fluxo-caixa'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
-        queryClient.invalidateQueries({ queryKey: ['relatorios'] }),
+        queryClient.invalidateQueries({ queryKey: ['relatórios'] }),
       ])
       setFormError(null)
       setIsFormOpen(false)
@@ -157,7 +157,7 @@ export function FluxoCaixaPage() {
       setFormError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel salvar a movimentacao.',
+          : 'Não foi possível salvar a movimentação.',
       )
     }
   }

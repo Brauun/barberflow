@@ -160,7 +160,7 @@ export function PlanosFidelidadePage() {
   const servicosQuery = useQuery({
     enabled: Boolean(empresaId),
     queryFn: () => listServicos(empresaId as string, ''),
-    queryKey: ['servicos', empresaId, 'benefits'],
+    queryKey: ['serviços', empresaId, 'benefits'],
   })
 
   const clientesQuery = useQuery({
@@ -201,7 +201,7 @@ export function PlanosFidelidadePage() {
   const saveMutation = useMutation({
     mutationFn: async (data: BenefitProgramFormData) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       if (editingProgram) {
@@ -261,7 +261,7 @@ export function PlanosFidelidadePage() {
       setFormError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel salvar o programa.',
+          : 'Não foi possível salvar o programa.',
       )
     }
   }
@@ -271,7 +271,7 @@ export function PlanosFidelidadePage() {
       <Card>
         <CardContent>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Complete o vinculo do usuario com uma empresa para gerenciar planos
+            Complete o vínculo do usuário com uma empresa para gerenciar planos
             e fidelidade.
           </p>
         </CardContent>
@@ -289,10 +289,10 @@ export function PlanosFidelidadePage() {
                 Upgrade
               </p>
               <h2 className="mt-2 text-2xl font-black text-slate-950 dark:text-white">
-                Planos e Fidelidade nao esta disponivel no seu plano.
+                Planos e Fidelidade não está disponível no seu plano.
               </h2>
               <p className="mt-2 max-w-2xl text-sm text-slate-500 dark:text-slate-400">
-                Faca upgrade para BW Pro ou BW Elite para criar programas
+                Faça upgrade para BW Pro ou BW Elite para criar programas
                 de fidelidade, pacotes e beneficios.
               </p>
             </div>
@@ -320,7 +320,7 @@ export function PlanosFidelidadePage() {
             Beneficios personalizaveis
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-            Crie planos, pacotes, clubes, cashback, cupons e regras proprias
+            Crie planos, pacotes, clubes, cashback, cupons e regras próprias
             para cada modelo comercial da barbearia.
           </p>
         </div>
@@ -539,10 +539,10 @@ export function PlanosFidelidadePage() {
               <Repeat className="text-brand-600" size={20} />
               <div>
                 <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
-                  Historico de uso
+                  Histórico de uso
                 </h3>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Resgates, descontos, cortesias e beneficios aplicados.
+                  Resgates, descontos, cortesias e benefícios aplicados.
                 </p>
               </div>
             </div>
@@ -637,7 +637,7 @@ export function PlanosFidelidadePage() {
             />
             <Input
               error={errors.renovacao_periodo?.message}
-              label="Renovacao"
+              label="Renovação"
               placeholder="mensal, semanal..."
               {...register('renovacao_periodo')}
             />
@@ -680,7 +680,7 @@ export function PlanosFidelidadePage() {
               {...register('publico_alvo')}
             />
             <Select
-              label="Servicos aplicaveis"
+              label="Serviços aplicáveis"
               options={serviceScopeTypes.map((option) => ({ ...option }))}
               {...register('service_scope')}
             />
@@ -688,7 +688,7 @@ export function PlanosFidelidadePage() {
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
             <p className="text-sm font-semibold text-slate-950 dark:text-slate-50">
-              Servicos incluidos
+              Serviços incluídos
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {(servicosQuery.data ?? []).map((servico) => (
@@ -710,7 +710,7 @@ export function PlanosFidelidadePage() {
             </div>
             {servicosQuery.data?.length === 0 && (
               <p className="mt-2 text-sm text-slate-500">
-                Nenhum servico cadastrado ainda.
+                Nenhum serviço cadastrado ainda.
               </p>
             )}
           </div>
@@ -750,7 +750,7 @@ export function PlanosFidelidadePage() {
               {...register('recompensa_valor')}
             />
             <Select
-              label="Servico gratis/recompensa"
+              label="Serviço grátis/recompensa"
               options={[
                 { label: 'Nenhum', value: '' },
                 ...(servicosQuery.data ?? []).map((servico) => ({
@@ -764,19 +764,19 @@ export function PlanosFidelidadePage() {
 
           <Input
             label="Descricao da recompensa"
-            placeholder="Ex: 1 corte gratis, 15% em qualquer servico..."
+            placeholder="Ex: 1 corte grátis, 15% em qualquer serviço..."
             {...register('recompensa_descricao')}
           />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
-              label="Regra de acumulo"
-              placeholder="Ex: acumula a cada atendimento concluido"
+              label="Regra de acúmulo"
+              placeholder="Ex: acumula a cada atendimento concluído"
               {...register('regra_acumulo')}
             />
             <Input
               label="Regra de resgate"
-              placeholder="Ex: cliente pode resgatar no proximo atendimento"
+              placeholder="Ex: cliente pode resgatar no próximo atendimento"
               {...register('regra_resgate')}
             />
           </div>
@@ -785,7 +785,7 @@ export function PlanosFidelidadePage() {
             <Select
               label="Acumulavel"
               options={[
-                { label: 'Nao', value: 'false' },
+                { label: 'Não', value: 'false' },
                 { label: 'Sim', value: 'true' },
               ]}
               {...register('acumulavel')}

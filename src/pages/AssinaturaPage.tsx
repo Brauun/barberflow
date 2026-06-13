@@ -28,9 +28,9 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 })
 
 const featureLabels: Record<string, string> = {
-  HAS_ADVANCED_REPORTS: 'Relatorios avancados',
+  HAS_ADVANCED_REPORTS: 'Relatórios avançados',
   HAS_CLIENT_APP: 'App do cliente',
-  HAS_EXECUTIVE_REPORTS: 'Relatorios executivos',
+  HAS_EXECUTIVE_REPORTS: 'Relatórios executivos',
   HAS_EXECUTIVE_PDF: 'PDF executivo',
   HAS_LOYALTY: 'Planos e fidelidade',
   HAS_MULTI_UNITS: 'Multiunidades',
@@ -57,29 +57,29 @@ const planFeatureSummary: Record<DisplayPlanSlug, Array<[string, string]>> = {
   premium: [
     ['Barbeiros', 'Ilimitado'],
     ['Clientes', 'Ilimitado'],
-    ['Lista de espera', 'incluido'],
-    ['Fidelidade', 'incluido'],
-    ['Relatorios executivos', 'incluido'],
-    ['WhatsApp', 'incluido'],
-    ['Multiunidades', 'incluido'],
+    ['Lista de espera', 'incluído'],
+    ['Fidelidade', 'incluído'],
+    ['Relatórios executivos', 'incluído'],
+    ['WhatsApp', 'incluído'],
+    ['Multiunidades', 'incluído'],
   ],
   professional: [
     ['Barbeiros', '5'],
     ['Clientes', 'Ilimitado'],
-    ['Lista de espera', 'incluido'],
-    ['Fidelidade', 'incluido'],
-    ['Relatorios executivos', 'incluido'],
-    ['PDF executivo', 'incluido'],
-    ['WhatsApp', 'nao incluido'],
+    ['Lista de espera', 'incluído'],
+    ['Fidelidade', 'incluído'],
+    ['Relatórios executivos', 'incluído'],
+    ['PDF executivo', 'incluído'],
+    ['WhatsApp', 'não incluído'],
   ],
   starter: [
     ['Barbeiros', '1'],
     ['Clientes', '300'],
-    ['Lista de espera', 'nao incluido'],
-    ['Fidelidade', 'nao incluido'],
-    ['Relatorios executivos', 'nao incluido'],
-    ['PWA', 'incluido'],
-    ['App do cliente', 'incluido'],
+    ['Lista de espera', 'não incluído'],
+    ['Fidelidade', 'não incluído'],
+    ['Relatórios executivos', 'não incluído'],
+    ['PWA', 'incluído'],
+    ['App do cliente', 'incluído'],
   ],
 }
 
@@ -145,19 +145,19 @@ function featureValue(value: unknown) {
   }
 
   if (value === true) {
-    return 'Incluido'
+    return 'Incluído'
   }
 
   if (value === false) {
-    return 'Nao incluido'
+    return 'Não incluído'
   }
 
-  if (value === 'incluido') {
-    return 'Incluido'
+  if (value === 'incluído') {
+    return 'Incluído'
   }
 
-  if (value === 'nao incluido') {
-    return 'Nao incluido'
+  if (value === 'não incluído') {
+    return 'Não incluído'
   }
 
   return String(value)
@@ -176,7 +176,7 @@ export function AssinaturaPage() {
   const selectPlanMutation = useMutation({
     mutationFn: async (plan: Plan) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       const nextStatus =
@@ -217,7 +217,7 @@ export function AssinaturaPage() {
       <Card>
         <CardContent>
           <p className="text-sm font-semibold text-red-600">
-            Nao foi possivel carregar a assinatura.
+            Não foi possível carregar a assinatura.
           </p>
           <p className="mt-2 text-sm text-slate-500">
             {subscriptionQuery.error.message}
@@ -238,7 +238,7 @@ export function AssinaturaPage() {
             Planos do BW Barber
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400">
-            Controle trial, plano atual e limites do sistema. Pagamento sera
+            Controle trial, plano atual e limites do sistema. Pagamento será
             integrado em uma proxima etapa.
           </p>
         </div>
@@ -263,7 +263,7 @@ export function AssinaturaPage() {
         <Card className="border-amber-200 bg-amber-50/80 dark:border-amber-400/20 dark:bg-amber-400/10">
           <CardContent>
             <p className="text-sm font-black text-amber-900 dark:text-amber-100">
-              Estrutura de assinatura ainda nao foi aplicada no Supabase.
+              Estrutura de assinatura ainda não foi aplicada no Supabase.
             </p>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-amber-800/80 dark:text-amber-100/80">
               A tela esta funcionando em modo de pre-visualizacao. Para liberar a
@@ -297,8 +297,8 @@ export function AssinaturaPage() {
                     {!schemaReady
                       ? 'Migration pendente para ativar trial e planos reais.'
                       : subscription?.status === 'TRIAL'
-                      ? `Seu teste gratis termina em ${subscriptionQuery.daysRemaining ?? 0} dias.`
-                      : 'Assinatura fora do periodo de teste.'}
+                      ? `Seu teste grátis termina em ${subscriptionQuery.daysRemaining ?? 0} dias.`
+                      : 'Assinatura fora do período de teste.'}
                   </p>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     Durante o trial, os recursos do BW Pro ficam liberados.

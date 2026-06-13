@@ -5,7 +5,7 @@ export const produtoSchema = z.object({
   categoria: z.string().min(2, 'Informe a categoria.'),
   estoque_atual: z.coerce
     .number()
-    .int('O estoque deve ser um número inteiro.')
+    .int('O estoque deve ser um numero inteiro.')
     .min(0, 'O estoque não pode ser negativo.'),
   nome: z.string().min(2, 'Informe o nome do produto.'),
   preco_custo: z.coerce.number().min(0, 'O valor de compra não pode ser negativo.'),
@@ -15,7 +15,7 @@ export const produtoSchema = z.object({
 export const estoqueSchema = z.object({
   quantidade: z.coerce
     .number()
-    .int('A quantidade deve ser um número inteiro.')
+    .int('A quantidade deve ser um numero inteiro.')
     .min(1, 'Informe uma quantidade maior que zero.'),
 })
 

@@ -12,8 +12,8 @@ export const barbeiroSchema = z.object({
     }),
   percentual_comissao: z.coerce
     .number()
-    .min(0, 'A comissão não pode ser negativa.')
-    .max(100, 'A comissão não pode passar de 100%.'),
+    .min(0, 'A comissao não pode ser negativa.')
+    .max(100, 'A comissao não pode passar de 100%.'),
 })
 
 export type BarbeiroFormInput = z.input<typeof barbeiroSchema>

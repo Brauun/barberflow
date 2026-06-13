@@ -8,7 +8,7 @@ export function NotFoundPage() {
           404
         </p>
         <h1 className="mt-3 text-4xl font-semibold tracking-normal">
-          Pagina nao encontrada.
+          Página não encontrada.
         </h1>
         <Link
           className="mt-6 inline-flex items-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-500"

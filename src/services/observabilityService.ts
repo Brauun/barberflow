@@ -143,7 +143,7 @@ export async function handleAppError(input: ErrorInput) {
     return errorMessage(input.error)
   }
 
-  return 'Nao foi possivel concluir a acao agora. Tente novamente em alguns instantes.'
+  return 'Não foi possivel concluir a acao agora. Tente novamente em alguns instantes.'
 }
 
 export async function listAuditLogs(empresaId: string): Promise<AuditLog[]> {

@@ -144,7 +144,7 @@ export function ClientBarbershopSearchPage() {
   const selectMutation = useMutation({
     mutationFn: async (barbershopId: string) => {
       if (!clientProfile) {
-        throw new Error('Perfil de cliente nao encontrado.')
+        throw new Error('Perfil de cliente não encontrado.')
       }
 
       await setPrimaryBarbershop(clientProfile, barbershopId)
@@ -158,7 +158,7 @@ export function ClientBarbershopSearchPage() {
 
   const filters = [
     { label: 'Mais proximas', value: 'nearby' },
-    { label: 'Melhor avaliacao', value: 'rating' },
+    { label: 'Melhor avaliação', value: 'rating' },
     { label: 'Mais agendadas', value: 'booked' },
     { label: 'Menor espera', value: 'waiting' },
   ] as const
@@ -166,7 +166,7 @@ export function ClientBarbershopSearchPage() {
   const favoriteMutation = useMutation({
     mutationFn: async (barbershop: Barbershop) => {
       if (!clientProfile) {
-        throw new Error('Perfil de cliente nao encontrado.')
+        throw new Error('Perfil de cliente não encontrado.')
       }
 
       if (favoriteIds.has(barbershop.id)) {

@@ -139,7 +139,7 @@ export function ProdutosPage() {
   const saveMutation = useMutation({
     mutationFn: async (data: ProdutoFormData) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       if (editingProduto) {
@@ -161,7 +161,7 @@ export function ProdutosPage() {
   const deleteMutation = useMutation({
     mutationFn: async (produto: Produto) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       await deleteProduto(empresaId, produto.id)
@@ -174,7 +174,7 @@ export function ProdutosPage() {
   const stockMutation = useMutation({
     mutationFn: async (data: EstoqueFormData) => {
       if (!empresaId || !stockProduto) {
-        throw new Error('Produto nao encontrado.')
+        throw new Error('Produto não encontrado.')
       }
 
       await registrarEntradaEstoque(empresaId, stockProduto.id, data)
@@ -190,7 +190,7 @@ export function ProdutosPage() {
   const saleMutation = useMutation({
     mutationFn: async (data: VendaProdutoFormData) => {
       if (!empresaId || !saleProduto) {
-        throw new Error('Produto nao encontrado.')
+        throw new Error('Produto não encontrado.')
       }
 
       await registrarVendaProduto(empresaId, saleProduto.id, data)
@@ -236,14 +236,14 @@ export function ProdutosPage() {
       setFormError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel salvar o produto.',
+          : 'Não foi possível salvar o produto.',
       )
     }
   }
 
   async function handleDelete(produto: Produto) {
     const shouldDelete = window.confirm(
-      `Excluir o produto ${produto.nome}? Esta acao nao pode ser desfeita.`,
+      `Excluir o produto ${produto.nome}? Esta ação não pode ser desfeita.`,
     )
 
     if (!shouldDelete) {
@@ -262,7 +262,7 @@ export function ProdutosPage() {
       setStockError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel registrar a entrada.',
+          : 'Não foi possível registrar a entrada.',
       )
     }
   }
@@ -276,7 +276,7 @@ export function ProdutosPage() {
       setSaleError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel registrar a venda.',
+          : 'Não foi possível registrar a venda.',
       )
     }
   }

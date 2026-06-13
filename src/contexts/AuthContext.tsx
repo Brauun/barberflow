@@ -112,7 +112,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           action: 'auth_load_user_profile_failed',
           area: 'auth',
           error,
-          message: 'Erro ao carregar perfil do usuario.',
+          message: 'Erro ao carregar perfil do usuário.',
           userId: user.id,
         })
         setProfile(null)
@@ -293,7 +293,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           action: 'auth_initialization_failed',
           area: 'auth',
           error,
-          message: 'Erro ao inicializar autenticacao.',
+          message: 'Erro ao inicializar autenticação.',
         })
         setProfile(null)
         setClientProfile(null)

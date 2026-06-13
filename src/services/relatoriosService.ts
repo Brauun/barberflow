@@ -292,7 +292,7 @@ export async function getRelatorioData(
       .filter(
         (movement) =>
           movement.tipo === 'entrada' &&
-          ['serviço', 'servico', 'atendimento'].some((category) =>
+          ['servico', 'servico', 'atendimento'].some((category) =>
             movement.categoria.toLowerCase().includes(category),
           ),
       )

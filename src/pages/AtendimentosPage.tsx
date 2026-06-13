@@ -100,12 +100,12 @@ const dailyStatusOptions = [
   { label: 'Agendado', value: 'agendado' },
   { label: 'Confirmado', value: 'confirmado' },
   { label: 'Em atendimento', value: 'em_atendimento' },
-  { label: 'Finalizacao pendente', value: 'aguardando_finalizacao' },
-  { label: 'Concluido', value: 'concluido' },
-  { label: 'Concluido automatico', value: 'concluido_automatico' },
+  { label: 'Finalização pendente', value: 'aguardando_finalizacao' },
+  { label: 'Concluído', value: 'concluido' },
+  { label: 'Concluído automático', value: 'concluido_automatico' },
   { label: 'Cancelado', value: 'cancelado' },
   { label: 'Remarcado', value: 'remarcado' },
-  { label: 'Nao compareceu', value: 'nao_compareceu' },
+  { label: 'Não compareceu', value: 'nao_compareceu' },
 ]
 
 function getStatusLabel(status: string) {
@@ -192,7 +192,7 @@ export function AtendimentosPage() {
   const servicosQuery = useQuery({
     enabled: Boolean(empresaId),
     queryFn: () => listAtendimentoServicos(empresaId as string),
-    queryKey: ['atendimentos-servicos', empresaId],
+    queryKey: ['atendimentos-serviços', empresaId],
   })
 
   const dailyAppointmentsQuery = useQuery({
@@ -271,7 +271,7 @@ export function AtendimentosPage() {
   const saveMutation = useMutation({
     mutationFn: async (data: AtendimentoFormData) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       await registrarAtendimento(empresaId, data)
@@ -295,7 +295,7 @@ export function AtendimentosPage() {
       status: DailyAppointmentStatus
     }) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       await updateDailyAppointmentStatus({
@@ -315,7 +315,7 @@ export function AtendimentosPage() {
         queryClient.invalidateQueries({ queryKey: ['atendimentos'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
         queryClient.invalidateQueries({ queryKey: ['fluxo-caixa'] }),
-        queryClient.invalidateQueries({ queryKey: ['relatorios'] }),
+        queryClient.invalidateQueries({ queryKey: ['relatórios'] }),
         queryClient.invalidateQueries({ queryKey: ['relatorios-executivos'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-waitlist'] }),
       ])
@@ -328,7 +328,7 @@ export function AtendimentosPage() {
       nextStatus: 'concluido' | 'nao_compareceu'
     }) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       await reverseAutoCompletedAppointment({
@@ -343,7 +343,7 @@ export function AtendimentosPage() {
         queryClient.invalidateQueries({ queryKey: ['atendimentos'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
         queryClient.invalidateQueries({ queryKey: ['fluxo-caixa'] }),
-        queryClient.invalidateQueries({ queryKey: ['relatorios'] }),
+        queryClient.invalidateQueries({ queryKey: ['relatórios'] }),
         queryClient.invalidateQueries({ queryKey: ['relatorios-executivos'] }),
       ])
     },
@@ -352,7 +352,7 @@ export function AtendimentosPage() {
   const rescheduleMutation = useMutation({
     mutationFn: async () => {
       if (!empresaId || !rescheduleAppointment) {
-        throw new Error('Atendimento nao encontrado.')
+        throw new Error('Atendimento não encontrado.')
       }
 
       const startsAt = new Date(`${rescheduleDate}T${rescheduleTime}:00`)
@@ -400,7 +400,7 @@ export function AtendimentosPage() {
       setFormError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel registrar o atendimento.',
+          : 'Não foi possível registrar o atendimento.',
       )
     }
   }
@@ -536,7 +536,7 @@ export function AtendimentosPage() {
                 >
                   <div>
                     <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                      Horario
+                      Horário
                     </p>
                     <p className="mt-1 text-xl font-black text-brand-600">
                       {new Date(appointment.starts_at).toLocaleTimeString('pt-BR', {
@@ -594,7 +594,7 @@ export function AtendimentosPage() {
                           size="sm"
                           type="button"
                         >
-                          Concluido
+                          Concluído
                         </Button>
                         <Button
                           disabled={updateStatusMutation.isPending}
@@ -608,7 +608,7 @@ export function AtendimentosPage() {
                           type="button"
                           variant="secondary"
                         >
-                          Nao compareceu
+                          Não compareceu
                         </Button>
                       </>
                     )}
@@ -618,7 +618,7 @@ export function AtendimentosPage() {
                           disabled={reverseAutoMutation.isPending}
                           onClick={() => {
                             const markNoShow = window.confirm(
-                              'Corrigir para Nao compareceu? Cancele para apenas confirmar como concluido.',
+                              'Corrigir para Não compareceu? Cancele para apenas confirmar como concluído.',
                             )
 
                             reverseAutoMutation.mutate({
@@ -671,7 +671,7 @@ export function AtendimentosPage() {
                           onClick={() => {
                             if (
                               !window.confirm(
-                                'Cancelar este atendimento e liberar o horario?',
+                                'Cancelar este atendimento e liberar o horário?',
                               )
                             ) {
                               return
@@ -730,7 +730,7 @@ export function AtendimentosPage() {
                 Lista de espera
               </h3>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Clientes aguardando vaga por data, servico e profissional.
+                Clientes aguardando vaga por data, serviço e profissional.
               </p>
             </div>
           </div>
@@ -738,7 +738,7 @@ export function AtendimentosPage() {
         <CardContent className="space-y-3">
           {!waitlistAccess.isLoading && !waitlistAccess.canUse ? (
             <div className="rounded-[1.35rem] border border-brand-100 bg-brand-50/70 p-6 text-sm font-semibold text-slate-700 dark:border-brand-400/20 dark:bg-brand-400/10 dark:text-brand-100">
-              A lista de espera nao esta disponivel no seu plano atual. Faça
+              A lista de espera não está disponível no seu plano atual. Faça
               upgrade em Assinatura para liberar este recurso.
             </div>
           ) : waitlistQuery.error ? (
@@ -762,12 +762,12 @@ export function AtendimentosPage() {
                     {entry.client?.nome ?? 'Cliente'}
                   </p>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {entry.client?.telefone ?? 'Telefone nao informado'}
+                    {entry.client?.telefone ?? 'Telefone não informado'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-950 dark:text-white">
-                    {entry.service?.nome ?? 'Servico'}
+                    {entry.service?.nome ?? 'Serviço'}
                   </p>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     {entry.barber?.nome ?? 'Qualquer profissional'}
@@ -966,7 +966,7 @@ export function AtendimentosPage() {
 
           <Input
             error={errors.valor?.message}
-            label="Preco"
+            label="Preço"
             min={0}
             step="0.01"
             type="number"
@@ -1008,10 +1008,10 @@ export function AtendimentosPage() {
             />
             <Select
               error={errors.comissao_base?.message}
-              label="Comissao sobre"
+              label="Comissão sobre"
               options={[
                 { label: 'Valor cheio', value: 'cheio' },
-                { label: 'Valor liquido', value: 'liquido' },
+                { label: 'Valor líquido', value: 'liquido' },
               ]}
               {...register('comissao_base')}
             />
@@ -1083,11 +1083,11 @@ export function AtendimentosPage() {
         {selectedDailyAppointment && (
           <div className="space-y-4 text-sm">
             {[
-              ['Horario', dateTimeFormatter.format(new Date(selectedDailyAppointment.starts_at))],
+              ['Horário', dateTimeFormatter.format(new Date(selectedDailyAppointment.starts_at))],
               ['Cliente', selectedDailyAppointment.cliente],
               ['Barbeiro', selectedDailyAppointment.barbeiro],
-              ['Servico', selectedDailyAppointment.servico],
-              ['Duracao', `${selectedDailyAppointment.duration_minutes}min`],
+              ['Serviço', selectedDailyAppointment.servico],
+              ['Duração', `${selectedDailyAppointment.duration_minutes}min`],
               ['Valor', currencyFormatter.format(selectedDailyAppointment.valor)],
               ['Status', getStatusLabel(selectedDailyAppointment.status)],
             ].map(([label, value]) => (
@@ -1125,7 +1125,7 @@ export function AtendimentosPage() {
               value={rescheduleDate}
             />
             <Input
-              label="Novo horario"
+              label="Novo horário"
               onChange={(event) => setRescheduleTime(event.target.value)}
               type="time"
               value={rescheduleTime}

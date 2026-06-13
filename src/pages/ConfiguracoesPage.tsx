@@ -88,26 +88,52 @@ const roleLabels: Record<string, string> = {
 
 const auditActionLabels: Record<string, string> = {
   atendimento_cancelado: 'Atendimento cancelado',
-  atendimento_concluido: 'Atendimento concluido',
+  atendimento_concluido: 'Atendimento concluído',
   atendimento_remarcado: 'Atendimento remarcado',
-  convite_funcionario: 'Convite de funcionario',
+  convite_funcionario: 'Convite de funcionário',
   despesa_criada: 'Despesa criada',
   empresa_atualizada: 'Empresa atualizada',
-  exportacao_dados: 'Exportacao de dados',
-  exportacao_dados_completa: 'Exportacao completa',
-  funcionario_inativado: 'Funcionario inativado',
+  exportacao_dados: 'Exportação de dados',
+  exportacao_dados_completa: 'Exportação completa',
+  funcionario_inativado: 'Funcionário inativado',
   login: 'Login',
   logout: 'Logout',
-  movimentacao_criada: 'Movimentacao financeira',
-  servico_criado: 'Servico criado',
-  servico_editado: 'Servico editado',
-  servico_inativado: 'Servico inativado',
+  movimentacao_criada: 'Movimentação financeira',
+  servico_criado: 'Serviço criado',
+  servico_editado: 'Serviço editado',
+  servico_inativado: 'Serviço inativado',
 }
 
 const auditDateFormatter = new Intl.DateTimeFormat('pt-BR', {
   dateStyle: 'short',
   timeStyle: 'short',
 })
+
+type CompactTimeInputProps = {
+  disabled?: boolean
+  label?: string
+  onChange: (value: string) => void
+  value: string
+}
+
+function CompactTimeInput({ disabled, label, onChange, value }: CompactTimeInputProps) {
+  return (
+    <label className="block">
+      {label && (
+        <span className="mb-0.5 block text-[0.65rem] font-semibold uppercase tracking-wide text-slate-400">
+          {label}
+        </span>
+      )}
+      <input
+        className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm tabular-nums text-slate-950 outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100/80 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50 dark:disabled:bg-slate-800/50"
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        type="time"
+        value={value}
+      />
+    </label>
+  )
+}
 
 function SettingsRow({ description, icon, title, value }: SettingsRowProps) {
   return (
@@ -287,7 +313,7 @@ export function ConfiguracoesPage() {
             setCepStatus(
               error instanceof Error
                 ? error.message
-                : 'Nao foi possivel consultar o CEP.',
+                : 'Não foi possível consultar o CEP.',
             )
           }
         })
@@ -390,7 +416,7 @@ export function ConfiguracoesPage() {
   const empresaMutation = useMutation({
     mutationFn: async (data: EmpresaSettingsFormData) => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       await updateEmpresaSettings(empresaId, data)
@@ -405,7 +431,7 @@ export function ConfiguracoesPage() {
   const perfilMutation = useMutation({
     mutationFn: async (data: UserProfileFormData) => {
       if (!empresaId || !profile?.id) {
-        throw new Error('Perfil nao encontrado.')
+        throw new Error('Perfil não encontrado.')
       }
 
       await updateUserProfile(empresaId, profile.id, data)
@@ -419,7 +445,7 @@ export function ConfiguracoesPage() {
   const businessHoursMutation = useMutation({
     mutationFn: async () => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       const parsedHours = businessHoursSchema.parse(businessHours)
@@ -435,7 +461,7 @@ export function ConfiguracoesPage() {
   const appointmentAutomationMutation = useMutation({
     mutationFn: async () => {
       if (!empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       await saveAppointmentAutomationSettings(empresaId, appointmentAutomation)
@@ -479,7 +505,7 @@ export function ConfiguracoesPage() {
     onError: async (error) => {
       setEmpresaError(
         await handleAppError({
-          area: 'backup_exportacao',
+          area: 'backup_exportação',
           empresaId,
           error,
         }),
@@ -508,7 +534,7 @@ export function ConfiguracoesPage() {
       setEmpresaError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel salvar a empresa.',
+          : 'Não foi possível salvar a empresa.',
       )
     }
   }
@@ -529,7 +555,7 @@ export function ConfiguracoesPage() {
       setPerfilError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel salvar o perfil.',
+          : 'Não foi possível salvar o perfil.',
       )
     }
   }
@@ -589,7 +615,7 @@ export function ConfiguracoesPage() {
       setBusinessHoursError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel salvar os horarios.',
+          : 'Não foi possível salvar os horários.',
       )
     }
   }
@@ -603,7 +629,7 @@ export function ConfiguracoesPage() {
       setAppointmentAutomationError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel salvar a automacao de atendimentos.',
+          : 'Não foi possível salvar a automação de atendimentos.',
       )
     }
   }
@@ -655,16 +681,16 @@ export function ConfiguracoesPage() {
                 description={
                   empresa?.telefone
                     ? formatPhone(empresa.telefone)
-                    : 'Telefone nao informado'
+                    : 'Telefone não informado'
                 }
                 icon={<Building2 size={19} />}
                 title={empresa?.nome ?? 'Barbearia'}
-                value={empresa?.email ?? 'Email nao informado'}
+                value={empresa?.email ?? 'Email não informado'}
               />
               <SettingsRow
-                description={empresa?.endereco ?? 'Endereco nao informado'}
+                description={empresa?.endereco ?? 'Endereço não informado'}
                 icon={<Save size={19} />}
-                title="Comissao padrao"
+                title="Comissão padrão"
                 value={`${empresa?.percentual_comissao_padrao ?? 60}%`}
               />
             </div>
@@ -676,7 +702,7 @@ export function ConfiguracoesPage() {
             </p>
             <div className="space-y-3">
               <SettingsRow
-                description="Preferencia visual aplicada ao app"
+                description="Preferência visual aplicada ao app"
                 icon={<Paintbrush size={19} />}
                 title="Tema"
                 value={
@@ -691,10 +717,10 @@ export function ConfiguracoesPage() {
                 description={
                   profile?.telefone
                     ? formatPhone(profile.telefone)
-                    : 'Telefone nao informado'
+                    : 'Telefone não informado'
                 }
                 icon={<UserRound size={19} />}
-                title={profile?.nome ?? 'Usuario'}
+                title={profile?.nome ?? 'Usuário'}
                 value={profile?.papel ? roleLabels[profile.papel] ?? profile.papel : 'Perfil'}
               />
             </div>
@@ -833,143 +859,182 @@ export function ConfiguracoesPage() {
       )}
 
       <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+  <CardHeader>
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+          Horários de funcionamento
+        </h3>
+        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+          Dias, expediente e pausas que liberam a agenda.
+        </p>
+      </div>
+      <div className="flex gap-2">
+        <Button
+          className="border-slate-200 bg-white text-slate-950 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 dark:border-transparent dark:bg-slate-950 dark:text-white dark:hover:border-transparent dark:hover:bg-slate-900"
+          onClick={copyWeekdayHours}
+          type="button"
+          variant="secondary"
+        >
+          Seg → Sex
+        </Button>
+        <Button
+          className="border-transparent bg-slate-950 text-white hover:border-transparent hover:bg-slate-800 dark:border-transparent dark:bg-white dark:text-slate-950 dark:hover:border-transparent dark:hover:bg-slate-200"
+          disabled={businessHoursMutation.isPending}
+          onClick={() => void handleSaveBusinessHours()}
+          type="button"
+        >
+          {businessHoursMutation.isPending ? 'Salvando...' : 'Salvar'}
+        </Button>
+      </div>
+    </div>
+  </CardHeader>
+
+  <CardContent className="space-y-1.5">
+    {businessHoursError && (
+      <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        {businessHoursError}
+      </p>
+    )}
+    {businessHoursMutation.isSuccess && (
+      <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+        Horários salvos com sucesso.
+      </p>
+    )}
+
+    {/* Cabeçalho das colunas — visível apenas em telas médias+ */}
+    <div className="hidden grid-cols-[7rem_1fr_1fr_1fr_1fr_2rem] gap-x-2 px-2 sm:grid">
+      <span />
+      <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">Abertura</span>
+      <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">Fechamento</span>
+      <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">Intervalo</span>
+      <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">Fim intervalo</span>
+      <span />
+    </div>
+
+    {weekDays.map((day) => {
+      const hour =
+        businessHours.find((item) => item.day_of_week === day.value) ??
+        defaultBusinessHours()[day.value]
+
+      return (
+        <div
+          key={day.value}
+          className={[
+            'rounded-2xl border px-3 py-2.5 transition-colors',
+            hour.is_open
+              ? 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60'
+              : 'border-slate-100 bg-slate-50/60 dark:border-slate-800/60 dark:bg-slate-900/30',
+          ].join(' ')}
+        >
+          {/* Layout mobile: empilhado */}
+          <div className="flex items-center justify-between sm:hidden">
             <div>
-              <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
-                Horarios de funcionamento
-              </h3>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Defina os dias, expediente e pausas que liberam a agenda do cliente.
+              <p className="text-sm font-bold text-slate-950 dark:text-slate-50">
+                {day.label}
               </p>
+              {hour.is_open && (
+                <p className="mt-0.5 text-[0.7rem] tabular-nums text-slate-500">
+                  {hour.open_time} – {hour.close_time}
+                  {hour.break_start && (
+                    <span className="ml-1 text-slate-400">
+                      · {hour.break_start}–{hour.break_end}
+                    </span>
+                  )}
+                </p>
+              )}
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                className="border-slate-200 bg-white text-slate-950 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 dark:border-transparent dark:bg-slate-950 dark:text-white dark:hover:border-transparent dark:hover:bg-slate-900"
-                onClick={copyWeekdayHours}
-                type="button"
-                variant="secondary"
-              >
-                Copiar segunda a sexta
-              </Button>
-              <Button
-                className="border-transparent bg-slate-950 text-white hover:border-transparent hover:bg-slate-800 dark:border-transparent dark:bg-white dark:text-slate-950 dark:hover:border-transparent dark:hover:bg-slate-200"
-                disabled={businessHoursMutation.isPending}
-                onClick={() => void handleSaveBusinessHours()}
-                type="button"
-              >
-                {businessHoursMutation.isPending
-                  ? 'Salvando...'
-                  : 'Salvar horarios'}
-              </Button>
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+              <input
+                checked={hour.is_open}
+                className="h-3.5 w-3.5 accent-brand-500"
+                onChange={(e) =>
+                  updateBusinessHour(day.value, { is_open: e.target.checked })
+                }
+                type="checkbox"
+              />
+              {hour.is_open ? 'Aberto' : 'Fechado'}
+            </label>
+          </div>
+
+          {/* Expandido no mobile quando aberto */}
+          {hour.is_open && (
+            <div className="mt-2 grid grid-cols-2 gap-2 sm:hidden">
+              <CompactTimeInput
+                label="Abertura"
+                disabled={!hour.is_open}
+                value={hour.open_time ?? ''}
+                onChange={(v) => updateBusinessHour(day.value, { open_time: v })}
+              />
+              <CompactTimeInput
+                label="Fechamento"
+                disabled={!hour.is_open}
+                value={hour.close_time ?? ''}
+                onChange={(v) => updateBusinessHour(day.value, { close_time: v })}
+              />
+              <CompactTimeInput
+                label="Intervalo"
+                disabled={!hour.is_open}
+                value={hour.break_start ?? ''}
+                onChange={(v) => updateBusinessHour(day.value, { break_start: v })}
+              />
+              <CompactTimeInput
+                label="Fim intervalo"
+                disabled={!hour.is_open}
+                value={hour.break_end ?? ''}
+                onChange={(v) => updateBusinessHour(day.value, { break_end: v })}
+              />
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {businessHoursError && (
-            <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {businessHoursError}
-            </p>
           )}
-          {businessHoursMutation.isSuccess && (
-            <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              Horarios salvos com sucesso.
+
+          {/* Layout desktop: linha única */}
+          <div className="hidden grid-cols-[7rem_1fr_1fr_1fr_1fr_2rem] items-center gap-x-2 sm:grid">
+            <p className="text-sm font-bold text-slate-950 dark:text-slate-50">
+              {day.label}
             </p>
-          )}
-          <div className="grid gap-3 lg:grid-cols-2">
-            {weekDays.map((day) => {
-              const hour =
-                businessHours.find((item) => item.day_of_week === day.value) ??
-                defaultBusinessHours()[day.value]
-
-              return (
-                <div
-                  className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70"
-                  key={day.value}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="font-black text-slate-950 dark:text-slate-50">
-                        {day.label}
-                      </p>
-                      <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        {hour.is_open ? 'Aberto' : 'Fechado'}
-                      </p>
-                    </div>
-                    <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                      <input
-                        checked={hour.is_open}
-                        className="h-4 w-4 accent-brand-500"
-                        onChange={(event) =>
-                          updateBusinessHour(day.value, {
-                            is_open: event.target.checked,
-                          })
-                        }
-                        type="checkbox"
-                      />
-                      Aberto
-                    </label>
-                  </div>
-
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <Input
-                      disabled={!hour.is_open}
-                      label="Inicio"
-                      onChange={(event) =>
-                        updateBusinessHour(day.value, {
-                          open_time: event.target.value,
-                        })
-                      }
-                      type="time"
-                      value={hour.open_time ?? ''}
-                    />
-                    <Input
-                      disabled={!hour.is_open}
-                      label="Fim"
-                      onChange={(event) =>
-                        updateBusinessHour(day.value, {
-                          close_time: event.target.value,
-                        })
-                      }
-                      type="time"
-                      value={hour.close_time ?? ''}
-                    />
-                    <Input
-                      disabled={!hour.is_open}
-                      label="Intervalo inicio"
-                      onChange={(event) =>
-                        updateBusinessHour(day.value, {
-                          break_start: event.target.value,
-                        })
-                      }
-                      type="time"
-                      value={hour.break_start ?? ''}
-                    />
-                    <Input
-                      disabled={!hour.is_open}
-                      label="Intervalo fim"
-                      onChange={(event) =>
-                        updateBusinessHour(day.value, {
-                          break_end: event.target.value,
-                        })
-                      }
-                      type="time"
-                      value={hour.break_end ?? ''}
-                    />
-                  </div>
-                </div>
-              )
-            })}
+            <CompactTimeInput
+              disabled={!hour.is_open}
+              value={hour.open_time ?? ''}
+              onChange={(v) => updateBusinessHour(day.value, { open_time: v })}
+            />
+            <CompactTimeInput
+              disabled={!hour.is_open}
+              value={hour.close_time ?? ''}
+              onChange={(v) => updateBusinessHour(day.value, { close_time: v })}
+            />
+            <CompactTimeInput
+              disabled={!hour.is_open}
+              value={hour.break_start ?? ''}
+              onChange={(v) => updateBusinessHour(day.value, { break_start: v })}
+            />
+            <CompactTimeInput
+              disabled={!hour.is_open}
+              value={hour.break_end ?? ''}
+              onChange={(v) => updateBusinessHour(day.value, { break_end: v })}
+            />
+            <label className="flex items-center justify-center">
+              <input
+                checked={hour.is_open}
+                className="h-3.5 w-3.5 accent-brand-500"
+                onChange={(e) =>
+                  updateBusinessHour(day.value, { is_open: e.target.checked })
+                }
+                type="checkbox"
+              />
+            </label>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )
+    })}
+  </CardContent>
+</Card>
 
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
-                Automacao de atendimentos
+                Automação de atendimentos
               </h3>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                 Defina quando o sistema conclui atendimentos esquecidos e por
@@ -984,7 +1049,7 @@ export function ConfiguracoesPage() {
             >
               {appointmentAutomationMutation.isPending
                 ? 'Salvando...'
-                : 'Salvar automacao'}
+                : 'Salvar automação'}
             </Button>
           </div>
         </CardHeader>
@@ -996,12 +1061,12 @@ export function ConfiguracoesPage() {
           )}
           {appointmentAutomationMutation.isSuccess && (
             <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
-              Automacao salva com sucesso.
+              Automação salva com sucesso.
             </p>
           )}
           <div className="grid gap-4 lg:grid-cols-3">
             <Select
-              label="Finalizacao automatica"
+              label="Finalização automatica"
               onChange={(event) => {
                 const value = event.target.value
 
@@ -1014,10 +1079,10 @@ export function ConfiguracoesPage() {
               }}
               options={[
                 { label: 'Desativado', value: 'off' },
-                { label: '30 minutos apos fim', value: '30' },
-                { label: '1 hora apos fim', value: '60' },
-                { label: '2 horas apos fim', value: '120' },
-                { label: '4 horas apos fim', value: '240' },
+                { label: '30 minutos após fim', value: '30' },
+                { label: '1 hora após fim', value: '60' },
+                { label: '2 horas após fim', value: '120' },
+                { label: '4 horas após fim', value: '240' },
               ]}
               value={
                 appointmentAutomation.enabled
@@ -1035,7 +1100,7 @@ export function ConfiguracoesPage() {
               }
               options={[
                 { label: 'Sim', value: 'true' },
-                { label: 'Nao', value: 'false' },
+                { label: 'Não', value: 'false' },
               ]}
               value={String(appointmentAutomation.allow_reversal)}
             />
@@ -1058,7 +1123,7 @@ export function ConfiguracoesPage() {
           </div>
           {appointmentAutomationQuery.isLoading && (
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Carregando configuracao de atendimentos...
+              Carregando configuração de atendimentos...
             </p>
           )}
         </CardContent>
@@ -1126,7 +1191,7 @@ export function ConfiguracoesPage() {
               <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
                 <div className="mb-4">
                   <p className="text-sm font-semibold text-slate-950 dark:text-slate-50">
-                    Localizacao da barbearia
+                    Localização da barbearia
                   </p>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     Esses dados aparecem para o cliente e alimentam o botao Ver rota.
@@ -1150,7 +1215,7 @@ export function ConfiguracoesPage() {
                   />
                   <Input
                     error={empresaForm.formState.errors.numero?.message}
-                    label="Numero"
+                    label="Número"
                     placeholder="123"
                     {...empresaForm.register('numero')}
                   />
@@ -1176,7 +1241,7 @@ export function ConfiguracoesPage() {
                   <Input
                     error={empresaForm.formState.errors.complemento?.message}
                     label="Complemento"
-                    placeholder="Sala, andar ou referencia"
+                    placeholder="Sala, andar ou referência"
                     {...empresaForm.register('complemento')}
                   />
                 </div>
@@ -1205,7 +1270,7 @@ export function ConfiguracoesPage() {
                       Logo da barbearia
                     </p>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                      PNG, JPG, JPEG ou WEBP ate 2MB.
+                      PNG, JPG, JPEG ou WEBP até 2MB.
                     </p>
                     {empresaForm.formState.errors.logo_url?.message && (
                       <p className="mt-2 text-sm text-red-600">
@@ -1361,7 +1426,7 @@ export function ConfiguracoesPage() {
                         Foto de perfil
                       </p>
                       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Usada na sidebar e no perfil do usuario.
+                        Usada na sidebar e no perfil do usuário.
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">

@@ -174,14 +174,14 @@ export function ContasPagarPage() {
       setFormError(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel salvar a conta.',
+          : 'Não foi possível salvar a conta.',
       )
     }
   }
 
   async function handleDelete(conta: ContaPagar) {
     const shouldDelete = window.confirm(
-      `Excluir a conta "${conta.descricao}"? Esta acao nao pode ser desfeita.`,
+      `Excluir a conta "${conta.descricao}"? Esta ação não pode ser desfeita.`,
     )
 
     if (!shouldDelete) {

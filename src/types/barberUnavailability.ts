@@ -4,7 +4,7 @@ export const barberUnavailabilityReasons = [
   'Folga',
   'Ferias',
   'Atestado',
-  'Horario bloqueado',
+  'Horário bloqueado',
   'Compromisso pessoal',
   'Outro',
 ] as const

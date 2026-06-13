@@ -6,7 +6,7 @@ export const atendimentoSchema = z.object({
   data: z.string().min(1, 'Informe a data.'),
   forma_pagamento: z.string().min(2, 'Informe a forma de pagamento.'),
   hora: z.string().min(1, 'Informe a hora.'),
-  servico_id: z.string().uuid('Selecione um serviço.'),
+  servico_id: z.string().uuid('Selecione um servico.'),
   valor: z.coerce.number().min(0, 'O valor não pode ser negativo.'),
   desconto_tipo: z.enum(['valor', 'percentual']).default('valor'),
   valor_desconto: z.coerce

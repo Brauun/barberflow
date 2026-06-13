@@ -43,7 +43,7 @@ export function EmployeeInvitePage() {
   const acceptMutation = useMutation({
     mutationFn: async (data: AcceptEmployeeInvitationFormData) => {
       if (!invitation) {
-        throw new Error('Convite nao encontrado.')
+        throw new Error('Convite não encontrado.')
       }
 
       await acceptEmployeeInvitation({
@@ -75,7 +75,7 @@ export function EmployeeInvitePage() {
               Crie sua senha
             </h1>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Voce foi convidado para participar da barbearia. Defina sua senha
+              Você foi convidado para participar da barbearia. Defina sua senha
               para ativar o acesso.
             </p>
           </div>
@@ -83,7 +83,7 @@ export function EmployeeInvitePage() {
           {invitationQuery.isLoading ? (
             <p className="text-sm text-slate-500">Carregando convite...</p>
           ) : !invitation ? (
-            <AuthFormMessage message="Convite nao encontrado ou expirado." />
+            <AuthFormMessage message="Convite não encontrado ou expirado." />
           ) : (
             <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
               <AuthFormMessage

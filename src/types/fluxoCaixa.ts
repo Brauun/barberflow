@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const entradaCategorias = [
-  'Serviços',
+  'Servicos',
   'Produtos',
   'Receitas Extras',
 ] as const

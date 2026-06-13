@@ -433,7 +433,7 @@ export async function notifyWaitlistForVacancy(input: {
     .eq('id', candidate.client_id)
     .maybeSingle()
 
-  const message = `Ola, ${clientData?.nome ?? 'cliente'}! Surgiu um horario disponivel na ${input.barbershopName ?? 'barbearia'} para ${vacancyDate.toLocaleDateString('pt-BR')} as ${vacancyDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}. Acesse o app BW Barber para confirmar seu agendamento.`
+  const message = `Olá, ${clientData?.nome ?? 'cliente'}! Surgiu um horário disponivel na ${input.barbershopName ?? 'barbearia'} para ${vacancyDate.toLocaleDateString('pt-BR')} as ${vacancyDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}. Acesse o app BW Barber para confirmar seu agendamento.`
 
   const { error: notificationError } = await supabase
     .from('notification_logs')
@@ -469,7 +469,7 @@ export async function notifyWaitlistForVacancy(input: {
       desired_date: desiredDate,
       waitlist_id: candidate.id,
     },
-    title: 'Horario liberado',
+    title: 'Horário liberado',
     type: 'waitlist_vacancy',
   })
 }
@@ -756,7 +756,7 @@ export async function createWaitlistEntry(input: {
 
   await tryCreateInternalNotification({
     empresaId: input.barbershop.empresa_id,
-    message: `${input.clientProfile.nome} entrou na lista de espera para ${input.desiredDate.split('-').reverse().join('/')} (${input.preferredPeriod ?? 'qualquer horario'}).`,
+    message: `${input.clientProfile.nome} entrou na lista de espera para ${input.desiredDate.split('-').reverse().join('/')} (${input.preferredPeriod ?? 'qualquer horário'}).`,
     metadata: {
       barber_id: input.barberId ?? null,
       client_profile_id: input.clientProfile.id,

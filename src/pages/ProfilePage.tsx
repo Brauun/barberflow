@@ -21,7 +21,7 @@ export function ProfilePage() {
           Perfil
         </p>
           <h2 className="mt-2 text-3xl font-semibold tracking-normal">
-          Dados do usuario
+          Dados do usuário
           </h2>
         </div>
         <Link
@@ -39,7 +39,7 @@ export function ProfilePage() {
               Nome
             </p>
             <p className="mt-2 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
-              {profile?.nome ?? user?.user_metadata.nome ?? 'Usuario'}
+              {profile?.nome ?? user?.user_metadata.nome ?? 'Usuário'}
             </p>
           </CardContent>
         </Card>
@@ -58,7 +58,7 @@ export function ProfilePage() {
         <Card>
           <CardContent>
             <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              Tipo de usuario
+              Tipo de usuário
             </p>
             <div className="mt-3">
               <Badge variant={profile ? 'warning' : 'default'}>
@@ -75,11 +75,11 @@ export function ProfilePage() {
             Empresa
           </p>
           <p className="mt-2 text-xl font-semibold text-zinc-950 dark:text-zinc-50">
-            {profile?.empresa?.nome ?? user?.user_metadata.empresa ?? 'Nao vinculada'}
+            {profile?.empresa?.nome ?? user?.user_metadata.empresa ?? 'Não vinculada'}
           </p>
           {!profile && (
             <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-              O usuario esta autenticado, mas ainda nao possui perfil vinculado
+              O usuário está autenticado, mas ainda não possui perfil vinculado
               a uma empresa. Confirme se a funcao SQL de onboarding foi aplicada
               no Supabase.
             </p>

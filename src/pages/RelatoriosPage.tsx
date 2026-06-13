@@ -56,12 +56,12 @@ function formatDate(value: string) {
 
 function reportTitle(tipo: RelatorioTipo) {
   const labels: Record<RelatorioTipo, string> = {
-    anual: 'Relatorio Anual',
-    barbeiro: 'Relatorio por Barbeiro',
-    diario: 'Relatorio Diario',
-    financeiro: 'Relatorio Financeiro',
-    mensal: 'Relatorio Mensal',
-    produtos: 'Relatorio de Produtos',
+    anual: 'Relatório Anual',
+    barbeiro: 'Relatório por Barbeiro',
+    diario: 'Relatório Diario',
+    financeiro: 'Relatório Financeiro',
+    mensal: 'Relatório Mensal',
+    produtos: 'Relatório de Produtos',
   }
 
   return labels[tipo]
@@ -114,13 +114,13 @@ function buildPdfHtml(input: {
   const emittedAt = new Date().toLocaleString('pt-BR')
 
   const kpis = [
-    ['Receita de servicos', currencyFormatter.format(data.summary.receitaServicos)],
+    ['Receita de serviços', currencyFormatter.format(data.summary.receitaServicos)],
     ['Receita de produtos', currencyFormatter.format(data.summary.receitaProdutos)],
     ['Despesas', currencyFormatter.format(data.summary.despesas)],
-    ['Lucro liquido', currencyFormatter.format(data.summary.lucroLiquido)],
-    ['Comissoes', currencyFormatter.format(data.summary.comissoes)],
+    ['Lucro líquido', currencyFormatter.format(data.summary.lucroLiquido)],
+    ['Comissões', currencyFormatter.format(data.summary.comissoes)],
     ['Atendimentos', numberFormatter.format(atendimentos)],
-    ['Ticket medio', currencyFormatter.format(ticketMedio)],
+    ['Ticket médio', currencyFormatter.format(ticketMedio)],
     ['Margem', `${margem.toFixed(1).replace('.', ',')}%`],
   ]
 
@@ -399,10 +399,10 @@ function buildPdfHtml(input: {
             </div>
           </header>
           <div class="hero">
-            <div class="eyebrow">Relatorio Executivo</div>
+            <div class="eyebrow">Relatório Executivo</div>
             <h1>${escapeHtml(title)}</h1>
-            <p>Resumo consolidado do periodo para acompanhamento de performance operacional e financeira.</p>
-            <span class="period">${formatDate(dataInicio)} ate ${formatDate(dataFim)}</span>
+            <p>Resumo consolidado do período para acompanhamento de performance operacional e financeira.</p>
+            <span class="period">${formatDate(dataInicio)} até ${formatDate(dataFim)}</span>
           </div>
           <div class="kpi-grid">
             ${kpis
@@ -418,38 +418,38 @@ function buildPdfHtml(input: {
           </div>
           <div class="summary-strip">
             <div class="summary-card">
-              <div class="eyebrow">Leitura do periodo</div>
+              <div class="eyebrow">Leitura do período</div>
               <h3>Resumo executivo</h3>
-              <p>O periodo consolidou <span class="accent">${currencyFormatter.format(entradas)}</span> em entradas, com lucro liquido de <span class="accent">${currencyFormatter.format(data.summary.lucroLiquido)}</span> e margem de <span class="accent">${margem.toFixed(1).replace('.', ',')}%</span>.</p>
+              <p>O período consolidou <span class="accent">${currencyFormatter.format(entradas)}</span> em entradas, com lucro líquido de <span class="accent">${currencyFormatter.format(data.summary.lucroLiquido)}</span> e margem de <span class="accent">${margem.toFixed(1).replace('.', ',')}%</span>.</p>
             </div>
             <div class="summary-card">
               <div class="eyebrow">Destaques</div>
               <div class="mini-list">
                 <div class="mini-item"><span>Melhor barbeiro</span><strong>${topBarber ? escapeHtml(topBarber.nome) : 'Sem dados'}</strong></div>
                 <div class="mini-item"><span>Produto destaque</span><strong>${topProduct ? escapeHtml(topProduct.nome) : 'Sem dados'}</strong></div>
-                <div class="mini-item"><span>Ticket medio</span><strong>${currencyFormatter.format(ticketMedio)}</strong></div>
+                <div class="mini-item"><span>Ticket médio</span><strong>${currencyFormatter.format(ticketMedio)}</strong></div>
               </div>
             </div>
           </div>
-          <footer class="footer"><span>BW Barber</span><span>Pagina 1 de 4</span></footer>
+          <footer class="footer"><span>BW Barber</span><span>Página 1 de 4</span></footer>
         </section>
 
         <section class="page">
           <header class="header">
             <div><div class="eyebrow">Operacional</div><h2>Detalhamento operacional</h2></div>
-            <div class="meta">${formatDate(dataInicio)} ate ${formatDate(dataFim)}</div>
+            <div class="meta">${formatDate(dataInicio)} até ${formatDate(dataFim)}</div>
           </header>
           <div class="two-col">
             <div class="panel">
               <div class="panel-head"><h3>Produtos mais vendidos</h3></div>
-              <table><thead><tr><th>Produto</th><th>Qtd.</th><th>Valor</th></tr></thead><tbody>${productRows || '<tr><td colspan="3">Sem vendas no periodo.</td></tr>'}</tbody></table>
+              <table><thead><tr><th>Produto</th><th>Qtd.</th><th>Valor</th></tr></thead><tbody>${productRows || '<tr><td colspan="3">Sem vendas no período.</td></tr>'}</tbody></table>
             </div>
             <div class="panel">
               <div class="panel-head"><h3>Atendimentos por barbeiro</h3></div>
-              <table><thead><tr><th>Barbeiro</th><th>Atend.</th><th>Faturamento</th></tr></thead><tbody>${barberRows || '<tr><td colspan="3">Sem atendimentos concluidos.</td></tr>'}</tbody></table>
+              <table><thead><tr><th>Barbeiro</th><th>Atend.</th><th>Faturamento</th></tr></thead><tbody>${barberRows || '<tr><td colspan="3">Sem atendimentos concluídos.</td></tr>'}</tbody></table>
             </div>
           </div>
-          <footer class="footer"><span>BW Barber</span><span>Pagina 2 de 4</span></footer>
+          <footer class="footer"><span>BW Barber</span><span>Página 2 de 4</span></footer>
         </section>
 
         <section class="page">
@@ -460,22 +460,22 @@ function buildPdfHtml(input: {
           <div class="kpi-grid">
             <div class="kpi"><span>Entradas</span><strong>${currencyFormatter.format(entradas)}</strong></div>
             <div class="kpi"><span>Saidas</span><strong>${currencyFormatter.format(data.summary.despesas)}</strong></div>
-            <div class="kpi"><span>Comissoes</span><strong>${currencyFormatter.format(data.summary.comissoes)}</strong></div>
-            <div class="kpi"><span>Lucro liquido</span><strong>${currencyFormatter.format(data.summary.lucroLiquido)}</strong></div>
+            <div class="kpi"><span>Comissões</span><strong>${currencyFormatter.format(data.summary.comissoes)}</strong></div>
+            <div class="kpi"><span>Lucro líquido</span><strong>${currencyFormatter.format(data.summary.lucroLiquido)}</strong></div>
           </div>
           <div class="panel">
-            <div class="panel-head"><h3>Comparativo bruto x liquido</h3></div>
+            <div class="panel-head"><h3>Comparativo bruto x líquido</h3></div>
             <table>
-              <thead><tr><th>Indicador</th><th>Valor</th><th>Observacao</th></tr></thead>
+              <thead><tr><th>Indicador</th><th>Valor</th><th>Observação</th></tr></thead>
               <tbody>
-                <tr><td>Receita bruta</td><td>${currencyFormatter.format(entradas)}</td><td>Servicos + produtos</td></tr>
-                <tr><td>Receita liquida estimada</td><td>${currencyFormatter.format(data.summary.lucroLiquido)}</td><td>Apos despesas e comissoes</td></tr>
-                <tr><td>Margem liquida</td><td>${margem.toFixed(1).replace('.', ',')}%</td><td>Lucro liquido / entradas</td></tr>
-                <tr><td>Ticket medio</td><td>${currencyFormatter.format(ticketMedio)}</td><td>Receita de servicos / atendimentos</td></tr>
+                <tr><td>Receita bruta</td><td>${currencyFormatter.format(entradas)}</td><td>Serviços + produtos</td></tr>
+                <tr><td>Receita liquida estimada</td><td>${currencyFormatter.format(data.summary.lucroLiquido)}</td><td>Após despesas e comissões</td></tr>
+                <tr><td>Margem liquida</td><td>${margem.toFixed(1).replace('.', ',')}%</td><td>Lucro líquido / entradas</td></tr>
+                <tr><td>Ticket médio</td><td>${currencyFormatter.format(ticketMedio)}</td><td>Receita de serviços / atendimentos</td></tr>
               </tbody>
             </table>
           </div>
-          <footer class="footer"><span>BW Barber</span><span>Pagina 3 de 4</span></footer>
+          <footer class="footer"><span>BW Barber</span><span>Página 3 de 4</span></footer>
         </section>
 
         <section class="page">
@@ -484,24 +484,24 @@ function buildPdfHtml(input: {
             <div class="meta">${escapeHtml(title)}</div>
           </header>
           <div class="insight">
-            <p>O periodo gerou <span class="accent">${currencyFormatter.format(entradas)}</span> em entradas e lucro liquido de <span class="accent">${currencyFormatter.format(data.summary.lucroLiquido)}</span>.</p>
-            <p>O ticket medio estimado foi de <span class="accent">${currencyFormatter.format(ticketMedio)}</span>, com <span class="accent">${numberFormatter.format(atendimentos)}</span> atendimentos concluidos registrados.</p>
+            <p>O período gerou <span class="accent">${currencyFormatter.format(entradas)}</span> em entradas e lucro líquido de <span class="accent">${currencyFormatter.format(data.summary.lucroLiquido)}</span>.</p>
+            <p>O ticket médio estimado foi de <span class="accent">${currencyFormatter.format(ticketMedio)}</span>, com <span class="accent">${numberFormatter.format(atendimentos)}</span> atendimentos concluídos registrados.</p>
           </div>
           <div class="two-col" style="margin-top: 14px;">
             <div class="insight">
               <h3>Melhor desempenho</h3>
-              <p style="margin-top: 10px;">${topBarber ? `${escapeHtml(topBarber.nome)} liderou em faturamento com ${currencyFormatter.format(topBarber.faturamento)}.` : 'Nao houve barbeiro com atendimento concluido no periodo.'}</p>
+              <p style="margin-top: 10px;">${topBarber ? `${escapeHtml(topBarber.nome)} liderou em faturamento com ${currencyFormatter.format(topBarber.faturamento)}.` : 'Não houve barbeiro com atendimento concluído no período.'}</p>
             </div>
             <div class="insight">
               <h3>Produto destaque</h3>
-              <p style="margin-top: 10px;">${topProduct ? `${escapeHtml(topProduct.nome)} foi o produto mais vendido, com ${numberFormatter.format(topProduct.quantidade)} unidade(s).` : 'Nao houve venda de produtos no periodo.'}</p>
+              <p style="margin-top: 10px;">${topProduct ? `${escapeHtml(topProduct.nome)} foi o produto mais vendido, com ${numberFormatter.format(topProduct.quantidade)} unidade(s).` : 'Não houve venda de produtos no período.'}</p>
             </div>
           </div>
           <div class="insight" style="margin-top: 14px;">
             <h3>Observacoes</h3>
-            <p style="margin-top: 10px;">Relatorio gerado a partir dos filtros atuais do BW Barber. Use este documento para conversas com socios, contabilidade e acompanhamento gerencial.</p>
+            <p style="margin-top: 10px;">Relatório gerado a partir dos filtros atuais do BW Barber. Use este documento para conversas com sócios, contabilidade e acompanhamento gerencial.</p>
           </div>
-          <footer class="footer"><span>BW Barber</span><span>Pagina 4 de 4</span></footer>
+          <footer class="footer"><span>BW Barber</span><span>Página 4 de 4</span></footer>
         </section>
         <script>
           window.addEventListener('load', function () {
@@ -537,7 +537,7 @@ export function RelatoriosPage() {
         appliedFilters.dataFim,
       ),
     queryKey: [
-      'relatorios',
+      'relatórios',
       empresaId,
       appliedFilters.dataInicio,
       appliedFilters.dataFim,
@@ -546,7 +546,7 @@ export function RelatoriosPage() {
   })
 
   const title = reportTitle(appliedFilters.tipo)
-  const periodLabel = `${formatDate(appliedFilters.dataInicio)} ate ${formatDate(appliedFilters.dataFim)}`
+  const periodLabel = `${formatDate(appliedFilters.dataInicio)} até ${formatDate(appliedFilters.dataFim)}`
   const atendimentos = useMemo(
     () =>
       data?.topBarbers.reduce((total, barber) => total + barber.atendimentos, 0) ??
@@ -594,7 +594,7 @@ export function RelatoriosPage() {
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `BW-Barber-Relatorio-${appliedFilters.tipo}-${appliedFilters.dataInicio}-${appliedFilters.dataFim}.html`
+      link.download = `BW-Barber-Relatório-${appliedFilters.tipo}-${appliedFilters.dataInicio}-${appliedFilters.dataFim}.html`
       link.click()
       URL.revokeObjectURL(url)
       return
@@ -611,17 +611,17 @@ export function RelatoriosPage() {
     }
 
     const rows = [
-      ['Relatorio', title],
-      ['Periodo', periodLabel],
+      ['Relatório', title],
+      ['Período', periodLabel],
       [],
       ['Indicador', 'Valor'],
-      ['Receita de servicos', data.summary.receitaServicos],
+      ['Receita de serviços', data.summary.receitaServicos],
       ['Receita de produtos', data.summary.receitaProdutos],
       ['Despesas', data.summary.despesas],
-      ['Lucro liquido', data.summary.lucroLiquido],
-      ['Comissoes', data.summary.comissoes],
+      ['Lucro líquido', data.summary.lucroLiquido],
+      ['Comissões', data.summary.comissoes],
       ['Atendimentos', atendimentos],
-      ['Ticket medio', ticketMedio],
+      ['Ticket médio', ticketMedio],
       [],
       ['Produtos mais vendidos'],
       ['Produto', 'Quantidade', 'Valor total'],
@@ -649,7 +649,7 @@ export function RelatoriosPage() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `BW-Barber-Relatorio-${appliedFilters.tipo}-${appliedFilters.dataInicio}-${appliedFilters.dataFim}.csv`
+    link.download = `BW-Barber-Relatório-${appliedFilters.tipo}-${appliedFilters.dataInicio}-${appliedFilters.dataFim}.csv`
     link.click()
     URL.revokeObjectURL(url)
   }
@@ -659,8 +659,8 @@ export function RelatoriosPage() {
       <Card>
         <CardContent>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Complete o vinculo do usuario com uma empresa para visualizar
-            relatorios.
+            Complete o vínculo do usuário com uma empresa para visualizar
+            relatórios.
           </p>
         </CardContent>
       </Card>
@@ -672,13 +672,13 @@ export function RelatoriosPage() {
       <section className="flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">
-            Relatorios
+            Relatórios
           </p>
           <h2 className="mt-3 text-3xl font-black tracking-normal text-zinc-950 dark:text-zinc-50">
             Analises do BW Barber
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-            Escolha o tipo, ajuste o periodo e gere um PDF executivo pronto para
+            Escolha o tipo, ajuste o período e gere um PDF executivo pronto para
             enviar.
           </p>
         </div>
@@ -688,7 +688,7 @@ export function RelatoriosPage() {
         <CardContent className="space-y-6">
           <div>
             <p className="text-sm font-bold text-zinc-950 dark:text-zinc-50">
-              Tipo de relatorio
+              Tipo de relatório
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {reportTypes.map((item) => {
@@ -770,7 +770,7 @@ export function RelatoriosPage() {
           </div>
           {!advancedReportsAccess.isLoading && !advancedReportsAccess.canUse && (
             <p className="rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm font-semibold text-slate-700">
-              Exportacoes executivas e relatorios avancados exigem upgrade de
+              Exportacoes executivas e relatórios avançados exigem upgrade de
               plano.
             </p>
           )}
@@ -806,7 +806,7 @@ export function RelatoriosPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge variant="warning">Periodo filtrado</Badge>
+              <Badge variant="warning">Período filtrado</Badge>
               <Badge variant="info">{numberFormatter.format(registros)} registros</Badge>
               <Badge>{reportTypes.find((item) => item.value === appliedFilters.tipo)?.label}</Badge>
             </div>
@@ -814,12 +814,12 @@ export function RelatoriosPage() {
 
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
             {[
-              ['Receita de servicos', currencyFormatter.format(data.summary.receitaServicos)],
+              ['Receita de serviços', currencyFormatter.format(data.summary.receitaServicos)],
               ['Receita de produtos', currencyFormatter.format(data.summary.receitaProdutos)],
               ['Despesas', currencyFormatter.format(data.summary.despesas)],
-              ['Lucro liquido', currencyFormatter.format(data.summary.lucroLiquido)],
-              ['Comissoes', currencyFormatter.format(data.summary.comissoes)],
-              ['Ticket medio', currencyFormatter.format(ticketMedio)],
+              ['Lucro líquido', currencyFormatter.format(data.summary.lucroLiquido)],
+              ['Comissões', currencyFormatter.format(data.summary.comissoes)],
+              ['Ticket médio', currencyFormatter.format(ticketMedio)],
             ].map(([label, value]) => (
               <Card key={label}>
                 <CardContent>
@@ -842,7 +842,7 @@ export function RelatoriosPage() {
               <CardContent className="p-0">
                 {data.topProducts.length === 0 ? (
                   <div className="p-5 text-sm text-zinc-500 dark:text-zinc-400">
-                    Nenhuma venda de produto no periodo.
+                    Nenhuma venda de produto no período.
                   </div>
                 ) : (
                   <Table>
@@ -880,7 +880,7 @@ export function RelatoriosPage() {
               <CardContent className="p-0">
                 {data.topBarbers.length === 0 ? (
                   <div className="p-5 text-sm text-zinc-500 dark:text-zinc-400">
-                    Nenhum atendimento concluido no periodo.
+                    Nenhum atendimento concluído no período.
                   </div>
                 ) : (
                   <Table>

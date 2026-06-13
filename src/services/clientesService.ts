@@ -254,7 +254,7 @@ export async function getClienteHistorico(
     .order('data_hora_inicio', { ascending: false })
 
   if (error) {
-    throw toAppError(error, 'Não foi possível carregar o histórico do cliente.')
+    throw toAppError(error, 'Não foi possível carregar o historico do cliente.')
   }
 
   return (data ?? []) as unknown as ClienteAtendimento[]

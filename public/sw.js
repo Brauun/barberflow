@@ -1,6 +1,15 @@
-const CACHE_NAME = 'bw-barber-static-v2'
+const CACHE_NAME = 'bw-barber-static-v3'
 const OFFLINE_URL = '/offline.html'
-const STATIC_ASSETS = ['/', '/offline.html', '/manifest.webmanifest', '/favicon.svg']
+const STATIC_ASSETS = [
+  '/',
+  '/offline.html',
+  '/manifest.webmanifest',
+  '/favicon.svg',
+  '/icons/apple-touch-icon.png',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/maskable-512.png',
+]
 
 function isSupabaseRequest(url) {
   return url.hostname.includes('supabase.co') || url.pathname.includes('/auth/v1/')
