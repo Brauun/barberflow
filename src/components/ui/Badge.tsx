@@ -10,16 +10,20 @@ type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
 }
 
 const badgeTextLabels: Record<string, string> = {
+  aceito: 'Aceito',
   agendado: 'Agendado',
+  aguardando: 'Aguardando',
   ativo: 'Ativo',
   cancelada: 'Cancelada',
   cancelado: 'Cancelado',
+  concluido_automatico: 'Concluído automático',
   concluido: 'Concluído',
   confirmada: 'Confirmada',
   confirmado: 'Confirmado',
   em_atendimento: 'Em atendimento',
   faltou: 'Faltou',
   inativo: 'Inativo',
+  notificado: 'Notificado',
   nao_compareceu: 'Não compareceu',
   paga: 'Paga',
   pago: 'Pago',
