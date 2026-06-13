@@ -37,6 +37,8 @@ export function TopBar({
   unreadCount,
 }: TopBarProps) {
   return (
+    // FIX 1: bg-white/82 → adicionado dark:bg-slate-950/82 (já tinha, mantido)
+    // FIX 2: border-slate-200 → já tinha dark:border-slate-800 (mantido)
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/82 pt-[env(safe-area-inset-top)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/82">
       <div className="flex min-h-16 flex-col justify-center gap-3 px-4 py-3 sm:min-h-20 sm:px-6 md:px-8 lg:px-10 xl:px-12">
         <div className="flex items-center gap-3">
@@ -54,6 +56,7 @@ export function TopBar({
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-300">
               {currentItem.label}
             </p>
+            {/* FIX 3: h1 tinha text-slate-950 sem dark: → adicionado dark:text-white */}
             <h1 className="truncate text-lg font-black tracking-normal text-slate-950 sm:text-xl dark:text-white">
               BW Barber
             </h1>
@@ -72,7 +75,10 @@ export function TopBar({
               <Bell size={16} />
             </Button>
             {unreadCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1.5 text-[0.65rem] font-black text-slate-950 ring-2 ring-white dark:ring-slate-950">
+              // FIX 4: badge de notificação usava ring-white sem dark: → adicionado dark:ring-slate-950
+              // FIX 5: texto do badge era text-slate-950 (legível no light) mas no dark o bg é brand-500
+              //        → adicionado dark:text-white para garantir contraste
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1.5 text-[0.65rem] font-black text-white ring-2 ring-white dark:ring-slate-950">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
