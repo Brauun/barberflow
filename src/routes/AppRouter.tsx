@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 
 import { ProtectedRoute } from '../components/ProtectedRoute'
 import { PublicOnlyRoute } from '../components/PublicOnlyRoute'
+import { PageSkeleton } from '../components/layout/PageSkeleton'
 import { AppLayout } from '../layouts/AppLayout'
 import { AuthLayout } from '../layouts/AuthLayout'
 import { ClientLayout } from '../layouts/ClientLayout'
@@ -147,13 +148,7 @@ const ServicosPage = lazy(lazyWithRetry(() =>
 
 function withSuspense(element: ReactNode) {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-64 items-center justify-center text-sm text-zinc-500 dark:text-zinc-400">
-          Carregando...
-        </div>
-      }
-    >
+    <Suspense fallback={<PageSkeleton />}>
       {element}
     </Suspense>
   )
