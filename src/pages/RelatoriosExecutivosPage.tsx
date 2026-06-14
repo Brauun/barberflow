@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom'
 import { Badge, Button, Card, CardContent, CardHeader, Skeleton } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useFeatureAccess } from '../hooks/useSubscription'
+import { resolveAssetUrl } from '../services/assetsService'
 import {
   getExecutiveRelatorioData,
   type ExecutiveReportData,
@@ -131,14 +132,27 @@ function absoluteAssetUrl(value: string) {
   return new URL(value, window.location.origin).toString()
 }
 
+function initialsFromName(value: string) {
+  const initials = value
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+
+  return initials || 'BW'
+}
+
 function buildExecutivePdfHtml(input: {
   data: ExecutiveReportData
   dataFim: string
   dataInicio: string
   empresaNome: string
+  logoFallback: string
   logoUrl: string
 }) {
-  const { data, dataFim, dataInicio, empresaNome, logoUrl } = input
+  const { data, dataFim, dataInicio, empresaNome, logoFallback, logoUrl } = input
   const entradas = data.summary.receitaServicos + data.summary.receitaProdutos
   const previousEntradas =
     data.periodoAnterior.summary.receitaServicos +
@@ -247,6 +261,13 @@ function buildExecutivePdfHtml(input: {
             width: 52px;
           }
           .logo img { height: 44px; max-width: 44px; object-fit: contain; }
+          .logo span {
+            color: #12c6f3;
+            display: none;
+            font-size: 15px;
+            font-weight: 950;
+            letter-spacing: -.04em;
+          }
           .eyebrow {
             color: #12c6f3;
             font-size: 8.5px;
@@ -348,7 +369,10 @@ function buildExecutivePdfHtml(input: {
         <section class="page cover">
           <header class="header">
             <div class="brand">
-              <div class="logo"><img src="${escapeHtml(logoUrl)}" alt="BW Barber" /></div>
+              <div class="logo">
+                <img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(empresaNome)}" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
+                <span>${escapeHtml(logoFallback)}</span>
+              </div>
               <div>
                 <div class="eyebrow">BW Barber</div>
                 <h3>${escapeHtml(empresaNome)}</h3>
@@ -523,6 +547,13 @@ export function RelatoriosExecutivosPage() {
     staleTime: 1000 * 60 * 5,
   })
 
+  const companyLogoQuery = useQuery({
+    enabled: Boolean(profile?.empresa?.logo_url),
+    queryFn: () => resolveAssetUrl('company-assets', profile?.empresa?.logo_url),
+    queryKey: ['relatorios-executivos-logo', empresaId, profile?.empresa?.logo_url],
+    staleTime: 1000 * 60 * 50,
+  })
+
   const data = reportQuery.data
   const periodLabel = `${formatDate(appliedFilters.dataInicio)} até ${formatDate(appliedFilters.dataFim)}`
   const entradas = data ? data.summary.receitaServicos + data.summary.receitaProdutos : 0
@@ -565,9 +596,8 @@ export function RelatoriosExecutivosPage() {
       dataFim: appliedFilters.dataFim,
       dataInicio: appliedFilters.dataInicio,
       empresaNome: profile?.empresa?.nome ?? 'BW Barber',
-      logoUrl: absoluteAssetUrl(
-        profile?.empresa?.logo_url || '/brand/bw-barber-login-logo.png',
-      ),
+      logoFallback: initialsFromName(profile?.empresa?.nome ?? 'BW Barber'),
+      logoUrl: companyLogoQuery.data ?? absoluteAssetUrl('/brand/bw-barber-login-logo.png'),
     })
     const printWindow = window.open('', '_blank', 'width=920,height=1200')
 
