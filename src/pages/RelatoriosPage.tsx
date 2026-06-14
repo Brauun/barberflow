@@ -88,12 +88,195 @@ function fileSafeDate(value: string) {
   return value.slice(0, 7)
 }
 
+function fileSafeReportName(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}
+
 function absoluteAssetUrl(value: string) {
   if (value.startsWith('http') || value.startsWith('data:')) {
     return value
   }
 
   return new URL(value, window.location.origin).toString()
+}
+
+function formatDateTime(value: string | null | undefined) {
+  if (!value) {
+    return '-'
+  }
+
+  return new Date(value).toLocaleString('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  })
+}
+
+function formatStatus(value: string) {
+  return value
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function buildReportTables(
+  data: ReportData,
+  tipo: RelatorioTipo,
+  atendimentos: number,
+  ticketMedio: number,
+) {
+  const financeiroRows = [
+    ['Entradas', currencyFormatter.format(data.summary.receitaServicos + data.summary.receitaProdutos)],
+    ['Receita de serviços', currencyFormatter.format(data.summary.receitaServicos)],
+    ['Receita de produtos', currencyFormatter.format(data.summary.receitaProdutos)],
+    ['Saídas', currencyFormatter.format(data.summary.despesas)],
+    ['Comissões', currencyFormatter.format(data.summary.comissoes)],
+    ['Lucro líquido', currencyFormatter.format(data.summary.lucroLiquido)],
+    ['Ticket médio', currencyFormatter.format(ticketMedio)],
+  ]
+
+  if (tipo === 'barbeiro') {
+    return [
+      {
+        empty: 'Nenhum barbeiro com atendimento no período.',
+        headers: ['Barbeiro', 'Atendimentos', 'Faturamento', 'Comissão', 'Ticket médio', 'Cancelamentos'],
+        rows: data.topBarbers.map((barber) => [
+          barber.nome,
+          numberFormatter.format(barber.atendimentos),
+          currencyFormatter.format(barber.faturamento),
+          currencyFormatter.format(barber.comissao),
+          currencyFormatter.format(barber.ticketMedio),
+          numberFormatter.format(barber.cancelamentos),
+        ]),
+        title: 'Desempenho por barbeiro',
+      },
+    ]
+  }
+
+  if (tipo === 'clientes') {
+    return [
+      {
+        empty: 'Nenhum cliente com movimentação no período.',
+        headers: ['Cliente', 'Perfil', 'Visitas', 'Total gasto', 'Última visita'],
+        rows: data.clients.map((client) => [
+          client.nome,
+          client.novo ? 'Novo' : client.recorrente ? 'Recorrente' : 'Cliente',
+          numberFormatter.format(client.visitas),
+          currencyFormatter.format(client.gastoTotal),
+          formatDateTime(client.ultimaVisita),
+        ]),
+        title: 'Clientes no período',
+      },
+    ]
+  }
+
+  if (tipo === 'produtos') {
+    return [
+      {
+        empty: 'Nenhuma venda de produto no período.',
+        headers: ['Produto', 'Quantidade', 'Receita', 'Estoque'],
+        rows: data.topProducts.map((product) => [
+          product.nome,
+          numberFormatter.format(product.quantidade),
+          currencyFormatter.format(product.valorTotal),
+          product.estoqueAtual == null ? '-' : numberFormatter.format(product.estoqueAtual),
+        ]),
+        title: 'Produtos vendidos',
+      },
+    ]
+  }
+
+  if (tipo === 'financeiro') {
+    return [
+      {
+        empty: 'Nenhuma movimentação financeira no período.',
+        headers: ['Indicador', 'Valor'],
+        rows: financeiroRows,
+        title: 'Resumo financeiro',
+      },
+    ]
+  }
+
+  if (tipo === 'agenda') {
+    return [
+      {
+        empty: 'Nenhum atendimento na agenda do período.',
+        headers: ['Horário', 'Cliente', 'Barbeiro', 'Serviço', 'Status', 'Valor'],
+        rows: data.agendaItems.map((appointment) => [
+          formatDateTime(appointment.horario),
+          appointment.cliente,
+          appointment.barbeiro,
+          appointment.servico,
+          formatStatus(appointment.status),
+          currencyFormatter.format(appointment.valor),
+        ]),
+        title: 'Agenda do período',
+      },
+    ]
+  }
+
+  return [
+    {
+      empty: 'Nenhum atendimento concluído no período.',
+      headers: ['Barbeiro', 'Atendimentos', 'Faturamento'],
+      rows: data.topBarbers.map((barber) => [
+        barber.nome,
+        numberFormatter.format(barber.atendimentos),
+        currencyFormatter.format(barber.faturamento),
+      ]),
+      title: 'Atendimentos por barbeiro',
+    },
+    {
+      empty: 'Nenhuma venda de produto no período.',
+      headers: ['Produto', 'Quantidade', 'Valor total'],
+      rows: data.topProducts.map((product) => [
+        product.nome,
+        numberFormatter.format(product.quantidade),
+        currencyFormatter.format(product.valorTotal),
+      ]),
+      title: 'Produtos mais vendidos',
+    },
+    {
+      empty: 'Nenhum dado financeiro no período.',
+      headers: ['Indicador', 'Valor'],
+      rows: [
+        ...financeiroRows,
+        ['Atendimentos', numberFormatter.format(atendimentos)],
+      ],
+      title: 'Resumo financeiro',
+    },
+  ]
+}
+
+function buildExcelRows(input: {
+  data: ReportData
+  periodo: string
+  tipo: RelatorioTipo
+  title: string
+  atendimentos: number
+  ticketMedio: number
+}) {
+  const tables = buildReportTables(
+    input.data,
+    input.tipo,
+    input.atendimentos,
+    input.ticketMedio,
+  )
+
+  return [
+    ['Relatório', input.title],
+    ['Período', input.periodo],
+    [],
+    ...tables.flatMap((table) => [
+      [table.title],
+      table.headers,
+      ...(table.rows.length > 0 ? table.rows : [[table.empty]]),
+      [],
+    ]),
+  ]
 }
 
 function buildPdfHtml(input: {
@@ -128,29 +311,35 @@ function buildPdfHtml(input: {
     ['Margem', `${margem.toFixed(1).replace('.', ',')}%`],
   ]
 
-  const productRows = data.topProducts
-    .slice(0, 8)
-    .map(
-      (product) => `
-        <tr>
-          <td>${escapeHtml(product.nome)}</td>
-          <td>${numberFormatter.format(product.quantidade)}</td>
-          <td>${currencyFormatter.format(product.valorTotal)}</td>
-        </tr>
-      `,
-    )
-    .join('')
-  const barberRows = data.topBarbers
-    .slice(0, 8)
-    .map(
-      (barber) => `
-        <tr>
-          <td>${escapeHtml(barber.nome)}</td>
-          <td>${numberFormatter.format(barber.atendimentos)}</td>
-          <td>${currencyFormatter.format(barber.faturamento)}</td>
-        </tr>
-      `,
-    )
+  const reportTables = buildReportTables(data, tipo, atendimentos, ticketMedio)
+  const tablePanels = reportTables
+    .map((table) => {
+      const colSpan = Math.max(1, table.headers.length)
+      const rows = table.rows
+        .slice(0, 18)
+        .map(
+          (row) => `
+            <tr>
+              ${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}
+            </tr>
+          `,
+        )
+        .join('')
+
+      return `
+        <div class="panel">
+          <div class="panel-head"><h3>${escapeHtml(table.title)}</h3></div>
+          <table>
+            <thead>
+              <tr>${table.headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr>
+            </thead>
+            <tbody>
+              ${rows || `<tr><td colspan="${colSpan}">${escapeHtml(table.empty)}</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      `
+    })
     .join('')
 
   return `<!doctype html>
@@ -403,7 +592,7 @@ function buildPdfHtml(input: {
             </div>
           </header>
           <div class="hero">
-            <div class="eyebrow">Relatório Executivo</div>
+            <div class="eyebrow">Relatório Operacional</div>
             <h1>${escapeHtml(title)}</h1>
             <p>Resumo consolidado do período para acompanhamento de performance operacional e financeira.</p>
             <span class="period">${formatDate(dataInicio)} até ${formatDate(dataFim)}</span>
@@ -435,52 +624,18 @@ function buildPdfHtml(input: {
               </div>
             </div>
           </div>
-          <footer class="footer"><span>BW Barber</span><span>Página 1 de 3</span></footer>
+          <footer class="footer"><span>BW Barber</span><span>Página 1 de 2</span></footer>
         </section>
 
         <section class="page">
           <header class="header">
-            <div><div class="eyebrow">Operacional</div><h2>Detalhamento operacional</h2></div>
+            <div><div class="eyebrow">Detalhamento</div><h2>${escapeHtml(title)}</h2></div>
             <div class="meta">${formatDate(dataInicio)} até ${formatDate(dataFim)}</div>
           </header>
-          <div class="two-col">
-            <div class="panel">
-              <div class="panel-head"><h3>Produtos mais vendidos</h3></div>
-              <table><thead><tr><th>Produto</th><th>Qtd.</th><th>Valor</th></tr></thead><tbody>${productRows || '<tr><td colspan="3">Sem vendas no período.</td></tr>'}</tbody></table>
-            </div>
-            <div class="panel">
-              <div class="panel-head"><h3>Atendimentos por barbeiro</h3></div>
-              <table><thead><tr><th>Barbeiro</th><th>Atend.</th><th>Faturamento</th></tr></thead><tbody>${barberRows || '<tr><td colspan="3">Sem atendimentos concluídos.</td></tr>'}</tbody></table>
-            </div>
-          </div>
-          <footer class="footer"><span>BW Barber</span><span>Página 2 de 3</span></footer>
+          ${tablePanels}
+          <footer class="footer"><span>BW Barber</span><span>Página 2 de 2</span></footer>
         </section>
 
-        <section class="page">
-          <header class="header">
-            <div><div class="eyebrow">Financeiro</div><h2>Análise financeira</h2></div>
-            <div class="meta">${escapeHtml(empresaNome)}</div>
-          </header>
-          <div class="kpi-grid">
-            <div class="kpi"><span>Entradas</span><strong>${currencyFormatter.format(entradas)}</strong></div>
-            <div class="kpi"><span>Saidas</span><strong>${currencyFormatter.format(data.summary.despesas)}</strong></div>
-            <div class="kpi"><span>Comissões</span><strong>${currencyFormatter.format(data.summary.comissoes)}</strong></div>
-            <div class="kpi"><span>Lucro líquido</span><strong>${currencyFormatter.format(data.summary.lucroLiquido)}</strong></div>
-          </div>
-          <div class="panel">
-            <div class="panel-head"><h3>Comparativo bruto x líquido</h3></div>
-            <table>
-              <thead><tr><th>Indicador</th><th>Valor</th><th>Observação</th></tr></thead>
-              <tbody>
-                <tr><td>Receita bruta</td><td>${currencyFormatter.format(entradas)}</td><td>Serviços + produtos</td></tr>
-                <tr><td>Receita líquida estimada</td><td>${currencyFormatter.format(data.summary.lucroLiquido)}</td><td>Após despesas e comissões</td></tr>
-                <tr><td>Margem líquida</td><td>${margem.toFixed(1).replace('.', ',')}%</td><td>Lucro líquido / entradas</td></tr>
-                <tr><td>Ticket médio</td><td>${currencyFormatter.format(ticketMedio)}</td><td>Receita de serviços / atendimentos</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <footer class="footer"><span>BW Barber</span><span>Página 3 de 3</span></footer>
-        </section>
         <script>
           window.addEventListener('load', function () {
             setTimeout(function () {
@@ -517,6 +672,7 @@ export function RelatoriosPage() {
     queryKey: [
       'relatórios',
       empresaId,
+      appliedFilters.tipo,
       appliedFilters.dataInicio,
       appliedFilters.dataFim,
     ],
@@ -571,7 +727,7 @@ export function RelatoriosPage() {
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `BW-Barber-Relatório-${appliedFilters.tipo}-${appliedFilters.dataInicio}-${appliedFilters.dataFim}.html`
+      link.download = `BW-Barber-${fileSafeReportName(title)}-${fileSafeDate(appliedFilters.dataInicio)}.html`
       link.click()
       URL.revokeObjectURL(url)
       return
@@ -587,35 +743,14 @@ export function RelatoriosPage() {
       return
     }
 
-    const rows = [
-      ['Relatório', title],
-      ['Período', periodLabel],
-      [],
-      ['Indicador', 'Valor'],
-      ['Receita de serviços', data.summary.receitaServicos],
-      ['Receita de produtos', data.summary.receitaProdutos],
-      ['Despesas', data.summary.despesas],
-      ['Lucro líquido', data.summary.lucroLiquido],
-      ['Comissões', data.summary.comissoes],
-      ['Atendimentos', atendimentos],
-      ['Ticket médio', ticketMedio],
-      [],
-      ['Produtos mais vendidos'],
-      ['Produto', 'Quantidade', 'Valor total'],
-      ...data.topProducts.map((product) => [
-        product.nome,
-        product.quantidade,
-        product.valorTotal,
-      ]),
-      [],
-      ['Barbeiros com maior faturamento'],
-      ['Barbeiro', 'Atendimentos', 'Faturamento'],
-      ...data.topBarbers.map((barber) => [
-        barber.nome,
-        barber.atendimentos,
-        barber.faturamento,
-      ]),
-    ]
+    const rows = buildExcelRows({
+      atendimentos,
+      data,
+      periodo: periodLabel,
+      ticketMedio,
+      tipo: appliedFilters.tipo,
+      title,
+    })
 
     const csv = rows
       .map((row) => row.map((cell) => escapeCsv(cell ?? '')).join(';'))
@@ -626,7 +761,7 @@ export function RelatoriosPage() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `BW-Barber-Relatório-${appliedFilters.tipo}-${appliedFilters.dataInicio}-${appliedFilters.dataFim}.csv`
+    link.download = `BW-Barber-${fileSafeReportName(title)}-${fileSafeDate(appliedFilters.dataInicio)}.csv`
     link.click()
     URL.revokeObjectURL(url)
   }

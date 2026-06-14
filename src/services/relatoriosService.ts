@@ -9,6 +9,7 @@ export type ReportSummary = {
 }
 
 export type TopProduct = {
+  estoqueAtual?: number
   nome: string
   quantidade: number
   valorTotal: number
@@ -17,10 +18,33 @@ export type TopProduct = {
 export type TopBarber = {
   nome: string
   atendimentos: number
+  cancelamentos: number
+  comissao: number
   faturamento: number
+  ticketMedio: number
+}
+
+export type ReportClient = {
+  gastoTotal: number
+  nome: string
+  novo: boolean
+  recorrente: boolean
+  ultimaVisita: string | null
+  visitas: number
+}
+
+export type ReportAgendaItem = {
+  barbeiro: string
+  cliente: string
+  horario: string
+  servico: string
+  status: string
+  valor: number
 }
 
 export type ReportData = {
+  agendaItems: ReportAgendaItem[]
+  clients: ReportClient[]
   summary: ReportSummary
   topProducts: TopProduct[]
   topBarbers: TopBarber[]
@@ -117,6 +141,7 @@ type PaidBill = {
 }
 
 type Commission = {
+  barbeiro_id: string
   valor_comissao: number
 }
 
@@ -127,6 +152,8 @@ type ProductSale = {
 }
 
 type BarberAppointment = {
+  barbeiro_id?: string
+  cliente_id?: string
   id?: string
   data_hora_fim?: string | null
   data_hora_inicio?: string
@@ -136,7 +163,11 @@ type BarberAppointment = {
   valor_desconto?: number | null
   barbeiros: { nome: string } | null
   clientes?: { nome: string } | null
-  servicos?: { duracao_minutos: number; duration_minutes: number | null } | null
+  servicos?: {
+    duracao_minutos: number
+    duration_minutes: number | null
+    nome?: string
+  } | null
 }
 
 type ClientRow = {
@@ -223,6 +254,8 @@ export async function getRelatorioData(
     productSalesResponse,
     barberAppointmentsResponse,
     paidBillsResponse,
+    clientsResponse,
+    productsResponse,
   ] = await Promise.all([
     supabase
       .from('movimentacoes_financeiras')
@@ -233,7 +266,7 @@ export async function getRelatorioData(
       .lte('data_movimentacao', dataFim),
     supabase
       .from('comissoes')
-      .select('valor_comissao')
+      .select('barbeiro_id,valor_comissao')
       .eq('empresa_id', empresaId)
       .neq('status', 'cancelada')
       .gte('created_at', startIso)
@@ -246,9 +279,10 @@ export async function getRelatorioData(
       .lte('data_venda', dataFim),
     supabase
       .from('atendimentos')
-      .select('valor,barbeiros(nome)')
+      .select(
+        'barbeiro_id,cliente_id,data_hora_inicio,data_hora_fim,status,valor,valor_final,barbeiros(nome),clientes(nome),servicos(nome,duracao_minutos,duration_minutes)',
+      )
       .eq('empresa_id', empresaId)
-      .in('status', ['concluido', 'concluido_automatico'])
       .gte('data_hora_inicio', startIso)
       .lt('data_hora_inicio', endIso),
     supabase
@@ -256,6 +290,14 @@ export async function getRelatorioData(
       .select('categoria,data_pagamento,data_vencimento,descricao,valor')
       .eq('empresa_id', empresaId)
       .eq('status', 'paga'),
+    supabase
+      .from('clientes')
+      .select('id,nome,status,created_at')
+      .eq('empresa_id', empresaId),
+    supabase
+      .from('produtos')
+      .select('nome,estoque_atual')
+      .eq('empresa_id', empresaId),
   ])
 
   const failedResponse = [
@@ -264,6 +306,8 @@ export async function getRelatorioData(
     productSalesResponse,
     barberAppointmentsResponse,
     paidBillsResponse,
+    clientsResponse,
+    productsResponse,
   ].find((response) => response.error)
 
   if (failedResponse?.error) {
@@ -276,6 +320,11 @@ export async function getRelatorioData(
     (productSalesResponse.data ?? []) as unknown as ProductSale[]
   const barberAppointments =
     (barberAppointmentsResponse.data ?? []) as unknown as BarberAppointment[]
+  const clients = (clientsResponse.data ?? []) as ClientRow[]
+  const products = (productsResponse.data ?? []) as Pick<
+    ProductRow,
+    'estoque_atual' | 'nome'
+  >[]
   const paidBills = ((paidBillsResponse.data ?? []) as PaidBill[]).filter(
     (bill) => {
       const paymentDate = bill.data_pagamento ?? bill.data_vencimento
@@ -321,18 +370,35 @@ export async function getRelatorioData(
   const comissoes = sum(
     commissions.map((commission) => Number(commission.valor_comissao)),
   )
+  const commissionByBarber = commissions.reduce<Map<string, number>>(
+    (map, commission) => {
+      map.set(
+        commission.barbeiro_id,
+        (map.get(commission.barbeiro_id) ?? 0) +
+          Number(commission.valor_comissao),
+      )
+
+      return map
+    },
+    new Map(),
+  )
+  const stockByProduct = new Map(
+    products.map((product) => [product.nome, Number(product.estoque_atual)]),
+  )
 
   const productsMap = new Map<string, TopProduct>()
 
   productSales.forEach((sale) => {
     const nome = sale.produtos?.nome ?? 'Produto'
     const current = productsMap.get(nome) ?? {
+      estoqueAtual: stockByProduct.get(nome),
       nome,
       quantidade: 0,
       valorTotal: 0,
     }
 
     productsMap.set(nome, {
+      estoqueAtual: current.estoqueAtual ?? stockByProduct.get(nome),
       nome,
       quantidade: current.quantidade + Number(sale.quantidade),
       valorTotal: current.valorTotal + Number(sale.valor_total),
@@ -340,23 +406,96 @@ export async function getRelatorioData(
   })
 
   const barbersMap = new Map<string, TopBarber>()
+  const completedStatuses = ['concluido', 'concluido_automatico']
+  const canceledStatuses = ['cancelado', 'nao_compareceu', 'faltou']
 
   barberAppointments.forEach((appointment) => {
     const nome = appointment.barbeiros?.nome ?? 'Barbeiro'
+    const barberId = appointment.barbeiro_id ?? nome
     const current = barbersMap.get(nome) ?? {
       atendimentos: 0,
+      cancelamentos: 0,
+      comissao: 0,
       faturamento: 0,
       nome,
+      ticketMedio: 0,
     }
+    const isCompleted = completedStatuses.includes(appointment.status ?? '')
+    const isCanceled = canceledStatuses.includes(appointment.status ?? '')
+    const nextAtendimentos = current.atendimentos + (isCompleted ? 1 : 0)
+    const nextFaturamento =
+      current.faturamento +
+      (isCompleted
+        ? Number(appointment.valor_final ?? appointment.valor)
+        : 0)
 
     barbersMap.set(nome, {
       nome,
-      atendimentos: current.atendimentos + 1,
-      faturamento: current.faturamento + Number(appointment.valor),
+      atendimentos: nextAtendimentos,
+      cancelamentos: current.cancelamentos + (isCanceled ? 1 : 0),
+      comissao: commissionByBarber.get(barberId) ?? current.comissao,
+      faturamento: nextFaturamento,
+      ticketMedio: nextAtendimentos > 0 ? nextFaturamento / nextAtendimentos : 0,
     })
   })
 
+  const clientsMap = new Map<string, ReportClient>()
+
+  clients.forEach((client) => {
+    clientsMap.set(client.id, {
+      gastoTotal: 0,
+      nome: client.nome,
+      novo: client.created_at >= startIso && client.created_at < endIso,
+      recorrente: false,
+      ultimaVisita: null,
+      visitas: 0,
+    })
+  })
+
+  barberAppointments
+    .filter((appointment) => completedStatuses.includes(appointment.status ?? ''))
+    .forEach((appointment) => {
+      const clientId = appointment.cliente_id ?? appointment.clientes?.nome ?? 'cliente'
+      const current = clientsMap.get(clientId) ?? {
+        gastoTotal: 0,
+        nome: appointment.clientes?.nome ?? 'Cliente',
+        novo: false,
+        recorrente: false,
+        ultimaVisita: null,
+        visitas: 0,
+      }
+      const visitas = current.visitas + 1
+      const ultimaVisita =
+        !current.ultimaVisita ||
+        (appointment.data_hora_inicio &&
+          appointment.data_hora_inicio > current.ultimaVisita)
+          ? appointment.data_hora_inicio ?? current.ultimaVisita
+          : current.ultimaVisita
+
+      clientsMap.set(clientId, {
+        ...current,
+        gastoTotal:
+          current.gastoTotal + Number(appointment.valor_final ?? appointment.valor),
+        recorrente: visitas > 1,
+        ultimaVisita,
+        visitas,
+      })
+    })
+
+  const agendaItems = barberAppointments.map<ReportAgendaItem>((appointment) => ({
+    barbeiro: appointment.barbeiros?.nome ?? 'Barbeiro',
+    cliente: appointment.clientes?.nome ?? 'Cliente',
+    horario: appointment.data_hora_inicio ?? '',
+    servico: appointment.servicos?.nome ?? 'Serviço',
+    status: appointment.status ?? 'agendado',
+    valor: Number(appointment.valor_final ?? appointment.valor),
+  }))
+
   return {
+    agendaItems,
+    clients: Array.from(clientsMap.values()).sort(
+      (a, b) => b.gastoTotal - a.gastoTotal,
+    ),
     summary: {
       comissoes,
       despesas,

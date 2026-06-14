@@ -162,6 +162,7 @@ export function AtendimentosPage() {
   const empresaId = profile?.empresa_id
   const waitlistAccess = useFeatureAccess('HAS_WAITLIST')
   const queryClient = useQueryClient()
+  const today = todayInputValue()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [dailyDate, setDailyDate] = useState(todayInputValue())
@@ -257,6 +258,20 @@ export function AtendimentosPage() {
       dailyStatus,
     ],
   })
+
+  const todayAppointmentsQuery = useQuery({
+    enabled: Boolean(empresaId),
+    queryFn: () =>
+      listDailyAppointments({
+        date: today,
+        empresaId: empresaId as string,
+      }),
+    queryKey: ['today-appointments-summary', empresaId, today],
+  })
+
+  const completedToday = (todayAppointmentsQuery.data ?? []).filter((appointment) =>
+    ['concluido', 'concluido_automatico'].includes(appointment.status),
+  ).length
 
   const waitlistQuery = useQuery({
     enabled: Boolean(empresaId && waitlistAccess.canUse),
@@ -471,8 +486,8 @@ export function AtendimentosPage() {
             Registro de atendimentos
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-            Ao salvar, o sistema registra o atendimento, gera entrada financeira
-            e cria comissão para o barbeiro em uma única transação.
+            Ao salvar, o sistema registra o atendimento, atualiza o caixa e
+            calcula a comissão do barbeiro automaticamente.
           </p>
         </div>
 
@@ -513,10 +528,10 @@ export function AtendimentosPage() {
         <Card>
           <CardContent>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Fluxo seguro
+              Concluídos hoje
             </p>
             <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
-              RPC transacional
+              {completedToday}
             </p>
           </CardContent>
         </Card>
