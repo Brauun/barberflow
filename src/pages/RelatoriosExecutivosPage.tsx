@@ -499,8 +499,8 @@ export function RelatoriosExecutivosPage() {
   const executiveAccess = useFeatureAccess('HAS_EXECUTIVE_REPORTS')
   const [activeTab, setActiveTab] = useState<ExecutiveTab>('visao-geral')
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('mensal')
-  const [dataInicio, setDataInicio] = useState(monthStartInputValue())
-  const [dataFim, setDataFim] = useState(todayInputValue())
+  const [pendingInicio, setPendingInicio] = useState(monthStartInputValue())
+  const [pendingFim, setPendingFim] = useState(todayInputValue())
   const [appliedFilters, setAppliedFilters] = useState({
     dataFim: todayInputValue(),
     dataInicio: monthStartInputValue(),
@@ -545,14 +545,14 @@ export function RelatoriosExecutivosPage() {
     }
 
     const range = getQuickFilterRange(filter)
-    setDataInicio(range.dataInicio)
-    setDataFim(range.dataFim)
+    setPendingInicio(range.dataInicio)
+    setPendingFim(range.dataFim)
     setAppliedFilters(range)
   }
 
   function applyFilters() {
     setQuickFilter('custom')
-    setAppliedFilters({ dataFim, dataInicio })
+    setAppliedFilters({ dataFim: pendingFim, dataInicio: pendingInicio })
   }
 
   function exportPdf() {
@@ -684,18 +684,18 @@ export function RelatoriosExecutivosPage() {
               Data inicial
               <input
                 className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base text-slate-950 outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-100 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:focus:ring-brand-400/10"
-                onChange={(event) => setDataInicio(event.target.value)}
+                onChange={(event) => setPendingInicio(event.target.value)}
                 type="date"
-                value={dataInicio}
+                value={pendingInicio}
               />
             </label>
             <label className="space-y-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
               Data final
               <input
                 className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base text-slate-950 outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-100 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:focus:ring-brand-400/10"
-                onChange={(event) => setDataFim(event.target.value)}
+                onChange={(event) => setPendingFim(event.target.value)}
                 type="date"
-                value={dataFim}
+                value={pendingFim}
               />
             </label>
             <Button onClick={applyFilters} variant="secondary">
