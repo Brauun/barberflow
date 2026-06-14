@@ -1,7 +1,8 @@
-import { Bell, Menu } from 'lucide-react'
+import { Bell, Menu, Moon, Sun } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '../ui'
+import { useTheme } from '../../hooks/useTheme'
 import { cn } from '../../utils/cn'
 import { GlobalSearch } from './GlobalSearch'
 import { NotificationsPanel } from './NotificationsPanel'
@@ -45,6 +46,7 @@ export function TopBar({
   searchItems,
   unreadCount,
 }: TopBarProps) {
+  const { resolvedTheme, setTheme } = useTheme()
   // FIX: rastreia se o dropdown da busca mobile está aberto
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
 
@@ -89,6 +91,39 @@ export function TopBar({
             onSelectAtendimento={onSelectAtendimento}
             onSelectCliente={onSelectCliente}
           />
+
+          <div
+            aria-label="Alternar tema"
+            className="flex h-11 items-center rounded-2xl border border-slate-200 bg-slate-50 p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            role="group"
+          >
+            <button
+              aria-label="Usar tema claro"
+              className={cn(
+                'flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition duration-200 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white',
+                resolvedTheme === 'light' &&
+                  'bg-white text-brand-600 shadow-sm dark:bg-slate-950 dark:text-brand-300',
+              )}
+              onClick={() => setTheme('light')}
+              title="Tema claro"
+              type="button"
+            >
+              <Sun size={17} />
+            </button>
+            <button
+              aria-label="Usar tema escuro"
+              className={cn(
+                'flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition duration-200 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white',
+                resolvedTheme === 'dark' &&
+                  'bg-white text-brand-600 shadow-sm dark:bg-slate-950 dark:text-brand-300',
+              )}
+              onClick={() => setTheme('dark')}
+              title="Tema escuro"
+              type="button"
+            >
+              <Moon size={16} />
+            </button>
+          </div>
 
           <div className="relative">
             <Button
