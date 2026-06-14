@@ -458,7 +458,7 @@ function buildPdfHtml(input: {
 
         <section class="page">
           <header class="header">
-            <div><div class="eyebrow">Financeiro</div><h2>Analise financeira</h2></div>
+            <div><div class="eyebrow">Financeiro</div><h2>Análise financeira</h2></div>
             <div class="meta">${escapeHtml(empresaNome)}</div>
           </header>
           <div class="kpi-grid">
@@ -473,8 +473,8 @@ function buildPdfHtml(input: {
               <thead><tr><th>Indicador</th><th>Valor</th><th>Observação</th></tr></thead>
               <tbody>
                 <tr><td>Receita bruta</td><td>${currencyFormatter.format(entradas)}</td><td>Serviços + produtos</td></tr>
-                <tr><td>Receita liquida estimada</td><td>${currencyFormatter.format(data.summary.lucroLiquido)}</td><td>Após despesas e comissões</td></tr>
-                <tr><td>Margem liquida</td><td>${margem.toFixed(1).replace('.', ',')}%</td><td>Lucro líquido / entradas</td></tr>
+                <tr><td>Receita líquida estimada</td><td>${currencyFormatter.format(data.summary.lucroLiquido)}</td><td>Após despesas e comissões</td></tr>
+                <tr><td>Margem líquida</td><td>${margem.toFixed(1).replace('.', ',')}%</td><td>Lucro líquido / entradas</td></tr>
                 <tr><td>Ticket médio</td><td>${currencyFormatter.format(ticketMedio)}</td><td>Receita de serviços / atendimentos</td></tr>
               </tbody>
             </table>
@@ -519,7 +519,6 @@ export function RelatoriosPage() {
       empresaId,
       appliedFilters.dataInicio,
       appliedFilters.dataFim,
-      appliedFilters.tipo,
     ],
   })
 
@@ -653,7 +652,7 @@ export function RelatoriosPage() {
             Relatórios
           </p>
           <h2 className="mt-3 text-3xl font-black tracking-normal text-slate-950 dark:text-white">
-            Analises do BW Barber
+            Análises do BW Barber
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
             Escolha o tipo, ajuste o período e gere um PDF operacional pronto para
@@ -779,7 +778,7 @@ export function RelatoriosPage() {
               <h3 className="text-xl font-semibold text-slate-950 dark:text-white">
                 {title}
               </h3>
-              <p className="mt-1 text-sm text-white0 dark:text-slate-400">
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {periodLabel}
               </p>
             </div>
@@ -801,7 +800,7 @@ export function RelatoriosPage() {
             ].map(([label, value]) => (
               <Card key={label}>
                 <CardContent>
-                  <p className="text-sm text-white0 dark:text-slate-400">{label}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
                   <p className="mt-2 text-xl font-black text-slate-950 dark:text-white">
                     {value}
                   </p>
@@ -819,7 +818,7 @@ export function RelatoriosPage() {
               </CardHeader>
               <CardContent className="p-0">
                 {data.topProducts.length === 0 ? (
-                  <div className="p-5 text-sm text-white0 dark:text-slate-400">
+                  <div className="p-5 text-sm text-slate-500 dark:text-slate-400">
                     Nenhuma venda de produto no período.
                   </div>
                 ) : (
@@ -857,7 +856,7 @@ export function RelatoriosPage() {
               </CardHeader>
               <CardContent className="p-0">
                 {data.topBarbers.length === 0 ? (
-                  <div className="p-5 text-sm text-white0 dark:text-slate-400">
+                  <div className="p-5 text-sm text-slate-500 dark:text-slate-400">
                     Nenhum atendimento concluído no período.
                   </div>
                 ) : (

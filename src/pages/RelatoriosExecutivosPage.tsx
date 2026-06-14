@@ -153,7 +153,7 @@ function buildExecutivePdfHtml(input: {
     ['Comissões', currencyFormatter.format(data.summary.comissoes)],
     ['Atendimentos', numberFormatter.format(data.agenda.status.concluido)],
     ['Clientes ativos', numberFormatter.format(data.clientes.ativos)],
-    ['Ticket médio', currencyFormatter.format(data.agenda.status.concluido ? data.summary.receitaServicos / data.agenda.status.concluido : 0)],
+    ['Ticket médio', currencyFormatter.format(data.agenda.status.concluido > 0 ? data.summary.receitaServicos / data.agenda.status.concluido : 0)],
   ]
   const teamRows = data.equipe
     .slice(0, 8)
@@ -357,7 +357,7 @@ function buildExecutivePdfHtml(input: {
             <div style="color:#9fb6d1;font-size:10px;text-align:right;">Emitido em ${escapeHtml(emittedAt)}<br />Relatório Executivo BW Pro</div>
           </header>
           <h1>Panorama<br />do Negócio</h1>
-          <p>Relatório executivo para tomada de decisao, combinando financeiro, equipe, clientes, agenda, produtos e previsões operacionais.</p>
+          <p>Relatório executivo para tomada de decisão, combinando financeiro, equipe, clientes, agenda, produtos e previsões operacionais.</p>
           <span class="period">${formatDate(dataInicio)} até ${formatDate(dataFim)}</span>
           <div class="score">
             <strong>${data.score.value}/100</strong>
@@ -520,6 +520,7 @@ export function RelatoriosExecutivosPage() {
       appliedFilters.dataInicio,
       appliedFilters.dataFim,
     ],
+    staleTime: 1000 * 60 * 5,
   })
 
   const data = reportQuery.data
@@ -601,7 +602,7 @@ export function RelatoriosExecutivosPage() {
         : `Receita caiu ${percent(Math.abs(crescimento))} em relação ao período anterior.`,
       topBarber
         ? `${topBarber.nome} gerou ${percent(entradas ? (topBarber.faturamento / entradas) * 100 : 0)} do faturamento.`
-        : 'Ainda não ha barbeiro com faturamento concluído no período.',
+        : 'Ainda não há barbeiro com faturamento concluído no período.',
       data.margemPercentual >= 15
         ? 'Nível financeiro saudável para o período analisado.'
         : 'Diminua despesas ou revise preços para recuperar margem.',
@@ -609,8 +610,8 @@ export function RelatoriosExecutivosPage() {
         ? `${topProduct.nome} lidera produtos, com ${numberFormatter.format(topProduct.quantidade)} venda(s).`
         : 'Produtos ainda não tiveram venda registrada no período.',
       topClient
-        ? `${topClient.nome} e o cliente de maior valor no período.`
-        : 'Ainda não ha ranking de clientes para este período.',
+        ? `${topClient.nome} é o cliente de maior valor no período.`
+        : 'Ainda não há ranking de clientes para este período.',
     ]
   }, [crescimento, data, entradas])
 
@@ -764,7 +765,7 @@ export function RelatoriosExecutivosPage() {
               />
               <KpiCard label="Margem" value={percent(data.margemPercentual)} />
               <KpiCard label="Ticket médio" value={currencyFormatter.format(ticketMedio)} />
-              <KpiCard label="Comissoes" value={currencyFormatter.format(data.summary.comissoes)} />
+              <KpiCard label="Comissões" value={currencyFormatter.format(data.summary.comissoes)} />
               <KpiCard label="Clientes ativos" value={numberFormatter.format(data.clientes.ativos)} />
               <KpiCard label="Atendimentos" value={numberFormatter.format(data.agenda.status.concluido)} />
               <KpiCard label="Crescimento" value={percent(crescimento)} />
@@ -854,10 +855,10 @@ export function RelatoriosExecutivosPage() {
                   </h3>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <MiniBar label="Receita servicos" max={entradas} value={data.summary.receitaServicos} />
-                  <MiniBar label="Receita produtos" max={entradas} value={data.summary.receitaProdutos} />
+                  <MiniBar label="Receita de serviços" max={entradas} value={data.summary.receitaServicos} />
+                  <MiniBar label="Receita de produtos" max={entradas} value={data.summary.receitaProdutos} />
                   <MiniBar label="Despesas" max={entradas} value={data.summary.despesas} />
-                  <MiniBar label="Comissoes" max={entradas} value={data.summary.comissoes} />
+                  <MiniBar label="Comissões" max={entradas} value={data.summary.comissoes} />
                 </CardContent>
               </Card>
               <Card>
@@ -953,7 +954,7 @@ export function RelatoriosExecutivosPage() {
           {activeTab === 'agenda' && (
             <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-                <KpiCard label="Concluidos" value={numberFormatter.format(data.agenda.status.concluido)} />
+                <KpiCard label="Concluídos" value={numberFormatter.format(data.agenda.status.concluido)} />
                 <KpiCard label="Cancelados" value={numberFormatter.format(data.agenda.status.cancelado)} />
                 <KpiCard label="Ocupação" value={percent(data.agenda.ocupacaoPercentual)} />
               </div>
