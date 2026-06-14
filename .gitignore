@@ -32,3 +32,8 @@ dist-ssr
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
