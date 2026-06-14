@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+﻿import { useQuery } from '@tanstack/react-query'
 import {
   Activity,
   BarChart3,
@@ -41,11 +41,11 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 const numberFormatter = new Intl.NumberFormat('pt-BR')
 
 const tabs: Array<{ icon: typeof BarChart3; label: string; value: ExecutiveTab }> = [
-  { icon: BarChart3, label: 'Visão Geral', value: 'visao-geral' },
+  { icon: BarChart3, label: 'VisÃ£o Geral', value: 'visao-geral' },
   { icon: Crown, label: 'Equipe', value: 'equipe' },
   { icon: Users, label: 'Clientes', value: 'clientes' },
   { icon: CalendarDays, label: 'Agenda', value: 'agenda' },
-  { icon: Sparkles, label: 'Inteligência', value: 'inteligencia' },
+  { icon: Sparkles, label: 'InteligÃªncia', value: 'inteligencia' },
 ]
 
 const quickFilters: Array<{ label: string; value: QuickFilter }> = [
@@ -159,67 +159,116 @@ function buildExecutivePdfHtml(input: {
     data.periodoAnterior.summary.receitaProdutos
   const crescimento = growth(entradas, previousEntradas)
   const emittedAt = new Date().toLocaleString('pt-BR')
+  const ticketMedio =
+    data.agenda.status.concluido > 0
+      ? data.summary.receitaServicos / data.agenda.status.concluido
+      : 0
+  const cancelamentos =
+    data.agenda.status.cancelado + data.agenda.status.remarcado
+  const scoreTone =
+    data.score.value >= 80 ? 'good' : data.score.value >= 60 ? 'warn' : 'danger'
+  const scoreLabel =
+    data.score.value >= 80
+      ? 'OperaÃ§Ã£o saudÃ¡vel'
+      : data.score.value >= 60
+        ? 'OperaÃ§Ã£o em atenÃ§Ã£o'
+        : 'OperaÃ§Ã£o crÃ­tica'
+  const marginTone =
+    data.margemPercentual >= 20
+      ? 'good'
+      : data.margemPercentual >= 8
+        ? 'warn'
+        : 'danger'
+  const topBarber = data.equipe[0]
+  const topProduct = data.produtos.maisVendidos[0]
+  const executiveSummary = `No perÃ­odo, a barbearia gerou ${currencyFormatter.format(entradas)} em entradas, com margem lÃ­quida de ${percent(data.margemPercentual)} e ${numberFormatter.format(data.agenda.status.concluido)} atendimentos concluÃ­dos.`
   const kpis = [
-    ['Score', `${data.score.value}/100`],
-    ['Receita', currencyFormatter.format(entradas)],
-    ['Lucro líquido', currencyFormatter.format(data.summary.lucroLiquido)],
-    ['Margem', percent(data.margemPercentual)],
-    ['Comissões', currencyFormatter.format(data.summary.comissoes)],
-    ['Atendimentos', numberFormatter.format(data.agenda.status.concluido)],
-    ['Clientes ativos', numberFormatter.format(data.clientes.ativos)],
-    ['Ticket médio', currencyFormatter.format(data.agenda.status.concluido > 0 ? data.summary.receitaServicos / data.agenda.status.concluido : 0)],
+    ['Receita', currencyFormatter.format(entradas), 'positive'],
+    ['Lucro lÃ­quido', currencyFormatter.format(data.summary.lucroLiquido), marginTone],
+    ['Margem', percent(data.margemPercentual), marginTone],
+    ['Ticket mÃ©dio', currencyFormatter.format(ticketMedio), 'neutral'],
+    ['Atendimentos', numberFormatter.format(data.agenda.status.concluido), 'neutral'],
+    ['Cancelamentos', numberFormatter.format(cancelamentos), cancelamentos > 0 ? 'warn' : 'good'],
   ]
-  const teamRows = data.equipe
-    .slice(0, 8)
+  const financeCards = [
+    ['Receita bruta', currencyFormatter.format(entradas), 'ServiÃ§os + produtos', 'positive'],
+    ['Receita lÃ­quida', currencyFormatter.format(data.summary.lucroLiquido), 'ApÃ³s despesas e comissÃµes', marginTone],
+    ['Despesas', currencyFormatter.format(data.summary.despesas), 'SaÃ­das do perÃ­odo', data.summary.despesas > 0 ? 'warn' : 'neutral'],
+    ['ComissÃµes', currencyFormatter.format(data.summary.comissoes), 'Equipe no perÃ­odo', 'neutral'],
+    ['Lucro', currencyFormatter.format(data.summary.lucroLiquido), 'Resultado operacional', marginTone],
+    ['Margem', percent(data.margemPercentual), 'Lucro / entradas', marginTone],
+  ]
+  const teamCards = data.equipe
+    .slice(0, 5)
     .map(
       (barber, index) => `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${escapeHtml(barber.nome)}</td>
-          <td>${numberFormatter.format(barber.atendimentos)}</td>
-          <td>${currencyFormatter.format(barber.faturamento)}</td>
-          <td>${currencyFormatter.format(barber.comissao)}</td>
-          <td>${numberFormatter.format(barber.cancelamentos)}</td>
-        </tr>
+        <div class="ranking-card">
+          <span class="rank">${index + 1}</span>
+          <div>
+            <strong>${escapeHtml(barber.nome)}</strong>
+            <small>${numberFormatter.format(barber.atendimentos)} atendimentos Â· Ticket ${currencyFormatter.format(barber.ticketMedio)}</small>
+          </div>
+          <div class="right">
+            <b>${currencyFormatter.format(barber.faturamento)}</b>
+            <small>${currencyFormatter.format(barber.comissao)} comissÃ£o</small>
+          </div>
+        </div>
       `,
     )
     .join('')
-  const clientRows = data.clientes.topClientes
-    .slice(0, 8)
+  const clientCards = data.clientes.topClientes
+    .slice(0, 5)
     .map(
       (client) => `
-        <tr>
-          <td>${escapeHtml(client.nome)}</td>
-          <td>${numberFormatter.format(client.visitas)}</td>
-          <td>${currencyFormatter.format(client.gastoTotal)}</td>
-          <td>${client.ultimaVisita ? new Date(client.ultimaVisita).toLocaleDateString('pt-BR') : '-'}</td>
-        </tr>
+        <div class="list-card">
+          <div>
+            <strong>${escapeHtml(client.nome)}</strong>
+            <small>${numberFormatter.format(client.visitas)} visitas Â· Ãºltima visita ${client.ultimaVisita ? new Date(client.ultimaVisita).toLocaleDateString('pt-BR') : '-'}</small>
+          </div>
+          <b>${currencyFormatter.format(client.gastoTotal)}</b>
+        </div>
       `,
     )
     .join('')
-  const productRows = data.produtos.maisVendidos
-    .slice(0, 8)
+  const productCards = data.produtos.maisVendidos
+    .slice(0, 5)
     .map(
       (product) => `
-        <tr>
-          <td>${escapeHtml(product.nome)}</td>
-          <td>${numberFormatter.format(product.quantidade)}</td>
-          <td>${currencyFormatter.format(product.valorTotal)}</td>
-        </tr>
+        <div class="list-card">
+          <div>
+            <strong>${escapeHtml(product.nome)}</strong>
+            <small>${numberFormatter.format(product.quantidade)} unidades vendidas</small>
+          </div>
+          <b>${currencyFormatter.format(product.valorTotal)}</b>
+        </div>
       `,
     )
     .join('')
+  const insightItems = [
+    crescimento >= 0
+      ? `Receita cresceu ${percent(crescimento)} em relaÃ§Ã£o ao perÃ­odo anterior.`
+      : `Receita caiu ${percent(Math.abs(crescimento))} em relaÃ§Ã£o ao perÃ­odo anterior.`,
+    cancelamentos > 0
+      ? `Cancelamentos exigem atenÃ§Ã£o: ${numberFormatter.format(cancelamentos)} ocorrÃªncia(s) no perÃ­odo.`
+      : 'Agenda sem cancelamentos relevantes no perÃ­odo.',
+    topBarber
+      ? `${topBarber.nome} liderou a equipe com ${currencyFormatter.format(topBarber.faturamento)} em faturamento.`
+      : 'Ainda nÃ£o hÃ¡ barbeiro com faturamento concluÃ­do no perÃ­odo.',
+    topProduct
+      ? `${topProduct.nome} foi o item de maior giro no perÃ­odo.`
+      : 'Sem vendas de produtos registradas no perÃ­odo.',
+  ]
 
   return `<!doctype html>
     <html lang="pt-BR">
       <head>
         <meta charset="utf-8" />
-        <title>BW-Barber-Relatório-Executivo-${escapeHtml(dataInicio)}-${escapeHtml(dataFim)}</title>
+        <title>BW-Barber-RelatÃ³rio-Executivo-${escapeHtml(dataInicio)}-${escapeHtml(dataFim)}</title>
         <style>
           @page { size: A4; margin: 0; }
           * { box-sizing: border-box; }
           body {
-            background: #071426;
+            background: #eef4f8;
             color: #0f172a;
             font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             margin: 0;
@@ -231,28 +280,18 @@ function buildExecutivePdfHtml(input: {
             margin: 0 auto;
             min-height: 297mm;
             overflow: hidden;
-            padding: 14mm;
+            padding: 12mm;
             page-break-after: always;
             position: relative;
             width: 210mm;
           }
-          .cover {
-            background:
-              radial-gradient(circle at 88% 10%, rgba(18,198,243,.24), transparent 24%),
-              linear-gradient(145deg, #071426 0%, #0e1d32 68%, #0b1728 100%);
-            color: #fff;
-          }
-          .header {
-            align-items: center;
-            display: flex;
-            justify-content: space-between;
-            min-height: 54px;
-          }
+          .cover { background: linear-gradient(180deg, #ffffff 0%, #f6fbff 100%); color: #071426; }
+          .header { align-items: center; display: flex; justify-content: space-between; min-height: 54px; }
           .brand { align-items: center; display: flex; gap: 13px; }
           .logo {
             align-items: center;
-            background: rgba(255,255,255,.06);
-            border: 1px solid rgba(255,255,255,.12);
+            background: #071426;
+            border: 1px solid #dbe8f0;
             border-radius: 18px;
             display: flex;
             height: 52px;
@@ -261,108 +300,50 @@ function buildExecutivePdfHtml(input: {
             width: 52px;
           }
           .logo img { height: 44px; max-width: 44px; object-fit: contain; }
-          .logo span {
-            color: #12c6f3;
-            display: none;
-            font-size: 15px;
-            font-weight: 950;
-            letter-spacing: -.04em;
-          }
-          .eyebrow {
-            color: #12c6f3;
-            font-size: 8.5px;
-            font-weight: 900;
-            letter-spacing: .22em;
-            text-transform: uppercase;
-          }
-          h1 { font-size: 42px; letter-spacing: -.04em; line-height: .98; margin: 44px 0 14px; }
-          h2 { color: #071426; font-size: 22px; letter-spacing: -.03em; margin: 18px 0 12px; }
-          h3 { margin: 0; }
+          .logo span { color: #12c6f3; display: none; font-size: 15px; font-weight: 950; letter-spacing: -.04em; }
+          .eyebrow { color: #0891b2; font-size: 8.5px; font-weight: 900; letter-spacing: .22em; text-transform: uppercase; }
+          h1 { color: #071426; font-size: 34px; letter-spacing: -.04em; line-height: 1.02; margin: 18px 0 10px; }
+          h2 { color: #071426; font-size: 21px; letter-spacing: -.03em; margin: 2px 0 4px; }
+          h3 { color: #071426; margin: 0; }
           p { color: #64748b; font-size: 10.5px; line-height: 1.58; margin: 0; }
-          .cover p { color: #bfd3e6; max-width: 510px; }
-          .period {
-            background: rgba(18,198,243,.12);
-            border: 1px solid rgba(18,198,243,.26);
-            border-radius: 999px;
-            color: #c9f7ff;
-            display: inline-flex;
-            font-size: 10px;
-            font-weight: 900;
-            margin-top: 18px;
-            padding: 8px 12px;
-          }
-          .score {
-            align-items: center;
-            border: 1px solid rgba(18,198,243,.28);
-            border-radius: 26px;
-            bottom: 36mm;
-            display: flex;
-            gap: 18px;
-            left: 14mm;
-            padding: 18px;
-            position: absolute;
-            right: 14mm;
-          }
-          .score strong { color: #fff; font-size: 46px; letter-spacing: -.04em; }
-          .grid { display: grid; gap: 9px; grid-template-columns: repeat(4, 1fr); }
-          .kpi {
-            background: #fff;
-            border: 1px solid #e1ebf2;
-            border-radius: 14px;
-            min-height: 72px;
-            padding: 11px;
-          }
-          .kpi span {
-            color: #64748b;
-            display: block;
-            font-size: 7.8px;
-            font-weight: 900;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-          }
+          .cover p { color: #526176; max-width: 560px; }
+          .period { background: #e8fbff; border: 1px solid #b9f1fb; border-radius: 999px; color: #03657d; display: inline-flex; font-size: 10px; font-weight: 900; padding: 8px 12px; }
+          .badge-pro { background: #071426; border-radius: 999px; color: #fff; display: inline-flex; font-size: 9px; font-weight: 950; letter-spacing: .12em; padding: 7px 10px; text-transform: uppercase; }
+          .hero { background: #071426; border-radius: 24px; color: #fff; display: grid; gap: 18px; grid-template-columns: 1.15fr .85fr; margin-top: 16px; padding: 20px; }
+          .hero h1 { color: #fff; }
+          .hero p { color: #c7d5ea; }
+          .score-card { align-items: center; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); border-radius: 20px; display: flex; gap: 14px; padding: 16px; }
+          .score-card strong { color: #fff; font-size: 40px; letter-spacing: -.04em; line-height: 1; }
+          .score-card.good { border-color: rgba(16,185,129,.42); }
+          .score-card.warn { border-color: rgba(245,158,11,.48); }
+          .score-card.danger { border-color: rgba(239,68,68,.48); }
+          .grid { display: grid; gap: 9px; grid-template-columns: repeat(3, 1fr); }
+          .grid.two { grid-template-columns: 1fr 1fr; }
+          .grid.four { grid-template-columns: repeat(4, 1fr); }
+          .kpi { background: #fff; border: 1px solid #e1ebf2; border-radius: 14px; min-height: 68px; padding: 11px; }
+          .kpi span { color: #64748b; display: block; font-size: 7.8px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
           .kpi strong { color: #071426; display: block; font-size: 14px; margin-top: 7px; }
-          .panel {
-            background: #fff;
-            border: 1px solid #e1ebf2;
-            border-radius: 16px;
-            margin-top: 12px;
-            overflow: hidden;
-          }
-          .panel-head { border-bottom: 1px solid #e1ebf2; padding: 12px; }
-          table { border-collapse: collapse; width: 100%; }
-          th {
-            color: #64748b;
-            font-size: 8px;
-            letter-spacing: .08em;
-            padding: 8px 11px;
-            text-align: left;
-            text-transform: uppercase;
-          }
-          td { border-top: 1px solid #edf3f7; color: #172033; font-size: 9.8px; padding: 8px 11px; }
+          .kpi.positive strong, .kpi.good strong { color: #0891b2; }
+          .kpi.warn strong { color: #b45309; }
+          .kpi.danger strong { color: #dc2626; }
+          .section-title { align-items: end; border-bottom: 1px solid #dbe7ef; display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 10px; }
+          .section-title small { color: #64748b; font-size: 9px; font-weight: 800; }
           .two { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
-          .insight {
-            background: #fff;
-            border: 1px solid #e1ebf2;
-            border-radius: 16px;
-            padding: 14px;
-          }
+          .insight { background: #fff; border: 1px solid #e1ebf2; border-radius: 16px; padding: 14px; }
           .insight p { margin-top: 8px; }
-          .accent { color: #0891b2; font-weight: 900; }
-          .footer {
-            bottom: 8mm;
-            color: #94a3b8;
-            display: flex;
-            font-size: 8.6px;
-            justify-content: space-between;
-            left: 14mm;
-            position: absolute;
-            right: 14mm;
-          }
-          .cover .footer { color: #90a9c6; }
-          @media print {
-            body { background: #fff; }
-            .page { margin: 0; }
-          }
+          .callout { background: #071426; border-radius: 18px; color: #fff; padding: 16px; }
+          .callout p { color: #c7d5ea; }
+          .ranking-card, .list-card { align-items: center; background: #fff; border: 1px solid #e1ebf2; border-radius: 15px; display: flex; gap: 12px; justify-content: space-between; margin-top: 9px; padding: 11px; }
+          .ranking-card .rank { align-items: center; background: #e8fbff; border-radius: 12px; color: #0891b2; display: flex; font-size: 15px; font-weight: 950; height: 34px; justify-content: center; width: 34px; }
+          .ranking-card strong, .list-card strong { color: #071426; display: block; font-size: 11px; }
+          .ranking-card small, .list-card small { color: #64748b; display: block; font-size: 8.6px; margin-top: 3px; }
+          .right { margin-left: auto; text-align: right; }
+          .right b, .list-card b { color: #0891b2; display: block; font-size: 11px; }
+          .insight-list { display: grid; gap: 9px; }
+          .insight-item { background: #fff; border: 1px solid #e1ebf2; border-left: 4px solid #12c6f3; border-radius: 14px; color: #334155; font-size: 10px; line-height: 1.45; padding: 11px 12px; }
+          .accent { color: #12c6f3; font-weight: 900; }
+          .footer { bottom: 8mm; color: #94a3b8; display: flex; font-size: 8.6px; justify-content: space-between; left: 12mm; position: absolute; right: 12mm; }
+          @media print { body { background: #fff; } .page { margin: 0; } }
         </style>
       </head>
       <body>
@@ -373,61 +354,50 @@ function buildExecutivePdfHtml(input: {
                 <img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(empresaNome)}" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
                 <span>${escapeHtml(logoFallback)}</span>
               </div>
-              <div>
-                <div class="eyebrow">BW Barber</div>
-                <h3>${escapeHtml(empresaNome)}</h3>
-              </div>
+              <div><div class="eyebrow">BW Barber</div><h3>${escapeHtml(empresaNome)}</h3></div>
             </div>
-            <div style="color:#9fb6d1;font-size:10px;text-align:right;">Emitido em ${escapeHtml(emittedAt)}<br />Relatório Executivo BW Pro</div>
+            <div style="text-align:right;"><span class="badge-pro">BW Pro</span><p style="margin-top:8px;font-size:9px;">Emitido em ${escapeHtml(emittedAt)}</p></div>
           </header>
-          <h1>Panorama<br />do Negócio</h1>
-          <p>Relatório executivo para tomada de decisão, combinando financeiro, equipe, clientes, agenda, produtos e previsões operacionais.</p>
-          <span class="period">${formatDate(dataInicio)} até ${formatDate(dataFim)}</span>
-          <div class="score">
-            <strong>${data.score.value}/100</strong>
+          <div class="hero">
             <div>
-              <div class="eyebrow">Score da operação</div>
-              <h3>${escapeHtml(data.score.label)}</h3>
-              <p>Crescimento do período: <span class="accent">${percent(crescimento)}</span>. Margem operacional: <span class="accent">${percent(data.margemPercentual)}</span>.</p>
+              <div class="eyebrow">RelatÃ³rio Executivo</div>
+              <h1>Panorama do negÃ³cio</h1>
+              <p>${escapeHtml(executiveSummary)}</p>
+              <div style="margin-top:14px;"><span class="period">${formatDate(dataInicio)} atÃ© ${formatDate(dataFim)}</span></div>
+            </div>
+            <div class="score-card ${scoreTone}">
+              <strong>${data.score.value}/100</strong>
+              <div><div class="eyebrow">Score da OperaÃ§Ã£o</div><h3 style="color:#fff;">${escapeHtml(scoreLabel)}</h3><p>Crescimento: <span class="accent">${percent(crescimento)}</span></p></div>
             </div>
           </div>
-          <footer class="footer"><span>Gerado por BW Barber</span><span>Página 1 de 4</span></footer>
+          <div class="grid" style="margin-top:13px;">
+            ${kpis.map(([label, value, tone]) => `<div class="kpi ${tone}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join('')}
+          </div>
+          <div class="callout" style="margin-top:13px;"><div class="eyebrow">Resumo do perÃ­odo</div><p>Receita de serviÃ§os: <span class="accent">${currencyFormatter.format(data.summary.receitaServicos)}</span>. Receita de produtos: <span class="accent">${currencyFormatter.format(data.summary.receitaProdutos)}</span>. OcupaÃ§Ã£o estimada da agenda: <span class="accent">${percent(data.agenda.ocupacaoPercentual)}</span>.</p></div>
+          <footer class="footer"><span>BW Barber Â· RelatÃ³rio confidencial</span><span>PÃ¡gina 1 de 4</span></footer>
         </section>
         <section class="page">
-          <header class="header"><div><div class="eyebrow">Resumo Executivo</div><h2>KPIs principais</h2></div><p>${formatDate(dataInicio)} até ${formatDate(dataFim)}</p></header>
-          <div class="grid">${kpis.map(([label, value]) => `<div class="kpi"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join('')}</div>
-          <div class="two" style="margin-top:14px;">
-            <div class="insight"><div class="eyebrow">Insight financeiro</div><p>Receita de <span class="accent">${currencyFormatter.format(entradas)}</span>, com lucro líquido de <span class="accent">${currencyFormatter.format(data.summary.lucroLiquido)}</span>.</p></div>
-            <div class="insight"><div class="eyebrow">Insight operacional</div><p>Ocupação estimada de <span class="accent">${percent(data.agenda.ocupacaoPercentual)}</span> e <span class="accent">${numberFormatter.format(data.agenda.status.concluido)}</span> atendimentos concluídos.</p></div>
-          </div>
-          <div class="panel"><div class="panel-head"><h3>Equipe e comissões</h3></div><table><thead><tr><th>#</th><th>Barbeiro</th><th>Atend.</th><th>Faturamento</th><th>Comissão</th><th>Cancel.</th></tr></thead><tbody>${teamRows || '<tr><td colspan="6">Sem dados no período.</td></tr>'}</tbody></table></div>
-          <footer class="footer"><span>Gerado por BW Barber</span><span>Página 2 de 4</span></footer>
+          <header class="section-title"><div><div class="eyebrow">VisÃ£o financeira</div><h2>SaÃºde financeira</h2><p>Entradas, saÃ­das, margem e resultado lÃ­quido do perÃ­odo.</p></div><small>${formatDate(dataInicio)} atÃ© ${formatDate(dataFim)}</small></header>
+          <div class="grid">${financeCards.map(([label, value, description, tone]) => `<div class="kpi ${tone}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong><p style="margin-top:5px;font-size:8.5px;">${escapeHtml(description)}</p></div>`).join('')}</div>
+          <div class="callout" style="margin-top:14px;"><div class="eyebrow">Leitura executiva</div><p>No perÃ­odo, a barbearia gerou <span class="accent">${currencyFormatter.format(entradas)}</span> em entradas, com lucro lÃ­quido de <span class="accent">${currencyFormatter.format(data.summary.lucroLiquido)}</span> e margem de <span class="accent">${percent(data.margemPercentual)}</span>.</p></div>
+          <div class="two" style="margin-top:14px;"><div class="insight"><div class="eyebrow">Receita</div><h3>ComposiÃ§Ã£o</h3><p>ServiÃ§os representam <span class="accent">${entradas > 0 ? percent((data.summary.receitaServicos / entradas) * 100) : '0%'}</span> das entradas. Produtos representam <span class="accent">${entradas > 0 ? percent((data.summary.receitaProdutos / entradas) * 100) : '0%'}</span>.</p></div><div class="insight"><div class="eyebrow">Resultado</div><h3>Margem operacional</h3><p>A margem atual estÃ¡ em <span class="accent">${percent(data.margemPercentual)}</span>. Use este indicador para calibrar despesas, comissÃµes e metas de faturamento.</p></div></div>
+          <footer class="footer"><span>BW Barber Â· RelatÃ³rio confidencial</span><span>PÃ¡gina 2 de 4</span></footer>
         </section>
         <section class="page">
-          <header class="header"><div><div class="eyebrow">Clientes e Produtos</div><h2>Fidelização e estoque</h2></div><p>${escapeHtml(empresaNome)}</p></header>
-          <div class="two">
-            <div class="panel" style="margin-top:0;"><div class="panel-head"><h3>Top clientes</h3></div><table><thead><tr><th>Cliente</th><th>Visitas</th><th>Total</th><th>Ultima visita</th></tr></thead><tbody>${clientRows || '<tr><td colspan="4">Sem clientes no período.</td></tr>'}</tbody></table></div>
-            <div class="panel" style="margin-top:0;"><div class="panel-head"><h3>Produtos mais vendidos</h3></div><table><thead><tr><th>Produto</th><th>Qtd.</th><th>Valor</th></tr></thead><tbody>${productRows || '<tr><td colspan="3">Sem vendas no período.</td></tr>'}</tbody></table></div>
-          </div>
-          <div class="insight" style="margin-top:14px;"><div class="eyebrow">Alertas</div><p>${data.produtos.baixoEstoque} produto(s) em baixo estoque. Retenção estimada de clientes no período: <span class="accent">${percent(data.clientes.retencaoPercentual)}</span>.</p></div>
-          <footer class="footer"><span>Gerado por BW Barber</span><span>Página 3 de 4</span></footer>
+          <header class="section-title"><div><div class="eyebrow">Equipe e ServiÃ§os</div><h2>Performance operacional</h2><p>Top 5 da equipe e serviÃ§os/itens com maior giro no perÃ­odo.</p></div><small>${escapeHtml(empresaNome)}</small></header>
+          <div class="two"><div><div class="eyebrow">Equipe</div>${teamCards || '<div class="insight" style="margin-top:10px;"><p>Sem dados de equipe no perÃ­odo.</p></div>'}</div><div><div class="eyebrow">ServiÃ§os e produtos</div><div class="insight" style="margin-top:10px;"><h3>Receita de serviÃ§os</h3><p><span class="accent">${currencyFormatter.format(data.summary.receitaServicos)}</span> em serviÃ§os concluÃ­dos no perÃ­odo.</p></div>${productCards || '<div class="insight" style="margin-top:10px;"><p>Sem produtos vendidos no perÃ­odo.</p></div>'}</div></div>
+          <footer class="footer"><span>BW Barber Â· RelatÃ³rio confidencial</span><span>PÃ¡gina 3 de 4</span></footer>
         </section>
         <section class="page">
-          <header class="header"><div><div class="eyebrow">Previsões</div><h2>Projeção do negócio</h2></div><p>Baseada no ritmo do período</p></header>
-          <div class="grid">
-            <div class="kpi"><span>30 dias</span><strong>${currencyFormatter.format(data.previsao.receita30Dias)}</strong></div>
-            <div class="kpi"><span>90 dias</span><strong>${currencyFormatter.format(data.previsao.receita90Dias)}</strong></div>
-            <div class="kpi"><span>12 meses</span><strong>${currencyFormatter.format(data.previsao.receita12Meses)}</strong></div>
-            <div class="kpi"><span>Lucro 30 dias</span><strong>${currencyFormatter.format(data.previsao.lucro30Dias)}</strong></div>
-          </div>
-          <div class="insight" style="margin-top:14px;"><div class="eyebrow">Leitura executiva</div><p>Se continuar nesse ritmo, a receita estimada para os próximos 30 dias é <span class="accent">${currencyFormatter.format(data.previsao.receita30Dias)}</span>. Use este número como referência de meta operacional, não como garantia de faturamento.</p></div>
-          <footer class="footer"><span>Gerado por BW Barber</span><span>Página 4 de 4</span></footer>
+          <header class="section-title"><div><div class="eyebrow">Clientes, Agenda e Insights</div><h2>Relacionamento e ocupaÃ§Ã£o</h2><p>Leitura rÃ¡pida para decisÃµes de retenÃ§Ã£o, agenda e prÃ³ximos passos.</p></div><small>BW Pro</small></header>
+          <div class="grid"><div class="kpi"><span>Clientes ativos</span><strong>${numberFormatter.format(data.clientes.ativos)}</strong></div><div class="kpi"><span>Clientes novos</span><strong>${numberFormatter.format(data.clientes.novos)}</strong></div><div class="kpi"><span>RetenÃ§Ã£o</span><strong>${percent(data.clientes.retencaoPercentual)}</strong></div><div class="kpi"><span>OcupaÃ§Ã£o</span><strong>${percent(data.agenda.ocupacaoPercentual)}</strong></div><div class="kpi warn"><span>Cancelamentos</span><strong>${numberFormatter.format(cancelamentos)}</strong></div><div class="kpi danger"><span>NÃ£o compareceu</span><strong>${numberFormatter.format(data.agenda.status.cancelado)}</strong></div></div>
+          <div class="two" style="margin-top:14px;"><div><div class="eyebrow">Top clientes</div>${clientCards || '<div class="insight" style="margin-top:10px;"><p>Sem clientes com movimentaÃ§Ã£o no perÃ­odo.</p></div>'}</div><div><div class="eyebrow">Insights do perÃ­odo</div><div class="insight-list" style="margin-top:10px;">${insightItems.map((item) => `<div class="insight-item">${escapeHtml(item)}</div>`).join('')}</div></div></div>
+          <footer class="footer"><span>BW Barber Â· RelatÃ³rio confidencial</span><span>PÃ¡gina 4 de 4</span></footer>
         </section>
         <script>window.addEventListener('load',function(){setTimeout(function(){window.focus();window.print();},250);});</script>
       </body>
     </html>`
 }
-
 function KpiCard({
   label,
   tone = 'default',
@@ -485,11 +455,11 @@ function UpgradeState() {
             BW Pro
           </p>
           <h2 className="mt-4 max-w-2xl text-3xl font-black leading-tight text-white sm:text-4xl">
-            Torne sua gestao mais inteligente com os Relatórios Executivos BW Pro.
+            Torne sua gestao mais inteligente com os RelatÃ³rios Executivos BW Pro.
           </h2>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
-            Acompanhe score da operação, previsões, performance da equipe,
-            fidelização de clientes e PDF executivo pronto para decisao.
+            Acompanhe score da operaÃ§Ã£o, previsÃµes, performance da equipe,
+            fidelizaÃ§Ã£o de clientes e PDF executivo pronto para decisao.
           </p>
           <Button
             className="mt-7 bg-brand-500 text-slate-950 hover:bg-brand-400"
@@ -500,7 +470,7 @@ function UpgradeState() {
           </Button>
         </div>
         <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
-          {['Score 0-100', 'Insights automáticos', 'PDF premium', 'Previsões'].map(
+          {['Score 0-100', 'Insights automÃ¡ticos', 'PDF premium', 'PrevisÃµes'].map(
             (item) => (
               <div
                 className="flex items-center justify-between border-b border-white/10 py-3 text-sm font-bold last:border-0"
@@ -555,7 +525,7 @@ export function RelatoriosExecutivosPage() {
   })
 
   const data = reportQuery.data
-  const periodLabel = `${formatDate(appliedFilters.dataInicio)} até ${formatDate(appliedFilters.dataFim)}`
+  const periodLabel = `${formatDate(appliedFilters.dataInicio)} atÃ© ${formatDate(appliedFilters.dataFim)}`
   const entradas = data ? data.summary.receitaServicos + data.summary.receitaProdutos : 0
   const previousEntradas = data
     ? data.periodoAnterior.summary.receitaServicos +
@@ -606,7 +576,7 @@ export function RelatoriosExecutivosPage() {
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `BW-Barber-Relatório-Executivo-${appliedFilters.dataInicio}-${appliedFilters.dataFim}.html`
+      link.download = `BW-Barber-RelatÃ³rio-Executivo-${appliedFilters.dataInicio}-${appliedFilters.dataFim}.html`
       link.click()
       URL.revokeObjectURL(url)
       return
@@ -628,20 +598,20 @@ export function RelatoriosExecutivosPage() {
 
     return [
       crescimento >= 0
-        ? `Receita aumentou ${percent(crescimento)} em relação ao período anterior.`
-        : `Receita caiu ${percent(Math.abs(crescimento))} em relação ao período anterior.`,
+        ? `Receita aumentou ${percent(crescimento)} em relaÃ§Ã£o ao perÃ­odo anterior.`
+        : `Receita caiu ${percent(Math.abs(crescimento))} em relaÃ§Ã£o ao perÃ­odo anterior.`,
       topBarber
         ? `${topBarber.nome} gerou ${percent(entradas ? (topBarber.faturamento / entradas) * 100 : 0)} do faturamento.`
-        : 'Ainda não há barbeiro com faturamento concluído no período.',
+        : 'Ainda nÃ£o hÃ¡ barbeiro com faturamento concluÃ­do no perÃ­odo.',
       data.margemPercentual >= 15
-        ? 'Nível financeiro saudável para o período analisado.'
-        : 'Diminua despesas ou revise preços para recuperar margem.',
+        ? 'NÃ­vel financeiro saudÃ¡vel para o perÃ­odo analisado.'
+        : 'Diminua despesas ou revise preÃ§os para recuperar margem.',
       topProduct
         ? `${topProduct.nome} lidera produtos, com ${numberFormatter.format(topProduct.quantidade)} venda(s).`
-        : 'Produtos ainda não tiveram venda registrada no período.',
+        : 'Produtos ainda nÃ£o tiveram venda registrada no perÃ­odo.',
       topClient
-        ? `${topClient.nome} é o cliente de maior valor no período.`
-        : 'Ainda não há ranking de clientes para este período.',
+        ? `${topClient.nome} Ã© o cliente de maior valor no perÃ­odo.`
+        : 'Ainda nÃ£o hÃ¡ ranking de clientes para este perÃ­odo.',
     ]
   }, [crescimento, data, entradas])
 
@@ -650,7 +620,7 @@ export function RelatoriosExecutivosPage() {
       <Card>
         <CardContent>
           <p className="text-sm text-slate-500">
-            Complete o vínculo do usuário com uma empresa para visualizar os relatórios.
+            Complete o vÃ­nculo do usuÃ¡rio com uma empresa para visualizar os relatÃ³rios.
           </p>
         </CardContent>
       </Card>
@@ -670,13 +640,13 @@ export function RelatoriosExecutivosPage() {
       <section className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">
-            Relatórios Executivos
+            RelatÃ³rios Executivos
           </p>
           <h2 className="mt-3 text-3xl font-black tracking-normal text-slate-950 dark:text-white">
-            Panorama do Negócio
+            Panorama do NegÃ³cio
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
-            Analise gerencial para decidir preço, equipe, agenda, estoque e previsão
+            Analise gerencial para decidir preÃ§o, equipe, agenda, estoque e previsÃ£o
             de receita com dados reais do BW Barber.
           </p>
         </div>
@@ -729,7 +699,7 @@ export function RelatoriosExecutivosPage() {
               />
             </label>
             <Button onClick={applyFilters} variant="secondary">
-              Aplicar período
+              Aplicar perÃ­odo
             </Button>
           </div>
 
@@ -766,7 +736,7 @@ export function RelatoriosExecutivosPage() {
               <CardContent className="relative p-7">
                 <div className="absolute right-[-3rem] top-[-3rem] h-40 w-40 rounded-full border border-brand-400/20" />
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.22em] text-brand-300">
-                  Score da operação
+                  Score da operaÃ§Ã£o
                 </p>
                 <div className="mt-5 flex items-end gap-4">
                   <span className="text-6xl font-black tracking-tight">
@@ -776,26 +746,26 @@ export function RelatoriosExecutivosPage() {
                 </div>
                 <p className="mt-3 text-xl font-black text-white">{data.score.label}</p>
                 <p className="mt-2 max-w-md text-sm leading-6 text-slate-300">
-                  Baseado em receita, margem, ocupação, cancelamentos e ritmo do
-                  período.
+                  Baseado em receita, margem, ocupaÃ§Ã£o, cancelamentos e ritmo do
+                  perÃ­odo.
                 </p>
               </CardContent>
             </Card>
 
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <KpiCard
-                label="Receita período"
+                label="Receita perÃ­odo"
                 tone={crescimento >= 0 ? 'good' : 'warn'}
                 value={currencyFormatter.format(entradas)}
               />
               <KpiCard
-                label="Lucro líquido"
+                label="Lucro lÃ­quido"
                 tone={data.summary.lucroLiquido >= 0 ? 'good' : 'warn'}
                 value={currencyFormatter.format(data.summary.lucroLiquido)}
               />
               <KpiCard label="Margem" value={percent(data.margemPercentual)} />
-              <KpiCard label="Ticket médio" value={currencyFormatter.format(ticketMedio)} />
-              <KpiCard label="Comissões" value={currencyFormatter.format(data.summary.comissoes)} />
+              <KpiCard label="Ticket mÃ©dio" value={currencyFormatter.format(ticketMedio)} />
+              <KpiCard label="ComissÃµes" value={currencyFormatter.format(data.summary.comissoes)} />
               <KpiCard label="Clientes ativos" value={numberFormatter.format(data.clientes.ativos)} />
               <KpiCard label="Atendimentos" value={numberFormatter.format(data.agenda.status.concluido)} />
               <KpiCard label="Crescimento" value={percent(crescimento)} />
@@ -859,7 +829,7 @@ export function RelatoriosExecutivosPage() {
               <Card>
                 <CardHeader>
                   <h3 className="text-lg font-black text-slate-950 dark:text-white">
-                    Insights automáticos
+                    Insights automÃ¡ticos
                   </h3>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -885,10 +855,10 @@ export function RelatoriosExecutivosPage() {
                   </h3>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <MiniBar label="Receita de serviços" max={entradas} value={data.summary.receitaServicos} />
+                  <MiniBar label="Receita de serviÃ§os" max={entradas} value={data.summary.receitaServicos} />
                   <MiniBar label="Receita de produtos" max={entradas} value={data.summary.receitaProdutos} />
                   <MiniBar label="Despesas" max={entradas} value={data.summary.despesas} />
-                  <MiniBar label="Comissões" max={entradas} value={data.summary.comissoes} />
+                  <MiniBar label="ComissÃµes" max={entradas} value={data.summary.comissoes} />
                 </CardContent>
               </Card>
               <Card>
@@ -900,7 +870,7 @@ export function RelatoriosExecutivosPage() {
                 <CardContent className="grid gap-4 sm:grid-cols-2">
                   <KpiCard label="Saldo" value={currencyFormatter.format(data.summary.lucroLiquido)} />
                   <KpiCard label="Margem operacional" value={percent(data.margemPercentual)} />
-                  <KpiCard label="Ocupação" value={percent(data.agenda.ocupacaoPercentual)} />
+                  <KpiCard label="OcupaÃ§Ã£o" value={percent(data.agenda.ocupacaoPercentual)} />
                   <KpiCard label="Ociosidade" value={percent(data.agenda.ociosidadePercentual)} />
                 </CardContent>
               </Card>
@@ -911,12 +881,12 @@ export function RelatoriosExecutivosPage() {
             <Card>
               <CardHeader>
                 <h3 className="text-lg font-black text-slate-950 dark:text-white">
-                  Equipe e Comissões
+                  Equipe e ComissÃµes
                 </h3>
               </CardHeader>
               <CardContent className="space-y-3">
                 {data.equipe.length === 0 ? (
-                  <p className="text-sm text-slate-500">Sem dados de equipe no período.</p>
+                  <p className="text-sm text-slate-500">Sem dados de equipe no perÃ­odo.</p>
                 ) : (
                   data.equipe.map((barber, index) => (
                     <div
@@ -928,7 +898,7 @@ export function RelatoriosExecutivosPage() {
                       </span>
                       <div>
                         <p className="font-black text-slate-950 dark:text-white">{barber.nome}</p>
-                        <p className="text-sm text-slate-500">Tempo médio {barber.tempoMedio}min</p>
+                        <p className="text-sm text-slate-500">Tempo mÃ©dio {barber.tempoMedio}min</p>
                       </div>
                       <Badge>{barber.atendimentos} atend.</Badge>
                       <Badge variant="info">{currencyFormatter.format(barber.faturamento)}</Badge>
@@ -948,7 +918,7 @@ export function RelatoriosExecutivosPage() {
             <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
                 <KpiCard label="Novos clientes" value={numberFormatter.format(data.clientes.novos)} />
-                <KpiCard label="Retenção" value={percent(data.clientes.retencaoPercentual)} />
+                <KpiCard label="RetenÃ§Ã£o" value={percent(data.clientes.retencaoPercentual)} />
                 <KpiCard label="Clientes inativos" value={numberFormatter.format(data.clientes.inativos)} />
               </div>
               <Card>
@@ -959,7 +929,7 @@ export function RelatoriosExecutivosPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {data.clientes.topClientes.length === 0 ? (
-                    <p className="text-sm text-slate-500">Sem clientes com visitas no período.</p>
+                    <p className="text-sm text-slate-500">Sem clientes com visitas no perÃ­odo.</p>
                   ) : (
                     data.clientes.topClientes.map((client) => (
                       <div
@@ -984,9 +954,9 @@ export function RelatoriosExecutivosPage() {
           {activeTab === 'agenda' && (
             <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-                <KpiCard label="Concluídos" value={numberFormatter.format(data.agenda.status.concluido)} />
+                <KpiCard label="ConcluÃ­dos" value={numberFormatter.format(data.agenda.status.concluido)} />
                 <KpiCard label="Cancelados" value={numberFormatter.format(data.agenda.status.cancelado)} />
-                <KpiCard label="Ocupação" value={percent(data.agenda.ocupacaoPercentual)} />
+                <KpiCard label="OcupaÃ§Ã£o" value={percent(data.agenda.ocupacaoPercentual)} />
               </div>
               <Card>
                 <CardHeader>
@@ -996,7 +966,7 @@ export function RelatoriosExecutivosPage() {
                 </CardHeader>
                 <CardContent className="grid gap-3 sm:grid-cols-2">
                   {data.agenda.heatmap.length === 0 ? (
-                    <p className="text-sm text-slate-500">Sem horários registrados no período.</p>
+                    <p className="text-sm text-slate-500">Sem horÃ¡rios registrados no perÃ­odo.</p>
                   ) : (
                     data.agenda.heatmap.map((item) => (
                       <div
@@ -1007,7 +977,7 @@ export function RelatoriosExecutivosPage() {
                           {item.dia} as {item.hora}
                         </p>
                         <p className="mt-2 text-2xl font-black text-slate-950 dark:text-white">
-                          {item.total} horário(s)
+                          {item.total} horÃ¡rio(s)
                         </p>
                       </div>
                     ))
@@ -1037,7 +1007,7 @@ export function RelatoriosExecutivosPage() {
                         <div>
                           <p className="font-black text-slate-950 dark:text-white">{product.nome}</p>
                           <p className="text-sm text-slate-500">
-                            {product.categoria ?? 'Sem categoria'} · estoque {product.estoqueAtual}
+                            {product.categoria ?? 'Sem categoria'} Â· estoque {product.estoqueAtual}
                           </p>
                         </div>
                         <Badge variant={product.status === 'baixo' ? 'danger' : 'warning'}>
@@ -1056,7 +1026,7 @@ export function RelatoriosExecutivosPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {data.produtos.maisVendidos.length === 0 ? (
-                    <p className="text-sm text-slate-500">Sem vendas de produtos no período.</p>
+                    <p className="text-sm text-slate-500">Sem vendas de produtos no perÃ­odo.</p>
                   ) : (
                     data.produtos.maisVendidos.slice(0, 6).map((product) => (
                       <MiniBar
@@ -1077,7 +1047,7 @@ export function RelatoriosExecutivosPage() {
               <Card>
                 <CardHeader>
                   <h3 className="text-lg font-black text-slate-950 dark:text-white">
-                    Projeção
+                    ProjeÃ§Ã£o
                   </h3>
                 </CardHeader>
                 <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -1098,7 +1068,7 @@ export function RelatoriosExecutivosPage() {
                     <span className="font-black text-brand-600">
                       {currencyFormatter.format(data.previsao.receita30Dias)}
                     </span>
-                    . Use como referência para meta e escala da equipe.
+                    . Use como referÃªncia para meta e escala da equipe.
                   </p>
                 </CardContent>
               </Card>
@@ -1113,7 +1083,7 @@ export function RelatoriosExecutivosPage() {
             <TrendingUp className="text-emerald-500" size={22} />
             <div>
               <p className="font-black text-slate-950 dark:text-white">Crescimento</p>
-              <p className="text-sm text-slate-500">Comparativo com período anterior.</p>
+              <p className="text-sm text-slate-500">Comparativo com perÃ­odo anterior.</p>
             </div>
           </CardContent>
         </Card>
@@ -1122,7 +1092,7 @@ export function RelatoriosExecutivosPage() {
             <TrendingDown className="text-amber-500" size={22} />
             <div>
               <p className="font-black text-slate-950 dark:text-white">Queda</p>
-              <p className="text-sm text-slate-500">Sinaliza pontos de atenção.</p>
+              <p className="text-sm text-slate-500">Sinaliza pontos de atenÃ§Ã£o.</p>
             </div>
           </CardContent>
         </Card>
@@ -1131,7 +1101,7 @@ export function RelatoriosExecutivosPage() {
             <Activity className="text-brand-500" size={22} />
             <div>
               <p className="font-black text-slate-950 dark:text-white">Meta atingida</p>
-              <p className="text-sm text-slate-500">Score alto indica rotina saudável.</p>
+              <p className="text-sm text-slate-500">Score alto indica rotina saudÃ¡vel.</p>
             </div>
           </CardContent>
         </Card>
@@ -1139,3 +1109,4 @@ export function RelatoriosExecutivosPage() {
     </div>
   )
 }
+
