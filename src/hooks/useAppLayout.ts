@@ -54,6 +54,7 @@ export function useAppLayout() {
   const isSubscriptionExpired = subscriptionQuery.isExpired
   const trialDaysRemaining = subscriptionQuery.daysRemaining
 
+  const empresaId = profile?.empresa_id
   const companyName = profile?.empresa?.nome ?? user?.user_metadata.empresa ?? 'BW Barber'
   const userName = profile?.nome ?? user?.user_metadata.nome ?? 'Usuário'
   const roleLabel = profile?.papel ? roleLabels[profile.papel] ?? profile.papel : 'Perfil'
@@ -233,6 +234,14 @@ export function useAppLayout() {
     navigate(item.path)
   }
 
+  function navigateToCliente(clienteId: string) {
+    navigate(`/app/clientes?id=${clienteId}`)
+  }
+
+  function navigateToAtendimentos() {
+    navigate('/app/atendimentos')
+  }
+
   return {
     // Auth
     isLoading,
@@ -250,6 +259,7 @@ export function useAppLayout() {
     companyInitials,
     companyLogoSrc,
     companyName: String(companyName),
+    empresaId,
     roleLabel,
     userName: String(userName),
 
@@ -276,6 +286,8 @@ export function useAppLayout() {
 
     // Handlers
     markAllNotificationsRead,
+    navigateToAtendimentos,
+    navigateToCliente,
     openGlobalSearchItem,
     openNotification,
     toggleSidebar,

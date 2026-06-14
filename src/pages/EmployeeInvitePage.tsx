@@ -25,6 +25,12 @@ export function EmployeeInvitePage() {
     queryKey: ['employee-invite', token],
   })
   const invitation = invitationQuery.data
+  const invitationUnavailableMessage =
+    invitation?.status === 'expirado'
+      ? 'Convite expirado. Solicite um novo convite à barbearia.'
+      : invitation && invitation.status !== 'pendente'
+        ? 'Este convite não está mais disponível. Solicite um novo convite à barbearia.'
+        : null
 
   const {
     formState: { errors, isSubmitting },
@@ -44,6 +50,10 @@ export function EmployeeInvitePage() {
     mutationFn: async (data: AcceptEmployeeInvitationFormData) => {
       if (!invitation) {
         throw new Error('Convite não encontrado.')
+      }
+
+      if (invitationUnavailableMessage) {
+        throw new Error(invitationUnavailableMessage)
       }
 
       await acceptEmployeeInvitation({
@@ -75,15 +85,20 @@ export function EmployeeInvitePage() {
               Crie sua senha
             </h1>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Você foi convidado para participar da barbearia. Defina sua senha
-              para ativar o acesso.
+              Você foi convidado para participar da{' '}
+              <span className="font-semibold text-slate-700">
+                {invitation?.empresa_nome ?? 'barbearia'}
+              </span>
+              . Defina sua senha para ativar o acesso.
             </p>
           </div>
 
           {invitationQuery.isLoading ? (
             <p className="text-sm text-slate-500">Carregando convite...</p>
           ) : !invitation ? (
-            <AuthFormMessage message="Convite não encontrado ou expirado." />
+            <AuthFormMessage message="Convite não encontrado. Solicite um novo convite à barbearia." />
+          ) : invitationUnavailableMessage ? (
+            <AuthFormMessage message={invitationUnavailableMessage} />
           ) : (
             <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
               <AuthFormMessage
@@ -96,13 +111,13 @@ export function EmployeeInvitePage() {
 
               <div className="rounded-2xl border border-brand-100 bg-brand-50/70 px-4 py-3 text-sm font-semibold text-brand-700">
                 <CheckCircle2 className="mr-2 inline" size={16} />
-                Convite para {invitation.email}
+                Convite para {invitation.email} · {invitation.empresa_nome ?? 'BW Barber'}
               </div>
 
               <Input
                 error={errors.nome?.message}
                 label="Nome"
-                placeholder="Joao Silva"
+                placeholder="João Silva"
                 {...register('nome')}
               />
               <Input

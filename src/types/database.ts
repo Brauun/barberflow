@@ -1232,6 +1232,23 @@ export type Database = {
         }
         Returns: Database['public']['Tables']['employee_invitations']['Row']
       }
+      get_employee_invitation_public: {
+        Args: {
+          p_token: string
+        }
+        Returns: Array<
+          Database['public']['Tables']['employee_invitations']['Row'] & {
+            empresa_nome: string | null
+          }
+        >
+      }
+      regenerate_employee_invitation_token: {
+        Args: {
+          p_empresa_id: string
+          p_invitation_id: string
+        }
+        Returns: Database['public']['Tables']['employee_invitations']['Row']
+      }
       accept_employee_invitation: {
         Args: {
           p_token: string

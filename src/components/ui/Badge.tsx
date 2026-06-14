@@ -21,6 +21,7 @@ const badgeTextLabels: Record<string, string> = {
   confirmada: 'Confirmada',
   confirmado: 'Confirmado',
   em_atendimento: 'Em atendimento',
+  expirado: 'Expirado',
   faltou: 'Faltou',
   inativo: 'Inativo',
   notificado: 'Notificado',

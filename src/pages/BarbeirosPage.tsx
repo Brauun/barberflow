@@ -2,9 +2,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   CalendarOff,
+  Copy,
   Edit,
+  ExternalLink,
   Loader2,
+  MessageCircle,
   Plus,
+  RefreshCw,
   Scissors,
   Search,
   Trash2,
@@ -51,6 +55,7 @@ import {
   inactivateEmployeeLink,
   listEmployeeInvitations,
   listEmployeeLinks,
+  regenerateEmployeeInvitationLink,
   type EmployeeInvitation,
   type EmployeeLink,
 } from '../services/employeesService'
@@ -71,6 +76,10 @@ import {
   type EmployeeInvitationFormData,
   type EmployeeInvitationFormInput,
 } from '../types/employees'
+import {
+  buildEmployeeInviteLink,
+  buildEmployeeInviteMessage,
+} from '../utils/inviteLinks'
 import { formatPhone, maskPhoneChange } from '../utils/masks'
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
@@ -115,6 +124,18 @@ function emptyInvitationValues(): EmployeeInvitationFormInput {
     role: 'barbeiro',
     telefone: '',
   }
+}
+
+function getInvitationStatus(invitation: EmployeeInvitation) {
+  if (
+    invitation.status === 'pendente' &&
+    invitation.expires_at &&
+    new Date(invitation.expires_at).getTime() <= Date.now()
+  ) {
+    return 'expirado'
+  }
+
+  return invitation.status
 }
 
 function unavailabilityToFormValues(
@@ -169,9 +190,11 @@ export function BarbeirosPage() {
   const [isInviteFormOpen, setIsInviteFormOpen] = useState(false)
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [lastInviteLink, setLastInviteLink] = useState<string | null>(null)
+  const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null)
   const canManageUnavailability = canManageEmployees(profile?.papel)
   const canInviteEmployees = canInviteEmployee(profile?.papel)
   const barberLimitAccess = useFeatureAccess('MAX_BARBERS')
+  const barbershopName = profile?.empresa?.nome ?? 'barbearia'
 
   const barbeirosQueryKey = useMemo(
     () => queryKeys.barbeiros.list(empresaId, searchTerm),
@@ -373,7 +396,7 @@ export function BarbeirosPage() {
         queryClient.invalidateQueries({ queryKey: ['employee-links'] }),
       ])
       setInviteError(null)
-      setLastInviteLink(`${window.location.origin}/convite/${invitation.token}`)
+      setLastInviteLink(buildEmployeeInviteLink(invitation.token))
       invitationForm.reset(emptyInvitationValues())
     },
   })
@@ -388,6 +411,20 @@ export function BarbeirosPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['employee-invitations'] })
+    },
+  })
+
+  const regenerateInvitationMutation = useMutation({
+    mutationFn: async (invitation: EmployeeInvitation) => {
+      if (!empresaId) {
+        throw new Error('Empresa não encontrada.')
+      }
+
+      return regenerateEmployeeInvitationLink(empresaId, invitation.id)
+    },
+    onSuccess: async (invitation) => {
+      await queryClient.invalidateQueries({ queryKey: ['employee-invitations'] })
+      setLastInviteLink(buildEmployeeInviteLink(invitation.token))
     },
   })
 
@@ -521,6 +558,44 @@ export function BarbeirosPage() {
     }
 
     await cancelInvitationMutation.mutateAsync(invitation)
+  }
+
+  async function copyToClipboard(text: string, successKey: string) {
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch {
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.setAttribute('readonly', 'true')
+      textarea.style.position = 'fixed'
+      textarea.style.left = '-9999px'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+    }
+
+    setCopiedInviteId(successKey)
+    window.setTimeout(() => setCopiedInviteId(null), 1800)
+  }
+
+  function getInviteLink(invitation: EmployeeInvitation) {
+    return buildEmployeeInviteLink(invitation.token)
+  }
+
+  function getInviteMessage(invitation: EmployeeInvitation) {
+    return buildEmployeeInviteMessage({
+      barbershopName,
+      link: getInviteLink(invitation),
+    })
+  }
+
+  function openInviteLink(invitation: EmployeeInvitation) {
+    window.open(getInviteLink(invitation), '_blank', 'noopener,noreferrer')
+  }
+
+  async function handleRegenerateInvitation(invitation: EmployeeInvitation) {
+    await regenerateInvitationMutation.mutateAsync(invitation)
   }
 
   async function handleInactivateEmployee(link: EmployeeLink) {
@@ -824,9 +899,16 @@ export function BarbeirosPage() {
             </p>
             {employeeInvitationsQuery.data?.length ? (
               <div className="space-y-3">
-                {employeeInvitationsQuery.data.map((invitation) => (
+                {employeeInvitationsQuery.data.map((invitation) => {
+                  const status = getInvitationStatus(invitation)
+                  const inviteLink = getInviteLink(invitation)
+                  const inviteMessage = getInviteMessage(invitation)
+                  const canUseLink = status === 'pendente'
+                  const canRegenerate = status === 'pendente' || status === 'expirado'
+
+                  return (
                   <div
-                    className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-4 rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900"
                     key={invitation.id}
                   >
                     <div>
@@ -840,29 +922,83 @@ export function BarbeirosPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge
                         variant={
-                          invitation.status === 'aceito'
+                          status === 'aceito'
                             ? 'success'
-                            : invitation.status === 'cancelado'
+                            : status === 'cancelado' || status === 'expirado'
                               ? 'danger'
                               : 'warning'
                         }
                       >
-                        {invitation.status}
+                        {status}
                       </Badge>
                       {canInviteEmployees &&
-                        invitation.status === 'pendente' && (
+                        status === 'pendente' && (
                           <Button
                             disabled={cancelInvitationMutation.isPending}
                             onClick={() => void handleCancelInvitation(invitation)}
                             size="sm"
                             variant="secondary"
                           >
-                            Cancelar
+                            Cancelar convite
                           </Button>
                         )}
                     </div>
+
+                    {canUseLink && (
+                      <div className="rounded-2xl border border-brand-100 bg-white p-3 text-sm text-slate-600 dark:border-brand-400/20 dark:bg-slate-950 dark:text-slate-300">
+                        <p className="flex items-center gap-2 font-semibold text-slate-950 dark:text-white">
+                          <MessageCircle size={16} />
+                          Mensagem para WhatsApp
+                        </p>
+                        <p className="mt-2 leading-6">{inviteMessage}</p>
+                        <p className="mt-2 break-all text-xs font-semibold text-brand-600 dark:text-brand-300">
+                          {inviteLink}
+                        </p>
+                      </div>
+                    )}
+
+                    {canInviteEmployees && (
+                      <div className="flex flex-wrap gap-2">
+                        {canUseLink && (
+                          <>
+                            <Button
+                              leftIcon={<Copy size={15} />}
+                              onClick={() =>
+                                void copyToClipboard(inviteLink, `${invitation.id}:link`)
+                              }
+                              size="sm"
+                              variant="secondary"
+                            >
+                              {copiedInviteId === `${invitation.id}:link`
+                                ? 'Link copiado'
+                                : 'Copiar link'}
+                            </Button>
+                            <Button
+                              leftIcon={<ExternalLink size={15} />}
+                              onClick={() => openInviteLink(invitation)}
+                              size="sm"
+                              variant="secondary"
+                            >
+                              Abrir link
+                            </Button>
+                          </>
+                        )}
+                        {canRegenerate && (
+                          <Button
+                            disabled={regenerateInvitationMutation.isPending}
+                            leftIcon={<RefreshCw size={15} />}
+                            onClick={() => void handleRegenerateInvitation(invitation)}
+                            size="sm"
+                            variant="secondary"
+                          >
+                            Regerar link
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                ))}
+                  )
+                })}
               </div>
             ) : (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -1055,13 +1191,40 @@ export function BarbeirosPage() {
           )}
 
           {lastInviteLink && (
-            <div className="rounded-2xl border border-brand-100 bg-brand-50/70 p-4">
+            <div className="space-y-3 rounded-2xl border border-brand-100 bg-brand-50/70 p-4 dark:border-brand-400/20 dark:bg-brand-400/10">
               <p className="text-sm font-semibold text-slate-950">
                 Convite criado
               </p>
+              <Badge variant="warning">Pendente</Badge>
               <p className="mt-2 break-all text-sm text-brand-700">
                 {lastInviteLink}
               </p>
+              <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+                {buildEmployeeInviteMessage({
+                  barbershopName,
+                  link: lastInviteLink,
+                })}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  leftIcon={<Copy size={15} />}
+                  onClick={() => void copyToClipboard(lastInviteLink, 'last-link')}
+                  size="sm"
+                  type="button"
+                  variant="secondary"
+                >
+                  {copiedInviteId === 'last-link' ? 'Link copiado' : 'Copiar link'}
+                </Button>
+                <Button
+                  leftIcon={<ExternalLink size={15} />}
+                  onClick={() => window.open(lastInviteLink, '_blank', 'noopener,noreferrer')}
+                  size="sm"
+                  type="button"
+                  variant="secondary"
+                >
+                  Abrir link
+                </Button>
+              </div>
             </div>
           )}
 

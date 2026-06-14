@@ -13,6 +13,9 @@ export type EmployeeLink =
   }
 export type EmployeeInvitation =
   Database['public']['Tables']['employee_invitations']['Row']
+export type PublicEmployeeInvitation = EmployeeInvitation & {
+  empresa_nome?: string | null
+}
 
 export async function listEmployeeLinks(empresaId: string) {
   const { data, error } = await supabase
@@ -96,18 +99,38 @@ export async function cancelEmployeeInvitation(
   }
 }
 
-export async function getEmployeeInvitationByToken(token: string) {
-  const { data, error } = await supabase
-    .from('employee_invitations')
-    .select('*')
-    .eq('token', token)
-    .maybeSingle()
+export async function regenerateEmployeeInvitationLink(
+  empresaId: string,
+  invitationId: string,
+) {
+  const { data, error } = await supabase.rpc(
+    'regenerate_employee_invitation_token',
+    {
+      p_empresa_id: empresaId,
+      p_invitation_id: invitationId,
+    },
+  )
 
   if (error) {
     throw new Error(error.message)
   }
 
-  return data as EmployeeInvitation | null
+  return data as EmployeeInvitation
+}
+
+export async function getEmployeeInvitationByToken(token: string) {
+  const { data, error } = await supabase.rpc(
+    'get_employee_invitation_public',
+    {
+      p_token: token,
+    },
+  )
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return (data?.[0] ?? null) as PublicEmployeeInvitation | null
 }
 
 export async function acceptEmployeeInvitation(input: {
@@ -130,12 +153,12 @@ export async function acceptEmployeeInvitation(input: {
   })
 
   if (error) {
-    throw new Error(`Falha ao criar usuario no Auth: ${error.message}`)
+    throw new Error(`Falha ao criar usuário no Auth: ${error.message}`)
   }
 
   if (!data.session) {
     throw new Error(
-      'Usuario criado, mas o Supabase exige confirmacao de e-mail antes de aceitar o convite.',
+      'Usuário criado, mas o Supabase exige confirmação de e-mail antes de aceitar o convite.',
     )
   }
 

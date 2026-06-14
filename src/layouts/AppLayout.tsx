@@ -24,6 +24,7 @@ export function AppLayout() {
     companyInitials,
     companyLogoSrc,
     companyName,
+    empresaId,
     roleLabel,
     userName,
 
@@ -50,6 +51,8 @@ export function AppLayout() {
 
     // Handlers
     markAllNotificationsRead,
+    navigateToAtendimentos,
+    navigateToCliente,
     openGlobalSearchItem,
     openNotification,
     toggleSidebar,
@@ -105,13 +108,17 @@ export function AppLayout() {
       >
         <TopBar
           currentItem={currentItem}
+          empresaId={empresaId}
           isMarkingAllNotificationsRead={isMarkingAllNotificationsRead}
+          isMobileMenuOpen={isMobileMenuOpen}
           isNotificationsOpen={isNotificationsOpen}
           notifications={notifications}
           notificationsLoading={notificationsLoading}
           onMarkAllNotificationsRead={markAllNotificationsRead}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           onOpenNotification={openNotification}
+          onSelectAtendimento={navigateToAtendimentos}
+          onSelectCliente={navigateToCliente}
           onSelectSearchItem={openGlobalSearchItem}
           onToggleNotifications={() => setIsNotificationsOpen((current) => !current)}
           searchItems={globalSearchItems}
