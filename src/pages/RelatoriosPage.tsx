@@ -311,6 +311,20 @@ function buildPdfHtml(input: {
     ['Margem', `${margem.toFixed(1).replace('.', ',')}%`],
   ]
 
+  // For barbeiro reports: build a detailed per-barber table for page 1
+  const barberTableRows = tipo === 'barbeiro'
+    ? data.topBarbers.map((b) => `
+        <tr>
+          <td><strong>${escapeHtml(b.nome)}</strong></td>
+          <td>${numberFormatter.format(b.atendimentos)}</td>
+          <td>${currencyFormatter.format(b.faturamento)}</td>
+          <td>${currencyFormatter.format(b.comissao)}</td>
+          <td>${currencyFormatter.format(b.ticketMedio)}</td>
+          <td>${numberFormatter.format(b.cancelamentos)}</td>
+        </tr>
+      `).join('')
+    : ''
+
   const reportTables = buildReportTables(data, tipo, atendimentos, ticketMedio)
   const tablePanels = reportTables
     .map((table) => {
@@ -594,36 +608,165 @@ function buildPdfHtml(input: {
           <div class="hero">
             <div class="eyebrow">Relatório Operacional</div>
             <h1>${escapeHtml(title)}</h1>
-            <p>Resumo consolidado do período para acompanhamento de performance operacional e financeira.</p>
+            <p>${
+              tipo === 'barbeiro'   ? 'Desempenho individual de cada barbeiro no período: atendimentos, faturamento, comissões, ticket médio e cancelamentos.' :
+              tipo === 'financeiro' ? 'Visão completa das finanças do período: entradas, saídas, comissões e lucro líquido da barbearia.' :
+              tipo === 'produtos'   ? 'Produtos mais vendidos no período com quantidade, receita gerada e estoque atual.' :
+              tipo === 'clientes'   ? 'Comportamento dos clientes no período: visitas, gasto total e perfil (novo ou recorrente).' :
+              tipo === 'agenda'     ? 'Registro completo dos atendimentos agendados no período com status e valores.' :
+              'Resumo consolidado do período para acompanhamento de performance operacional e financeira.'
+            }</p>
             <span class="period">${formatDate(dataInicio)} até ${formatDate(dataFim)}</span>
           </div>
-          <div class="kpi-grid">
-            ${kpis
-              .map(
-                ([label, value]) => `
-                  <div class="kpi">
-                    <span>${escapeHtml(label)}</span>
-                    <strong>${escapeHtml(value)}</strong>
-                  </div>
-                `,
-              )
-              .join('')}
-          </div>
-          <div class="summary-strip">
-            <div class="summary-card">
-              <div class="eyebrow">Leitura do período</div>
-              <h3>Resumo operacional</h3>
-              <p>O período consolidou <span class="accent">${currencyFormatter.format(entradas)}</span> em entradas, com lucro líquido de <span class="accent">${currencyFormatter.format(data.summary.lucroLiquido)}</span> e margem de <span class="accent">${margem.toFixed(1).replace('.', ',')}%</span>.</p>
+
+          ${tipo === 'barbeiro' ? `
+            <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-top:14px;">
+              <div class="kpi"><span>Receita de serviços</span><strong>${currencyFormatter.format(data.summary.receitaServicos)}</strong></div>
+              <div class="kpi"><span>Receita de produtos</span><strong>${currencyFormatter.format(data.summary.receitaProdutos)}</strong></div>
+              <div class="kpi"><span>Total de atendimentos</span><strong>${numberFormatter.format(atendimentos)}</strong></div>
+              <div class="kpi"><span>Ticket médio</span><strong>${currencyFormatter.format(ticketMedio)}</strong></div>
+              <div class="kpi"><span>Comissões</span><strong>${currencyFormatter.format(data.summary.comissoes)}</strong></div>
+              <div class="kpi"><span>Despesas</span><strong>${currencyFormatter.format(data.summary.despesas)}</strong></div>
+              <div class="kpi"><span>Lucro líquido</span><strong>${currencyFormatter.format(data.summary.lucroLiquido)}</strong></div>
+              <div class="kpi"><span>Margem</span><strong>${margem.toFixed(1).replace('.', ',')}%</strong></div>
             </div>
-            <div class="summary-card">
-              <div class="eyebrow">Destaques</div>
-              <div class="mini-list">
-                <div class="mini-item"><span>Melhor barbeiro</span><strong>${topBarber ? escapeHtml(topBarber.nome) : 'Sem dados'}</strong></div>
-                <div class="mini-item"><span>Produto destaque</span><strong>${topProduct ? escapeHtml(topProduct.nome) : 'Sem dados'}</strong></div>
-                <div class="mini-item"><span>Ticket médio</span><strong>${currencyFormatter.format(ticketMedio)}</strong></div>
+            <div class="panel" style="margin-top:16px;">
+              <div class="panel-head"><h3>Desempenho por barbeiro</h3></div>
+              <table>
+                <thead><tr><th>Barbeiro</th><th>Atendimentos</th><th>Faturamento</th><th>Comissão</th><th>Ticket médio</th><th>Cancelamentos</th></tr></thead>
+                <tbody>${barberTableRows || `<tr><td colspan="6">Nenhum barbeiro com atendimento no período.</td></tr>`}</tbody>
+              </table>
+            </div>
+
+          ` : tipo === 'financeiro' ? `
+            <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-top:14px;">
+              <div class="kpi"><span>Entradas totais</span><strong>${currencyFormatter.format(entradas)}</strong></div>
+              <div class="kpi"><span>Receita de serviços</span><strong>${currencyFormatter.format(data.summary.receitaServicos)}</strong></div>
+              <div class="kpi"><span>Receita de produtos</span><strong>${currencyFormatter.format(data.summary.receitaProdutos)}</strong></div>
+              <div class="kpi"><span>Despesas</span><strong>${currencyFormatter.format(data.summary.despesas)}</strong></div>
+              <div class="kpi"><span>Comissões</span><strong>${currencyFormatter.format(data.summary.comissoes)}</strong></div>
+              <div class="kpi"><span>Lucro líquido</span><strong>${currencyFormatter.format(data.summary.lucroLiquido)}</strong></div>
+              <div class="kpi"><span>Atendimentos</span><strong>${numberFormatter.format(atendimentos)}</strong></div>
+              <div class="kpi"><span>Margem</span><strong>${margem.toFixed(1).replace('.', ',')}%</strong></div>
+            </div>
+            <div class="summary-strip" style="margin-top:14px;">
+              <div class="summary-card">
+                <div class="eyebrow">Análise do período</div>
+                <h3>Resultado financeiro</h3>
+                <p>O período gerou <span class="accent">${currencyFormatter.format(entradas)}</span> em entradas totais. Após despesas de <span class="accent">${currencyFormatter.format(data.summary.despesas)}</span> e comissões de <span class="accent">${currencyFormatter.format(data.summary.comissoes)}</span>, o lucro líquido foi de <span class="accent">${currencyFormatter.format(data.summary.lucroLiquido)}</span> com margem de <span class="accent">${margem.toFixed(1).replace('.', ',')}%</span>.</p>
+              </div>
+              <div class="summary-card">
+                <div class="eyebrow">Destaques</div>
+                <div class="mini-list">
+                  <div class="mini-item"><span>Melhor barbeiro</span><strong>${topBarber ? escapeHtml(topBarber.nome) : 'Sem dados'}</strong></div>
+                  <div class="mini-item"><span>Produto destaque</span><strong>${topProduct ? escapeHtml(topProduct.nome) : 'Sem dados'}</strong></div>
+                  <div class="mini-item"><span>Ticket médio</span><strong>${currencyFormatter.format(ticketMedio)}</strong></div>
+                </div>
               </div>
             </div>
-          </div>
+
+          ` : tipo === 'produtos' ? `
+            <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-top:14px;">
+              <div class="kpi"><span>Receita de produtos</span><strong>${currencyFormatter.format(data.summary.receitaProdutos)}</strong></div>
+              <div class="kpi"><span>Produtos distintos</span><strong>${numberFormatter.format(data.topProducts.length)}</strong></div>
+              <div class="kpi"><span>Produto destaque</span><strong>${topProduct ? escapeHtml(topProduct.nome) : 'Sem dados'}</strong></div>
+            </div>
+            <div class="panel" style="margin-top:16px;">
+              <div class="panel-head"><h3>Produtos vendidos no período</h3></div>
+              <table>
+                <thead><tr><th>Produto</th><th>Quantidade</th><th>Receita</th><th>Estoque atual</th></tr></thead>
+                <tbody>
+                  ${data.topProducts.length > 0
+                    ? data.topProducts.slice(0, 20).map((p) => `
+                        <tr>
+                          <td><strong>${escapeHtml(p.nome)}</strong></td>
+                          <td>${numberFormatter.format(p.quantidade)}</td>
+                          <td>${currencyFormatter.format(p.valorTotal)}</td>
+                          <td>${p.estoqueAtual == null ? '-' : numberFormatter.format(p.estoqueAtual)}</td>
+                        </tr>`).join('')
+                    : `<tr><td colspan="4">Nenhuma venda de produto no período.</td></tr>`}
+                </tbody>
+              </table>
+            </div>
+
+          ` : tipo === 'clientes' ? `
+            <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-top:14px;">
+              <div class="kpi"><span>Total de clientes</span><strong>${numberFormatter.format(data.clients.length)}</strong></div>
+              <div class="kpi"><span>Clientes novos</span><strong>${numberFormatter.format(data.clients.filter((c) => c.novo).length)}</strong></div>
+              <div class="kpi"><span>Recorrentes</span><strong>${numberFormatter.format(data.clients.filter((c) => c.recorrente).length)}</strong></div>
+              <div class="kpi"><span>Receita de serviços</span><strong>${currencyFormatter.format(data.summary.receitaServicos)}</strong></div>
+            </div>
+            <div class="panel" style="margin-top:16px;">
+              <div class="panel-head"><h3>Clientes no período</h3></div>
+              <table>
+                <thead><tr><th>Cliente</th><th>Perfil</th><th>Visitas</th><th>Total gasto</th><th>Última visita</th></tr></thead>
+                <tbody>
+                  ${data.clients.length > 0
+                    ? data.clients.slice(0, 18).map((c) => `
+                        <tr>
+                          <td><strong>${escapeHtml(c.nome)}</strong></td>
+                          <td>${c.novo ? 'Novo' : c.recorrente ? 'Recorrente' : 'Cliente'}</td>
+                          <td>${numberFormatter.format(c.visitas)}</td>
+                          <td>${currencyFormatter.format(c.gastoTotal)}</td>
+                          <td>${formatDateTime(c.ultimaVisita)}</td>
+                        </tr>`).join('')
+                    : `<tr><td colspan="5">Nenhum cliente com movimentação no período.</td></tr>`}
+                </tbody>
+              </table>
+            </div>
+
+          ` : tipo === 'agenda' ? `
+            <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-top:14px;">
+              <div class="kpi"><span>Total de agendamentos</span><strong>${numberFormatter.format(data.agendaItems.length)}</strong></div>
+              <div class="kpi"><span>Concluídos</span><strong>${numberFormatter.format(data.agendaItems.filter((a) => a.status === 'concluido').length)}</strong></div>
+              <div class="kpi"><span>Cancelados</span><strong>${numberFormatter.format(data.agendaItems.filter((a) => a.status === 'cancelado').length)}</strong></div>
+              <div class="kpi"><span>Receita de serviços</span><strong>${currencyFormatter.format(data.summary.receitaServicos)}</strong></div>
+            </div>
+            <div class="panel" style="margin-top:16px;">
+              <div class="panel-head"><h3>Agenda do período</h3></div>
+              <table>
+                <thead><tr><th>Horário</th><th>Cliente</th><th>Barbeiro</th><th>Serviço</th><th>Status</th><th>Valor</th></tr></thead>
+                <tbody>
+                  ${data.agendaItems.length > 0
+                    ? data.agendaItems.slice(0, 18).map((a) => `
+                        <tr>
+                          <td>${formatDateTime(a.horario)}</td>
+                          <td><strong>${escapeHtml(a.cliente)}</strong></td>
+                          <td>${escapeHtml(a.barbeiro)}</td>
+                          <td>${escapeHtml(a.servico)}</td>
+                          <td>${formatStatus(a.status)}</td>
+                          <td>${currencyFormatter.format(a.valor)}</td>
+                        </tr>`).join('')
+                    : `<tr><td colspan="6">Nenhum atendimento na agenda do período.</td></tr>`}
+                </tbody>
+              </table>
+            </div>
+
+          ` : `
+            <div class="kpi-grid">
+              ${kpis.map(([label, value]) => `
+                <div class="kpi">
+                  <span>${escapeHtml(label)}</span>
+                  <strong>${escapeHtml(value)}</strong>
+                </div>
+              `).join('')}
+            </div>
+            <div class="summary-strip">
+              <div class="summary-card">
+                <div class="eyebrow">Leitura do período</div>
+                <h3>Resumo operacional</h3>
+                <p>O período consolidou <span class="accent">${currencyFormatter.format(entradas)}</span> em entradas, com lucro líquido de <span class="accent">${currencyFormatter.format(data.summary.lucroLiquido)}</span> e margem de <span class="accent">${margem.toFixed(1).replace('.', ',')}%</span>.</p>
+              </div>
+              <div class="summary-card">
+                <div class="eyebrow">Destaques</div>
+                <div class="mini-list">
+                  <div class="mini-item"><span>Melhor barbeiro</span><strong>${topBarber ? escapeHtml(topBarber.nome) : 'Sem dados'}</strong></div>
+                  <div class="mini-item"><span>Produto destaque</span><strong>${topProduct ? escapeHtml(topProduct.nome) : 'Sem dados'}</strong></div>
+                  <div class="mini-item"><span>Ticket médio</span><strong>${currencyFormatter.format(ticketMedio)}</strong></div>
+                </div>
+              </div>
+            </div>
+          `}
           <footer class="footer"><span>BW Barber</span><span>Página 1 de 2</span></footer>
         </section>
 
