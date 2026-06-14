@@ -31,12 +31,14 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 const numberFormatter = new Intl.NumberFormat('pt-BR')
 
 const reportTypes: Array<{ label: string; value: RelatorioTipo }> = [
-  { label: 'Diario', value: 'diario' },
+  { label: 'Diário', value: 'diario' },
   { label: 'Mensal', value: 'mensal' },
   { label: 'Anual', value: 'anual' },
-  { label: 'Por barbeiro', value: 'barbeiro' },
   { label: 'Financeiro', value: 'financeiro' },
+  { label: 'Barbeiros', value: 'barbeiro' },
   { label: 'Produtos', value: 'produtos' },
+  { label: 'Clientes', value: 'clientes' },
+  { label: 'Agenda', value: 'agenda' },
 ]
 
 function todayInputValue() {
@@ -56,9 +58,11 @@ function formatDate(value: string) {
 
 function reportTitle(tipo: RelatorioTipo) {
   const labels: Record<RelatorioTipo, string> = {
+    agenda: 'Relatório de Agenda',
     anual: 'Relatório Anual',
-    barbeiro: 'Relatório por Barbeiro',
-    diario: 'Relatório Diario',
+    barbeiro: 'Relatório de Barbeiros',
+    clientes: 'Relatório de Clientes',
+    diario: 'Relatório Diário',
     financeiro: 'Relatório Financeiro',
     mensal: 'Relatório Mensal',
     produtos: 'Relatório de Produtos',
@@ -419,7 +423,7 @@ function buildPdfHtml(input: {
           <div class="summary-strip">
             <div class="summary-card">
               <div class="eyebrow">Leitura do período</div>
-              <h3>Resumo executivo</h3>
+              <h3>Resumo operacional</h3>
               <p>O período consolidou <span class="accent">${currencyFormatter.format(entradas)}</span> em entradas, com lucro líquido de <span class="accent">${currencyFormatter.format(data.summary.lucroLiquido)}</span> e margem de <span class="accent">${margem.toFixed(1).replace('.', ',')}%</span>.</p>
             </div>
             <div class="summary-card">
@@ -431,7 +435,7 @@ function buildPdfHtml(input: {
               </div>
             </div>
           </div>
-          <footer class="footer"><span>BW Barber</span><span>Página 1 de 4</span></footer>
+          <footer class="footer"><span>BW Barber</span><span>Página 1 de 3</span></footer>
         </section>
 
         <section class="page">
@@ -449,7 +453,7 @@ function buildPdfHtml(input: {
               <table><thead><tr><th>Barbeiro</th><th>Atend.</th><th>Faturamento</th></tr></thead><tbody>${barberRows || '<tr><td colspan="3">Sem atendimentos concluídos.</td></tr>'}</tbody></table>
             </div>
           </div>
-          <footer class="footer"><span>BW Barber</span><span>Página 2 de 4</span></footer>
+          <footer class="footer"><span>BW Barber</span><span>Página 2 de 3</span></footer>
         </section>
 
         <section class="page">
@@ -475,33 +479,7 @@ function buildPdfHtml(input: {
               </tbody>
             </table>
           </div>
-          <footer class="footer"><span>BW Barber</span><span>Página 3 de 4</span></footer>
-        </section>
-
-        <section class="page">
-          <header class="header">
-            <div><div class="eyebrow">Insights</div><h2>Resumo e oportunidades</h2></div>
-            <div class="meta">${escapeHtml(title)}</div>
-          </header>
-          <div class="insight">
-            <p>O período gerou <span class="accent">${currencyFormatter.format(entradas)}</span> em entradas e lucro líquido de <span class="accent">${currencyFormatter.format(data.summary.lucroLiquido)}</span>.</p>
-            <p>O ticket médio estimado foi de <span class="accent">${currencyFormatter.format(ticketMedio)}</span>, com <span class="accent">${numberFormatter.format(atendimentos)}</span> atendimentos concluídos registrados.</p>
-          </div>
-          <div class="two-col" style="margin-top: 14px;">
-            <div class="insight">
-              <h3>Melhor desempenho</h3>
-              <p style="margin-top: 10px;">${topBarber ? `${escapeHtml(topBarber.nome)} liderou em faturamento com ${currencyFormatter.format(topBarber.faturamento)}.` : 'Não houve barbeiro com atendimento concluído no período.'}</p>
-            </div>
-            <div class="insight">
-              <h3>Produto destaque</h3>
-              <p style="margin-top: 10px;">${topProduct ? `${escapeHtml(topProduct.nome)} foi o produto mais vendido, com ${numberFormatter.format(topProduct.quantidade)} unidade(s).` : 'Não houve venda de produtos no período.'}</p>
-            </div>
-          </div>
-          <div class="insight" style="margin-top: 14px;">
-            <h3>Observacoes</h3>
-            <p style="margin-top: 10px;">Relatório gerado a partir dos filtros atuais do BW Barber. Use este documento para conversas com sócios, contabilidade e acompanhamento gerencial.</p>
-          </div>
-          <footer class="footer"><span>BW Barber</span><span>Página 4 de 4</span></footer>
+          <footer class="footer"><span>BW Barber</span><span>Página 3 de 3</span></footer>
         </section>
         <script>
           window.addEventListener('load', function () {
@@ -678,7 +656,7 @@ export function RelatoriosPage() {
             Analises do BW Barber
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
-            Escolha o tipo, ajuste o período e gere um PDF executivo pronto para
+            Escolha o tipo, ajuste o período e gere um PDF operacional pronto para
             enviar.
           </p>
         </div>
@@ -770,7 +748,7 @@ export function RelatoriosPage() {
           </div>
           {!advancedReportsAccess.isLoading && !advancedReportsAccess.canUse && (
             <p className="rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-brand-800 dark:bg-brand-950/40 dark:text-slate-200">
-              Exportacoes executivas e relatórios avançados exigem upgrade de
+              Exportações em PDF e Excel exigem upgrade de
               plano.
             </p>
           )}

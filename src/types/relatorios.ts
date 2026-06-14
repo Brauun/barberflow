@@ -5,6 +5,8 @@ export type RelatorioTipo =
   | 'barbeiro'
   | 'financeiro'
   | 'produtos'
+  | 'clientes'
+  | 'agenda'
 
 export type RelatorioFilters = {
   dataInicio: string

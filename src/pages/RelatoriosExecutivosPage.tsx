@@ -5,14 +5,11 @@ import {
   CalendarDays,
   Crown,
   Download,
-  LineChart,
-  Package,
   Sparkles,
   Target,
   TrendingDown,
   TrendingUp,
   Users,
-  Wallet,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -27,13 +24,11 @@ import {
 import { cn } from '../utils/cn'
 
 type ExecutiveTab =
-  | 'resumo'
-  | 'financeiro'
+  | 'visao-geral'
   | 'equipe'
   | 'clientes'
   | 'agenda'
-  | 'produtos'
-  | 'previsões'
+  | 'inteligencia'
 
 type QuickFilter = 'hoje' | '7d' | '30d' | 'mensal' | 'anual' | 'custom'
 
@@ -45,13 +40,11 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 const numberFormatter = new Intl.NumberFormat('pt-BR')
 
 const tabs: Array<{ icon: typeof BarChart3; label: string; value: ExecutiveTab }> = [
-  { icon: BarChart3, label: 'Resumo Executivo', value: 'resumo' },
-  { icon: Wallet, label: 'Financeiro', value: 'financeiro' },
+  { icon: BarChart3, label: 'Visão Geral', value: 'visao-geral' },
   { icon: Crown, label: 'Equipe', value: 'equipe' },
   { icon: Users, label: 'Clientes', value: 'clientes' },
   { icon: CalendarDays, label: 'Agenda', value: 'agenda' },
-  { icon: Package, label: 'Produtos', value: 'produtos' },
-  { icon: LineChart, label: 'Previsões', value: 'previsões' },
+  { icon: Sparkles, label: 'Inteligência', value: 'inteligencia' },
 ]
 
 const quickFilters: Array<{ label: string; value: QuickFilter }> = [
@@ -504,7 +497,7 @@ export function RelatoriosExecutivosPage() {
   const { profile } = useAuth()
   const empresaId = profile?.empresa_id
   const executiveAccess = useFeatureAccess('HAS_EXECUTIVE_REPORTS')
-  const [activeTab, setActiveTab] = useState<ExecutiveTab>('resumo')
+  const [activeTab, setActiveTab] = useState<ExecutiveTab>('visao-geral')
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('mensal')
   const [dataInicio, setDataInicio] = useState(monthStartInputValue())
   const [dataFim, setDataFim] = useState(todayInputValue())
@@ -806,7 +799,7 @@ export function RelatoriosExecutivosPage() {
             </CardContent>
           </Card>
 
-          {activeTab === 'resumo' && (
+          {activeTab === 'visao-geral' && (
             <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
               <Card>
                 <CardHeader>
@@ -852,7 +845,7 @@ export function RelatoriosExecutivosPage() {
             </section>
           )}
 
-          {activeTab === 'financeiro' && (
+          {activeTab === 'inteligencia' && (
             <section className="grid gap-6 xl:grid-cols-2">
               <Card>
                 <CardHeader>
@@ -993,7 +986,7 @@ export function RelatoriosExecutivosPage() {
             </section>
           )}
 
-          {activeTab === 'produtos' && (
+          {activeTab === 'inteligencia' && (
             <section className="grid gap-6 xl:grid-cols-2">
               <Card>
                 <CardHeader>
@@ -1048,7 +1041,7 @@ export function RelatoriosExecutivosPage() {
             </section>
           )}
 
-          {activeTab === 'previsões' && (
+          {activeTab === 'inteligencia' && (
             <section className="grid gap-6 xl:grid-cols-[1fr_0.8fr]">
               <Card>
                 <CardHeader>
