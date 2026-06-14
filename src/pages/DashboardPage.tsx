@@ -320,6 +320,7 @@ export function DashboardPage() {
     enabled: Boolean(empresaId),
     queryFn: () => getDashboardData(empresaId as string),
     queryKey: ['dashboard', empresaId],
+    staleTime: 1000 * 60 * 5, // 5 minutos — evita refetch a cada foco de aba
   })
 
   if (!empresaId) {
@@ -362,6 +363,34 @@ export function DashboardPage() {
     Number(String(todayRevenue?.value ?? '0').replace(/\D/g, '')) /
     Math.max(1, Number(String(appointments?.value ?? '1').replace(/\D/g, '')))
 
+  function formatDelta(current: number, previous: number): { text: string; up: boolean } {
+    if (previous === 0) {
+      return current > 0
+        ? { text: '+100% vs. ontem', up: true }
+        : { text: '0% vs. ontem', up: true }
+    }
+    const pct = ((current - previous) / previous) * 100
+    const sign = pct >= 0 ? '+' : ''
+    return {
+      text: `${sign}${pct.toFixed(0)}% vs. ontem`,
+      up: pct >= 0,
+    }
+  }
+
+  const todayRevenueRaw = data.todayRevenue
+  const yesterdayRevenueRaw = data.yesterdayRevenue
+  const todayAppointmentsCount = data.todayAppointments
+  const yesterdayAppointmentsCount = data.yesterdayAppointments
+
+  const revenueTicketHoje =
+    todayAppointmentsCount > 0 ? todayRevenueRaw / todayAppointmentsCount : 0
+  const revenueTicketOntem =
+    yesterdayAppointmentsCount > 0 ? yesterdayRevenueRaw / yesterdayAppointmentsCount : 0
+
+  const revenueDelta = formatDelta(todayRevenueRaw, yesterdayRevenueRaw)
+  const appointmentsDelta = formatDelta(todayAppointmentsCount, yesterdayAppointmentsCount)
+  const ticketDelta = formatDelta(revenueTicketHoje, revenueTicketOntem)
+
   const popularServices = Object.values(
     data.popularServicesToday.reduce<
       Record<string, { count: number; name: string; total: number }>
@@ -395,28 +424,28 @@ export function DashboardPage() {
 
       <section className="grid gap-4 sm:grid-cols-3">
         <MetricCard
-          delta="+18% vs. ontem"
-          deltaUp={true}
+          delta={revenueDelta.text}
+          deltaUp={revenueDelta.up}
           icon={TrendingUp}
           iconColor="blue"
           label="Receita hoje"
           value={todayRevenue?.value ?? 'R$ 0'}
         />
         <MetricCard
-          delta="+12% vs. ontem"
-          deltaUp={true}
+          delta={appointmentsDelta.text}
+          deltaUp={appointmentsDelta.up}
           icon={Scissors}
           iconColor="green"
           label="Atendimentos"
           value={String(appointments?.value ?? '0')}
         />
         <MetricCard
-          delta="-3% vs. ontem"
-          deltaUp={false}
+          delta={ticketDelta.text}
+          deltaUp={ticketDelta.up}
           icon={CreditCard}
           iconColor="amber"
           label="Ticket médio"
-          value={formatCurrency(ticketMedio / 100)}
+          value={formatCurrency(ticketMedio)}
         />
       </section>
 

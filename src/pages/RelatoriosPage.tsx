@@ -658,7 +658,7 @@ export function RelatoriosPage() {
     return (
       <Card>
         <CardContent>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Complete o vínculo do usuário com uma empresa para visualizar
             relatórios.
           </p>
@@ -674,10 +674,10 @@ export function RelatoriosPage() {
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">
             Relatórios
           </p>
-          <h2 className="mt-3 text-3xl font-black tracking-normal text-zinc-950 dark:text-zinc-50">
+          <h2 className="mt-3 text-3xl font-black tracking-normal text-slate-950 dark:text-white">
             Analises do BW Barber
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
             Escolha o tipo, ajuste o período e gere um PDF executivo pronto para
             enviar.
           </p>
@@ -687,7 +687,7 @@ export function RelatoriosPage() {
       <Card className="overflow-hidden">
         <CardContent className="space-y-6">
           <div>
-            <p className="text-sm font-bold text-zinc-950 dark:text-zinc-50">
+            <p className="text-sm font-bold text-slate-950 dark:text-white">
               Tipo de relatório
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -769,7 +769,7 @@ export function RelatoriosPage() {
             </Button>
           </div>
           {!advancedReportsAccess.isLoading && !advancedReportsAccess.canUse && (
-            <p className="rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm font-semibold text-slate-700">
+            <p className="rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-brand-800 dark:bg-brand-950/40 dark:text-slate-200">
               Exportacoes executivas e relatórios avançados exigem upgrade de
               plano.
             </p>
@@ -798,10 +798,10 @@ export function RelatoriosPage() {
         <div className="space-y-6">
           <section className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-xl font-semibold text-zinc-950 dark:text-zinc-50">
+              <h3 className="text-xl font-semibold text-slate-950 dark:text-white">
                 {title}
               </h3>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="mt-1 text-sm text-white0 dark:text-slate-400">
                 {periodLabel}
               </p>
             </div>
@@ -823,8 +823,8 @@ export function RelatoriosPage() {
             ].map(([label, value]) => (
               <Card key={label}>
                 <CardContent>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">{label}</p>
-                  <p className="mt-2 text-xl font-black text-zinc-950 dark:text-zinc-50">
+                  <p className="text-sm text-white0 dark:text-slate-400">{label}</p>
+                  <p className="mt-2 text-xl font-black text-slate-950 dark:text-white">
                     {value}
                   </p>
                 </CardContent>
@@ -835,13 +835,13 @@ export function RelatoriosPage() {
           <section className="grid gap-6 xl:grid-cols-2">
             <Card>
               <CardHeader>
-                <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+                <h3 className="text-base font-semibold text-slate-950 dark:text-white">
                   Produtos mais vendidos
                 </h3>
               </CardHeader>
               <CardContent className="p-0">
                 {data.topProducts.length === 0 ? (
-                  <div className="p-5 text-sm text-zinc-500 dark:text-zinc-400">
+                  <div className="p-5 text-sm text-white0 dark:text-slate-400">
                     Nenhuma venda de produto no período.
                   </div>
                 ) : (
@@ -856,7 +856,7 @@ export function RelatoriosPage() {
                     <TableBody>
                       {data.topProducts.map((product) => (
                         <TableRow key={product.nome}>
-                          <TableCell className="font-medium text-zinc-950 dark:text-zinc-50">
+                          <TableCell className="font-medium text-slate-950 dark:text-white">
                             {product.nome}
                           </TableCell>
                           <TableCell>{product.quantidade}</TableCell>
@@ -873,13 +873,13 @@ export function RelatoriosPage() {
 
             <Card>
               <CardHeader>
-                <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+                <h3 className="text-base font-semibold text-slate-950 dark:text-white">
                   Barbeiros com maior faturamento
                 </h3>
               </CardHeader>
               <CardContent className="p-0">
                 {data.topBarbers.length === 0 ? (
-                  <div className="p-5 text-sm text-zinc-500 dark:text-zinc-400">
+                  <div className="p-5 text-sm text-white0 dark:text-slate-400">
                     Nenhum atendimento concluído no período.
                   </div>
                 ) : (
@@ -894,7 +894,7 @@ export function RelatoriosPage() {
                     <TableBody>
                       {data.topBarbers.map((barber) => (
                         <TableRow key={barber.nome}>
-                          <TableCell className="font-medium text-zinc-950 dark:text-zinc-50">
+                          <TableCell className="font-medium text-slate-950 dark:text-white">
                             {barber.nome}
                           </TableCell>
                           <TableCell>{barber.atendimentos}</TableCell>

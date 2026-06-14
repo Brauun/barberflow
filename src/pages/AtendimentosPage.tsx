@@ -63,6 +63,48 @@ function currentTimeInputValue() {
   return new Date().toTimeString().slice(0, 5)
 }
 
+function formatDateInputLabel(value: string) {
+  if (!value) {
+    return ''
+  }
+
+  const [year, month, day] = value.split('-')
+
+  if (!year || !month || !day) {
+    return value
+  }
+
+  return `${day}/${month}/${year}`
+}
+
+type DateFilterFieldProps = {
+  label: string
+  onChange: (value: string) => void
+  value: string
+}
+
+function DateFilterField({ label, onChange, value }: DateFilterFieldProps) {
+  return (
+    <label className="block">
+      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        {label}
+      </span>
+      <div className="relative mt-2">
+        <div className="flex h-12 w-full min-w-0 items-center rounded-xl border border-slate-200 bg-white px-3.5 text-base text-slate-950 transition duration-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 sm:h-11 sm:text-sm">
+          {formatDateInputLabel(value)}
+        </div>
+        <input
+          aria-label={label}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          onChange={(event) => onChange(event.target.value)}
+          type="date"
+          value={value}
+        />
+      </div>
+    </label>
+  )
+}
+
 function emptyFormValues(): AtendimentoFormInput {
   return {
     barbeiro_id: '',
@@ -419,7 +461,7 @@ export function AtendimentosPage() {
   }
 
   return (
-    <div className="min-w-0 space-y-5 overflow-x-hidden pb-[env(safe-area-inset-bottom)] sm:space-y-6">
+    <div className="min-w-0 space-y-5 overflow-x-hidden pt-2 pb-[calc(env(safe-area-inset-bottom)+5rem)] sm:space-y-6 sm:pt-0 sm:pb-[env(safe-area-inset-bottom)]">
       <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-semibold uppercase text-brand-600 dark:text-brand-400">
@@ -491,20 +533,21 @@ export function AtendimentosPage() {
                 Consulte a agenda por data, barbeiro e status.
               </p>
             </div>
-            <div className="grid w-full min-w-0 gap-3 sm:grid-cols-2 lg:w-auto lg:grid-cols-3">
-              <Input
+            <div className="grid w-full min-w-0 gap-3 sm:grid-cols-2 lg:w-auto lg:min-w-[46rem] lg:grid-cols-3">
+              <DateFilterField
                 label="Data"
-                onChange={(event) => setDailyDate(event.target.value)}
-                type="date"
+                onChange={setDailyDate}
                 value={dailyDate}
               />
               <Select
+                className="h-12 sm:h-11"
                 label="Barbeiro"
                 onChange={(event) => setDailyBarberId(event.target.value)}
                 options={barbeiroOptions}
                 value={dailyBarberId}
               />
               <Select
+                className="h-12 sm:h-11"
                 label="Status"
                 onChange={(event) => setDailyStatus(event.target.value)}
                 options={dailyStatusOptions}

@@ -59,6 +59,9 @@ export type DashboardData = {
   latestAppointments: LatestAppointment[]
   popularServicesToday: LatestAppointment[]
   todayAppointments: number
+  todayRevenue: number
+  yesterdayAppointments: number
+  yesterdayRevenue: number
   dueBills: DueBill[]
 }
 
@@ -188,6 +191,7 @@ function getMissingPaidBillMovements(
 export async function getDashboardData(empresaId: string): Promise<DashboardData> {
   const now = new Date()
   const today = startOfDay(now)
+  const yesterday = addDays(today, -1)
   const tomorrow = addDays(today, 1)
   const weekStart = startOfWeek(now)
   const monthStart = startOfMonth(now)
@@ -205,6 +209,7 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
     latestAppointmentsResponse,
     dueBillsResponse,
     paidBillsResponse,
+    yesterdayAppointmentsResponse,
   ] = await Promise.all([
     supabase
       .from('movimentacoes_financeiras')
@@ -273,6 +278,13 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
       .select('data_pagamento,data_vencimento,descricao,valor')
       .eq('empresa_id', empresaId)
       .eq('status', 'paga'),
+    supabase
+      .from('atendimentos')
+      .select('id', { count: 'exact', head: true })
+      .eq('empresa_id', empresaId)
+      .in('status', ['concluido', 'concluido_automatico'])
+      .gte('data_hora_inicio', yesterday.toISOString())
+      .lt('data_hora_inicio', today.toISOString()),
   ])
 
   const responses = [
@@ -285,6 +297,7 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
     latestAppointmentsResponse,
     dueBillsResponse,
     paidBillsResponse,
+    yesterdayAppointmentsResponse,
   ]
 
   const failedResponse = responses.find((response) => response.error)
@@ -313,6 +326,13 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
   const todayFrom = toDateInputValue(today)
   const tomorrowTo = toDateInputValue(tomorrow)
   const weekFrom = toDateInputValue(weekStart)
+  const yesterdayFrom = toDateInputValue(yesterday)
+  const faturamentoOntem = sumMovements(
+    movements,
+    'entrada',
+    yesterdayFrom,
+    todayFrom,
+  )
   const faturamentoHoje = sumMovements(
     movements,
     'entrada',
@@ -341,6 +361,9 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
   ).length
 
   return {
+    todayRevenue: faturamentoHoje,
+    yesterdayRevenue: faturamentoOntem,
+    yesterdayAppointments: yesterdayAppointmentsResponse.count ?? 0,
     dueBills: (dueBillsResponse.data ?? []) as DueBill[],
     latestAppointments:
       (latestAppointmentsResponse.data ?? []) as unknown as LatestAppointment[],
