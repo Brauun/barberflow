@@ -422,20 +422,20 @@ export async function getRelatorioData(
     }
     const isCompleted = completedStatuses.includes(appointment.status ?? '')
     const isCanceled = canceledStatuses.includes(appointment.status ?? '')
-    const nextAtendimentos = current.atendimentos + (isCompleted ? 1 : 0)
+    const nextAtendimentos = current.atendimentos + (isCompleted ?1 : 0)
     const nextFaturamento =
       current.faturamento +
       (isCompleted
-        ? Number(appointment.valor_final ?? appointment.valor)
+        ?Number(appointment.valor_final ?? appointment.valor)
         : 0)
 
     barbersMap.set(nome, {
       nome,
       atendimentos: nextAtendimentos,
-      cancelamentos: current.cancelamentos + (isCanceled ? 1 : 0),
+      cancelamentos: current.cancelamentos + (isCanceled ?1 : 0),
       comissao: commissionByBarber.get(barberId) ?? current.comissao,
       faturamento: nextFaturamento,
-      ticketMedio: nextAtendimentos > 0 ? nextFaturamento / nextAtendimentos : 0,
+      ticketMedio: nextAtendimentos > 0 ?nextFaturamento / nextAtendimentos : 0,
     })
   })
 
@@ -469,7 +469,7 @@ export async function getRelatorioData(
         !current.ultimaVisita ||
         (appointment.data_hora_inicio &&
           appointment.data_hora_inicio > current.ultimaVisita)
-          ? appointment.data_hora_inicio ?? current.ultimaVisita
+          ?appointment.data_hora_inicio ?? current.ultimaVisita
           : current.ultimaVisita
 
       clientsMap.set(clientId, {
@@ -606,7 +606,7 @@ export async function getExecutiveRelatorioData(
       ultimaVisita:
         !currentClient.ultimaVisita ||
         String(appointment.data_hora_inicio) > currentClient.ultimaVisita
-          ? String(appointment.data_hora_inicio)
+          ?String(appointment.data_hora_inicio)
           : currentClient.ultimaVisita,
       visitas: currentClient.visitas + 1,
     })
@@ -631,10 +631,10 @@ export async function getExecutiveRelatorioData(
     const isConcluido = ['concluido', 'concluido_automatico'].includes(
       appointment.status ?? '',
     )
-    const nextAtendimentos = currentBarber.atendimentos + (isConcluido ? 1 : 0)
+    const nextAtendimentos = currentBarber.atendimentos + (isConcluido ?1 : 0)
     const nextFaturamento =
       currentBarber.faturamento +
-      (isConcluido ? Number(appointment.valor_final ?? appointment.valor) : 0)
+      (isConcluido ?Number(appointment.valor_final ?? appointment.valor) : 0)
 
     equipeMap.set(nome, {
       atendimentos: nextAtendimentos,
@@ -644,12 +644,12 @@ export async function getExecutiveRelatorioData(
       faturamento: nextFaturamento,
       nome,
       tempoMedio: nextAtendimentos
-        ? Math.round(
+        ?Math.round(
             ((currentBarber.tempoMedio * currentBarber.atendimentos) + duration) /
               nextAtendimentos,
           )
         : 0,
-      ticketMedio: nextAtendimentos ? nextFaturamento / nextAtendimentos : 0,
+      ticketMedio: nextAtendimentos ?nextFaturamento / nextAtendimentos : 0,
     })
   })
 
@@ -659,19 +659,19 @@ export async function getExecutiveRelatorioData(
   const lucroProdutos = current.topProducts.reduce((total, product) => {
     const productData = products.find((item) => item.nome === product.nome)
     const margin = productData
-      ? Number(productData.preco_venda) - Number(productData.preco_custo)
+      ?Number(productData.preco_venda) - Number(productData.preco_custo)
       : 0
 
     return total + margin * product.quantidade
   }, 0)
-  const margemPercentual = entradas > 0 ? (current.summary.lucroLiquido / entradas) * 100 : 0
+  const margemPercentual = entradas > 0 ?(current.summary.lucroLiquido / entradas) * 100 : 0
   const crescimentoReceita =
-    previousEntradas > 0 ? ((entradas - previousEntradas) / previousEntradas) * 100 : 0
+    previousEntradas > 0 ?((entradas - previousEntradas) / previousEntradas) * 100 : 0
   const cancelamentoPercentual = appointments.length
-    ? (status.cancelado / appointments.length) * 100
+    ?(status.cancelado / appointments.length) * 100
     : 0
   const retencaoPercentual = clients.length
-    ? Math.round((clientMap.size / clients.length) * 100)
+    ?Math.round((clientMap.size / clients.length) * 100)
     : 0
   const scoreValue = Math.round(
     Math.min(
@@ -703,7 +703,7 @@ export async function getExecutiveRelatorioData(
     )
   })
   const series = Array.from({ length: Math.min(7, periodDays) }, (_, index) => {
-    const offset = periodDays <= 7 ? index : Math.floor((index * (periodDays - 1)) / 6)
+    const offset = periodDays <= 7 ?index : Math.floor((index * (periodDays - 1)) / 6)
     const date = addDays(dataInicio, offset)
 
     return {
@@ -772,9 +772,9 @@ export async function getExecutiveRelatorioData(
           precoVenda: product.preco_venda,
           status:
             product.estoque_atual <= product.estoque_minimo
-              ? 'baixo'
+              ?'baixo'
               : product.estoque_atual > product.estoque_minimo * 4
-                ? 'excesso'
+                ?'excesso'
                 : 'ok',
         }))
         .filter((product) => product.status !== 'ok')
@@ -786,11 +786,11 @@ export async function getExecutiveRelatorioData(
     score: {
       label:
         scoreValue >= 85
-          ? 'Excelente operacao'
+          ?'Excelente operação'
           : scoreValue >= 70
-            ? 'Operacao saudavel'
+            ?'Operação saudável'
             : scoreValue >= 55
-              ? 'Operacao em atencao'
+              ?'Operação em atenção'
               : 'Precisa de ajuste',
       value: scoreValue,
     },
