@@ -92,7 +92,7 @@ export function RegisterPage() {
   const tipoPessoa = useWatch({ control, name: 'tipo_pessoa' })
 
   return (
-    <div className="mx-auto w-full max-w-md">
+    <div className="mx-auto w-full max-w-3xl">
       <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#12C6F3]">
         Cadastro
       </p>
@@ -103,7 +103,7 @@ export function RegisterPage() {
         Escolha seu perfil e ative sua experiência no sistema.
       </p>
 
-      <form className="mt-5 space-y-3.5 transition-all duration-300 sm:mt-8 sm:space-y-4" onSubmit={handleSubmit(onSubmit)}>
+      <form className="mt-5 space-y-4 transition-all duration-300 sm:mt-8 sm:space-y-5" onSubmit={handleSubmit(onSubmit)}>
         <AuthFormMessage message={formError} />
         <AuthFormMessage message={successMessage} tone="success" />
 
@@ -135,7 +135,7 @@ export function RegisterPage() {
           <input
             className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
             autoComplete="name"
-            placeholder="Joao Silva"
+            placeholder="João Silva"
             {...register('nome')}
           />
           {errors.nome && (
@@ -181,7 +181,7 @@ export function RegisterPage() {
         )}
 
         {accountType === 'barbearia' && (
-          <div className="space-y-3.5 rounded-3xl border border-white/[0.08] bg-white/[0.03] p-4 animate-[fadeIn_240ms_ease-out] sm:space-y-4">
+          <div className="animate-[fadeIn_240ms_ease-out] space-y-4 rounded-3xl border border-white/[0.08] bg-white/[0.03] p-4 sm:space-y-5 sm:p-5">
             <div>
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.22em] text-[#12C6F3]">
                 Dados fiscais
@@ -274,14 +274,43 @@ export function RegisterPage() {
               )}
             </label>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <input className="h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none sm:text-sm" inputMode="numeric" placeholder="CEP 00000-000" {...register('cep', { onChange: maskCepChange })} />
-              <input className="h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none sm:text-sm" placeholder="Rua" {...register('rua')} />
-              <input className="h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none sm:text-sm" placeholder="Número" {...register('numero')} />
-              <input className="h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none sm:text-sm" placeholder="Bairro" {...register('bairro')} />
-              <input className="h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none sm:text-sm" placeholder="Cidade" {...register('cidade')} />
-              <input className="h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium uppercase text-white outline-none sm:text-sm" maxLength={2} placeholder="UF" {...register('uf')} />
-              <input className="h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none sm:col-span-2 sm:text-sm" placeholder="Complemento" {...register('complemento')} />
+            <div className="space-y-3 rounded-[1.35rem] border border-white/[0.08] bg-[#071426]/25 p-3 sm:p-4">
+              <div>
+                <p className="text-sm font-semibold text-white">Endereço</p>
+                <p className="mt-1 text-xs leading-5 text-[#A5B4CB]">
+                  Pode ser completado depois em Configurações.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-6">
+                <label className="block sm:col-span-2">
+                  <span className="text-xs font-semibold text-[#A5B4CB]">CEP</span>
+                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" inputMode="numeric" placeholder="00000-000" {...register('cep', { onChange: maskCepChange })} />
+                </label>
+                <label className="block sm:col-span-4">
+                  <span className="text-xs font-semibold text-[#A5B4CB]">Rua</span>
+                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="Rua" {...register('rua')} />
+                </label>
+                <label className="block sm:col-span-2">
+                  <span className="text-xs font-semibold text-[#A5B4CB]">Número</span>
+                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="123" {...register('numero')} />
+                </label>
+                <label className="block sm:col-span-2">
+                  <span className="text-xs font-semibold text-[#A5B4CB]">Bairro</span>
+                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="Centro" {...register('bairro')} />
+                </label>
+                <label className="block sm:col-span-2">
+                  <span className="text-xs font-semibold text-[#A5B4CB]">Cidade</span>
+                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="Cidade" {...register('cidade')} />
+                </label>
+                <label className="block sm:col-span-2">
+                  <span className="text-xs font-semibold text-[#A5B4CB]">UF</span>
+                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium uppercase text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" maxLength={2} placeholder="RS" {...register('uf')} />
+                </label>
+                <label className="block sm:col-span-4">
+                  <span className="text-xs font-semibold text-[#A5B4CB]">Complemento</span>
+                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="Sala, andar ou referência" {...register('complemento')} />
+                </label>
+              </div>
             </div>
           </div>
         )}
