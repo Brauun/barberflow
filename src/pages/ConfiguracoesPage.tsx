@@ -65,8 +65,12 @@ import {
 } from '../types/businessHours'
 import {
   formatCep,
+  formatCnpj,
+  formatCpf,
   formatPhone,
   maskCepChange,
+  maskCnpjChange,
+  maskCpfChange,
   maskPhoneChange,
   onlyDigits,
 } from '../utils/masks'
@@ -221,6 +225,10 @@ export function ConfiguracoesPage() {
     control: empresaForm.control,
     name: 'cep',
   })
+  const watchedTipoPessoa = useWatch({
+    control: empresaForm.control,
+    name: 'tipo_pessoa',
+  })
 
   const businessHoursQuery = useQuery({
     enabled: Boolean(empresaId),
@@ -246,17 +254,29 @@ export function ConfiguracoesPage() {
       cep: formatCep(empresa?.cep),
       cidade: empresa?.cidade ?? '',
       complemento: empresa?.complemento ?? '',
+      cpf_cnpj:
+        empresa?.tipo_pessoa === 'pj'
+          ? formatCnpj(empresa?.cpf_cnpj)
+          : formatCpf(empresa?.cpf_cnpj),
       email: empresa?.email ?? '',
+      email_financeiro: empresa?.email_financeiro ?? empresa?.email ?? '',
       endereco: empresa?.endereco ?? '',
       estado: empresa?.estado ?? '',
       latitude: empresa?.latitude ?? null,
+      logradouro: empresa?.logradouro ?? empresa?.rua ?? '',
       logo_url: empresa?.logo_url ?? '',
       longitude: empresa?.longitude ?? null,
       nome: empresa?.nome ?? '',
+      nome_fantasia: empresa?.nome_fantasia ?? '',
       numero: empresa?.numero ?? '',
       percentual_comissao_padrao: empresa?.percentual_comissao_padrao ?? 60,
+      razao_social: empresa?.razao_social ?? '',
+      responsavel_cpf: formatCpf(empresa?.responsavel_cpf),
+      responsavel_nome: empresa?.responsavel_nome ?? '',
       rua: empresa?.rua ?? '',
       telefone: formatPhone(empresa?.telefone),
+      tipo_pessoa: empresa?.tipo_pessoa === 'pj' ? 'pj' : 'pf',
+      uf: empresa?.uf ?? empresa?.estado ?? '',
     })
   }, [empresa, empresaForm])
 
@@ -295,9 +315,16 @@ export function ConfiguracoesPage() {
             shouldDirty: true,
             shouldValidate: true,
           })
+          empresaForm.setValue('uf', address.estado, {
+            shouldDirty: true,
+            shouldValidate: true,
+          })
 
           if (address.rua) {
             empresaForm.setValue('rua', address.rua, { shouldDirty: true })
+            empresaForm.setValue('logradouro', address.rua, {
+              shouldDirty: true,
+            })
           }
 
           if (address.bairro) {
@@ -1182,9 +1209,85 @@ export function ConfiguracoesPage() {
                 />
               </div>
 
+              <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                <div className="mb-4">
+                  <p className="text-sm font-semibold text-slate-950 dark:text-slate-50">
+                    Dados fiscais e cobrança
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Informações usadas futuramente para assinatura, cobrança e emissão fiscal.
+                  </p>
+                </div>
+                <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+                  <Select
+                    error={empresaForm.formState.errors.tipo_pessoa?.message}
+                    label="Tipo de cadastro"
+                    options={[
+                      { label: 'Pessoa Física', value: 'pf' },
+                      { label: 'Pessoa Jurídica', value: 'pj' },
+                    ]}
+                    {...empresaForm.register('tipo_pessoa')}
+                  />
+                  <Input
+                    error={empresaForm.formState.errors.cpf_cnpj?.message}
+                    inputMode="numeric"
+                    label={watchedTipoPessoa === 'pj' ? 'CNPJ' : 'CPF'}
+                    placeholder={
+                      watchedTipoPessoa === 'pj'
+                        ? '00.000.000/0000-00'
+                        : '000.000.000-00'
+                    }
+                    {...empresaForm.register('cpf_cnpj', {
+                      onChange:
+                        watchedTipoPessoa === 'pj'
+                          ? maskCnpjChange
+                          : maskCpfChange,
+                    })}
+                  />
+                  {watchedTipoPessoa === 'pj' && (
+                    <>
+                      <Input
+                        error={empresaForm.formState.errors.razao_social?.message}
+                        label="Razão social"
+                        placeholder="Razão social da empresa"
+                        {...empresaForm.register('razao_social')}
+                      />
+                      <Input
+                        error={empresaForm.formState.errors.nome_fantasia?.message}
+                        label="Nome fantasia"
+                        placeholder="Nome fantasia"
+                        {...empresaForm.register('nome_fantasia')}
+                      />
+                    </>
+                  )}
+                  <Input
+                    error={empresaForm.formState.errors.email_financeiro?.message}
+                    label="E-mail financeiro"
+                    placeholder="financeiro@barbearia.com"
+                    type="email"
+                    {...empresaForm.register('email_financeiro')}
+                  />
+                  <Input
+                    error={empresaForm.formState.errors.responsavel_nome?.message}
+                    label="Nome do responsável"
+                    placeholder="João Silva"
+                    {...empresaForm.register('responsavel_nome')}
+                  />
+                  <Input
+                    error={empresaForm.formState.errors.responsavel_cpf?.message}
+                    inputMode="numeric"
+                    label="CPF do responsável"
+                    placeholder="000.000.000-00"
+                    {...empresaForm.register('responsavel_cpf', {
+                      onChange: maskCpfChange,
+                    })}
+                  />
+                </div>
+              </div>
+
               <Input
                 error={empresaForm.formState.errors.endereco?.message}
-                label="Endereço"
+                label="Endereço resumido"
                 {...empresaForm.register('endereco')}
               />
 
@@ -1211,7 +1314,13 @@ export function ConfiguracoesPage() {
                     error={empresaForm.formState.errors.rua?.message}
                     label="Rua"
                     placeholder="Rua Exemplo"
-                    {...empresaForm.register('rua')}
+                    {...empresaForm.register('rua', {
+                      onChange: (event) => {
+                        empresaForm.setValue('logradouro', event.target.value, {
+                          shouldDirty: true,
+                        })
+                      },
+                    })}
                   />
                   <Input
                     error={empresaForm.formState.errors.numero?.message}
@@ -1233,10 +1342,18 @@ export function ConfiguracoesPage() {
                   />
                   <Input
                     error={empresaForm.formState.errors.estado?.message}
-                    label="Estado"
+                    label="UF"
                     maxLength={2}
                     placeholder="RS"
-                    {...empresaForm.register('estado')}
+                    {...empresaForm.register('estado', {
+                      onChange: (event) => {
+                        empresaForm.setValue(
+                          'uf',
+                          event.target.value.toUpperCase(),
+                          { shouldDirty: true },
+                        )
+                      },
+                    })}
                   />
                   <Input
                     error={empresaForm.formState.errors.complemento?.message}
@@ -1250,6 +1367,8 @@ export function ConfiguracoesPage() {
                     {cepStatus}
                   </p>
                 )}
+                <input type="hidden" {...empresaForm.register('logradouro')} />
+                <input type="hidden" {...empresaForm.register('uf')} />
               </div>
 
               <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">

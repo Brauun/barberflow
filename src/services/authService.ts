@@ -12,8 +12,22 @@ type SignUpInput = {
   nome: string
   empresa?: string
   email?: string
+  tipo_pessoa?: 'pf' | 'pj'
+  cpf_cnpj?: string
+  razao_social?: string
+  nome_fantasia?: string
+  email_financeiro?: string
+  cep?: string
+  rua?: string
+  numero?: string
+  bairro?: string
+  cidade?: string
+  uf?: string
+  complemento?: string
+  responsavel_nome?: string
   telefone?: string
   responsavel_cpf?: string
+  aceite_termos?: boolean
   password: string
   papel?: UserRole
 }
@@ -24,6 +38,22 @@ type CreateCompanyUserInput = {
   responsavelCpf?: string | null
   telefoneUsuario?: string | null
   papelUsuario: UserRole
+  fiscal?: {
+    aceiteTermosAt?: string | null
+    bairro?: string | null
+    cep?: string | null
+    cidade?: string | null
+    complemento?: string | null
+    cpfCnpj?: string | null
+    emailFinanceiro?: string | null
+    logradouro?: string | null
+    nomeFantasia?: string | null
+    numero?: string | null
+    razaoSocial?: string | null
+    responsavelNome?: string | null
+    tipoPessoa?: 'pf' | 'pj'
+    uf?: string | null
+  }
 }
 
 function normalizePhone(value: string) {
@@ -125,13 +155,33 @@ export async function signUpWithCompany(input: SignUpInput) {
   const nomeEmpresa = input.empresa?.trim()
   const telefoneUsuario = normalizeDigits(input.telefone)
   const responsavelCpf = normalizeDigits(input.responsavel_cpf)
+  const cpfCnpj = normalizeDigits(input.cpf_cnpj)
+  const tipoPessoa = input.tipo_pessoa ?? 'pf'
+  const emailFinanceiro = input.email_financeiro?.trim()
+  const responsavelNome = input.responsavel_nome?.trim() || input.nome.trim()
 
-  if (!nomeEmpresa || !input.email) {
-    throw new Error('Informe empresa e e-mail para cadastrar uma barbearia.')
+  if (!nomeEmpresa || !input.email || !emailFinanceiro) {
+    throw new Error('Informe empresa, e-mail de acesso e e-mail financeiro para cadastrar uma barbearia.')
   }
 
   if (responsavelCpf.length !== 11) {
     throw new Error('Informe o CPF do responsavel com 11 digitos.')
+  }
+
+  if (tipoPessoa === 'pf' && cpfCnpj.length !== 11) {
+    throw new Error('Informe o CPF com 11 digitos.')
+  }
+
+  if (tipoPessoa === 'pj' && cpfCnpj.length !== 14) {
+    throw new Error('Informe o CNPJ com 14 digitos.')
+  }
+
+  if (tipoPessoa === 'pj' && !input.razao_social?.trim()) {
+    throw new Error('Informe a razao social.')
+  }
+
+  if (!input.aceite_termos) {
+    throw new Error('Aceite os Termos de Uso e a Politica de Privacidade.')
   }
 
   logger.info({
@@ -151,7 +201,11 @@ export async function signUpWithCompany(input: SignUpInput) {
       data: {
         nome: input.nome,
         empresa: nomeEmpresa,
+        cpf_cnpj: cpfCnpj,
+        email_financeiro: emailFinanceiro,
         responsavel_cpf: responsavelCpf,
+        responsavel_nome: responsavelNome,
+        tipo_pessoa: tipoPessoa,
         telefone: telefoneUsuario || null,
         papel,
       },
@@ -190,10 +244,26 @@ export async function signUpWithCompany(input: SignUpInput) {
 
   const usuario = await createCompanyUser({
     nomeEmpresa,
-    nomeUsuario: input.nome,
+    nomeUsuario: responsavelNome,
     responsavelCpf,
     telefoneUsuario: telefoneUsuario || null,
     papelUsuario: papel,
+    fiscal: {
+      aceiteTermosAt: new Date().toISOString(),
+      bairro: input.bairro?.trim() || null,
+      cep: normalizeDigits(input.cep) || null,
+      cidade: input.cidade?.trim() || null,
+      complemento: input.complemento?.trim() || null,
+      cpfCnpj,
+      emailFinanceiro,
+      logradouro: input.rua?.trim() || null,
+      nomeFantasia: input.nome_fantasia?.trim() || nomeEmpresa,
+      numero: input.numero?.trim() || null,
+      razaoSocial: input.razao_social?.trim() || null,
+      responsavelNome,
+      tipoPessoa,
+      uf: input.uf?.trim().toUpperCase() || null,
+    },
   })
 
   if (!usuario?.empresa_id || usuario.auth_user_id !== data.user.id) {
@@ -330,14 +400,59 @@ export async function createCompanyUser(input: CreateCompanyUserInput) {
     throw new Error('A funcao de cadastro nao retornou o usuario criado.')
   }
 
-  await supabase.from('barbershops').upsert(
+  const endereco = [
+    [input.fiscal?.logradouro, input.fiscal?.numero].filter(Boolean).join(', '),
+    [input.fiscal?.bairro, input.fiscal?.cidade, input.fiscal?.uf]
+      .filter(Boolean)
+      .join(' - '),
+  ]
+    .filter(Boolean)
+    .join(' — ')
+  const fiscalPayload = {
+    aceite_termos_at: input.fiscal?.aceiteTermosAt ?? null,
+    bairro: input.fiscal?.bairro ?? null,
+    cep: input.fiscal?.cep ?? null,
+    cidade: input.fiscal?.cidade ?? null,
+    complemento: input.fiscal?.complemento ?? null,
+    cpf_cnpj: input.fiscal?.cpfCnpj ?? null,
+    email_financeiro: input.fiscal?.emailFinanceiro ?? null,
+    endereco: endereco || null,
+    estado: input.fiscal?.uf ?? null,
+    logradouro: input.fiscal?.logradouro ?? null,
+    nome_fantasia: input.fiscal?.nomeFantasia ?? input.nomeEmpresa.trim(),
+    numero: input.fiscal?.numero ?? null,
+    razao_social: input.fiscal?.razaoSocial ?? null,
+    responsavel_cpf: input.responsavelCpf || null,
+    responsavel_nome: input.fiscal?.responsavelNome ?? input.nomeUsuario.trim(),
+    rua: input.fiscal?.logradouro ?? null,
+    tipo_pessoa: input.fiscal?.tipoPessoa ?? 'pf',
+  }
+
+  const { error: empresaUpdateError } = await supabase
+    .from('empresas')
+    .update(fiscalPayload)
+    .eq('id', (data as Usuario).empresa_id)
+
+  if (empresaUpdateError) {
+    throw new Error(`Falha ao salvar dados fiscais: ${empresaUpdateError.message}`)
+  }
+
+  const { error: barbershopUpsertError } = await supabase.from('barbershops').upsert(
     {
+      ...fiscalPayload,
       empresa_id: (data as Usuario).empresa_id,
+      email: input.fiscal?.emailFinanceiro ?? null,
       nome: input.nomeEmpresa.trim(),
       telefone: input.telefoneUsuario || null,
     },
     { onConflict: 'empresa_id' },
   )
+
+  if (barbershopUpsertError) {
+    throw new Error(
+      `Falha ao salvar dados da barbearia: ${barbershopUpsertError.message}`,
+    )
+  }
 
   return data as Usuario
 }

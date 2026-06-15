@@ -15,16 +15,25 @@ export type Database = {
           nome: string
           documento: string | null
           responsavel_cpf: string | null
+          responsavel_nome: string | null
+          tipo_pessoa: string | null
+          cpf_cnpj: string | null
+          razao_social: string | null
+          nome_fantasia: string | null
+          email_financeiro: string | null
           telefone: string | null
           email: string | null
           endereco: string | null
           cep: string | null
+          logradouro: string | null
           rua: string | null
           numero: string | null
           bairro: string | null
           cidade: string | null
           estado: string | null
+          uf: string | null
           complemento: string | null
+          aceite_termos_at: string | null
           latitude: number | null
           longitude: number | null
           logo_url: string | null
@@ -38,16 +47,25 @@ export type Database = {
           nome: string
           documento?: string | null
           responsavel_cpf?: string | null
+          responsavel_nome?: string | null
+          tipo_pessoa?: string | null
+          cpf_cnpj?: string | null
+          razao_social?: string | null
+          nome_fantasia?: string | null
+          email_financeiro?: string | null
           telefone?: string | null
           email?: string | null
           endereco?: string | null
           cep?: string | null
+          logradouro?: string | null
           rua?: string | null
           numero?: string | null
           bairro?: string | null
           cidade?: string | null
           estado?: string | null
+          uf?: string | null
           complemento?: string | null
+          aceite_termos_at?: string | null
           latitude?: number | null
           longitude?: number | null
           logo_url?: string | null
@@ -541,12 +559,22 @@ export type Database = {
           email: string | null
           endereco: string | null
           cep: string | null
+          logradouro: string | null
           rua: string | null
           numero: string | null
           bairro: string | null
           cidade: string | null
           estado: string | null
+          uf: string | null
           complemento: string | null
+          tipo_pessoa: string | null
+          cpf_cnpj: string | null
+          razao_social: string | null
+          nome_fantasia: string | null
+          email_financeiro: string | null
+          responsavel_nome: string | null
+          responsavel_cpf: string | null
+          aceite_termos_at: string | null
           logo_url: string | null
           latitude: number | null
           longitude: number | null

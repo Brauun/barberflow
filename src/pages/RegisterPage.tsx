@@ -12,7 +12,12 @@ import {
   type RegisterFormData,
   type RegisterFormInput,
 } from '../types/auth'
-import { maskCpfChange, maskPhoneChange } from '../utils/masks'
+import {
+  maskCepChange,
+  maskCnpjChange,
+  maskCpfChange,
+  maskPhoneChange,
+} from '../utils/masks'
 
 export function RegisterPage() {
   const [formError, setFormError] = useState<string | null>(null)
@@ -28,9 +33,12 @@ export function RegisterPage() {
   } = useForm<RegisterFormInput, unknown, RegisterFormData>({
     defaultValues: {
       accountType: 'barbearia',
+      aceite_termos: false,
       papel: 'administrador',
+      responsavel_nome: '',
       responsavel_cpf: '',
       telefone: '',
+      tipo_pessoa: 'pf',
     },
     resolver: zodResolver(registerSchema),
   })
@@ -81,6 +89,7 @@ export function RegisterPage() {
   }
 
   const accountType = useWatch({ control, name: 'accountType' })
+  const tipoPessoa = useWatch({ control, name: 'tipo_pessoa' })
 
   return (
     <div className="mx-auto w-full max-w-md">
@@ -120,7 +129,9 @@ export function RegisterPage() {
         </div>
 
         <label className="block">
-          <span className="text-sm font-semibold text-white">Nome</span>
+          <span className="text-sm font-semibold text-white">
+            {accountType === 'barbearia' ? 'Nome do responsável' : 'Nome'}
+          </span>
           <input
             className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
             autoComplete="name"
@@ -153,7 +164,7 @@ export function RegisterPage() {
 
         {accountType === 'barbearia' && (
           <label className="block animate-[fadeIn_240ms_ease-out]">
-            <span className="text-sm font-semibold text-white">Email</span>
+            <span className="text-sm font-semibold text-white">E-mail de acesso</span>
             <input
               className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
               autoComplete="email"
@@ -167,6 +178,112 @@ export function RegisterPage() {
               </span>
             )}
           </label>
+        )}
+
+        {accountType === 'barbearia' && (
+          <div className="space-y-3.5 rounded-3xl border border-white/[0.08] bg-white/[0.03] p-4 animate-[fadeIn_240ms_ease-out] sm:space-y-4">
+            <div>
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.22em] text-[#12C6F3]">
+                Dados fiscais
+              </p>
+              <p className="mt-1 text-sm text-[#A5B4CB]">
+                Informações para futura cobrança e emissão fiscal.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="flex h-12 cursor-pointer items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-sm font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white">
+                <input
+                  className="h-4 w-4 accent-[#12C6F3]"
+                  type="radio"
+                  value="pf"
+                  {...register('tipo_pessoa')}
+                />
+                Pessoa Física
+              </label>
+              <label className="flex h-12 cursor-pointer items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-sm font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white">
+                <input
+                  className="h-4 w-4 accent-[#12C6F3]"
+                  type="radio"
+                  value="pj"
+                  {...register('tipo_pessoa')}
+                />
+                Pessoa Jurídica
+              </label>
+            </div>
+
+            <label className="block">
+              <span className="text-sm font-semibold text-white">
+                {tipoPessoa === 'pj' ? 'CNPJ' : 'CPF'}
+              </span>
+              <input
+                className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+                autoComplete="off"
+                inputMode="numeric"
+                placeholder={tipoPessoa === 'pj' ? '00.000.000/0000-00' : '000.000.000-00'}
+                {...register('cpf_cnpj', {
+                  onChange: tipoPessoa === 'pj' ? maskCnpjChange : maskCpfChange,
+                })}
+              />
+              {errors.cpf_cnpj && (
+                <span className="mt-2 block text-sm text-rose-200">
+                  {errors.cpf_cnpj.message}
+                </span>
+              )}
+            </label>
+
+            {tipoPessoa === 'pj' && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-sm font-semibold text-white">Razão social</span>
+                  <input
+                    className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+                    placeholder="Razão social da empresa"
+                    {...register('razao_social')}
+                  />
+                  {errors.razao_social && (
+                    <span className="mt-2 block text-sm text-rose-200">
+                      {errors.razao_social.message}
+                    </span>
+                  )}
+                </label>
+                <label className="block">
+                  <span className="text-sm font-semibold text-white">Nome fantasia</span>
+                  <input
+                    className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+                    placeholder="Nome fantasia"
+                    {...register('nome_fantasia')}
+                  />
+                </label>
+              </div>
+            )}
+
+            <label className="block">
+              <span className="text-sm font-semibold text-white">E-mail financeiro</span>
+              <input
+                className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+                autoComplete="email"
+                placeholder="financeiro@barbearia.com"
+                type="email"
+                {...register('email_financeiro')}
+              />
+              {errors.email_financeiro && (
+                <span className="mt-2 block text-sm text-rose-200">
+                  {errors.email_financeiro.message}
+                </span>
+              )}
+            </label>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <input className="h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none sm:text-sm" inputMode="numeric" placeholder="CEP 00000-000" {...register('cep', { onChange: maskCepChange })} />
+              <input className="h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none sm:text-sm" placeholder="Rua" {...register('rua')} />
+              <input className="h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none sm:text-sm" placeholder="Número" {...register('numero')} />
+              <input className="h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none sm:text-sm" placeholder="Bairro" {...register('bairro')} />
+              <input className="h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none sm:text-sm" placeholder="Cidade" {...register('cidade')} />
+              <input className="h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium uppercase text-white outline-none sm:text-sm" maxLength={2} placeholder="UF" {...register('uf')} />
+              <input className="h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none sm:col-span-2 sm:text-sm" placeholder="Complemento" {...register('complemento')} />
+            </div>
+          </div>
         )}
 
         {accountType === 'barbearia' && (
@@ -248,6 +365,25 @@ export function RegisterPage() {
             )}
           </label>
         </div>
+
+        {accountType === 'barbearia' && (
+          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-sm leading-6 text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/50">
+            <input
+              className="mt-1 h-4 w-4 shrink-0 accent-[#12C6F3]"
+              type="checkbox"
+              {...register('aceite_termos')}
+            />
+            <span>
+              Declaro que as informações fornecidas são verdadeiras e aceito os
+              Termos de Uso e a Política de Privacidade.
+              {errors.aceite_termos && (
+                <span className="mt-2 block text-sm text-rose-200">
+                  {errors.aceite_termos.message}
+                </span>
+              )}
+            </span>
+          </label>
+        )}
 
         <button
           className="min-h-11 h-12 w-full rounded-2xl bg-[#12C6F3] px-4 text-sm font-black text-[#071426] shadow-[0_16px_40px_rgb(18_198_243/0.22)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#4EDCFF] hover:shadow-[0_20px_48px_rgb(18_198_243/0.30)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-70 sm:h-14 sm:rounded-[18px]"

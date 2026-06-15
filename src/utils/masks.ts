@@ -40,6 +40,28 @@ export function formatCpf(value: string | null | undefined) {
   return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
 }
 
+export function formatCnpj(value: string | null | undefined) {
+  const digits = onlyDigits(value).slice(0, 14)
+
+  if (digits.length <= 2) {
+    return digits
+  }
+
+  if (digits.length <= 5) {
+    return `${digits.slice(0, 2)}.${digits.slice(2)}`
+  }
+
+  if (digits.length <= 8) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`
+  }
+
+  if (digits.length <= 12) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`
+  }
+
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`
+}
+
 export function formatCep(value: string | null | undefined) {
   const digits = onlyDigits(value).slice(0, 8)
 
@@ -56,6 +78,10 @@ export function maskPhoneChange(event: ChangeEvent<HTMLInputElement>) {
 
 export function maskCpfChange(event: ChangeEvent<HTMLInputElement>) {
   event.target.value = formatCpf(event.target.value)
+}
+
+export function maskCnpjChange(event: ChangeEvent<HTMLInputElement>) {
+  event.target.value = formatCnpj(event.target.value)
 }
 
 export function maskCepChange(event: ChangeEvent<HTMLInputElement>) {

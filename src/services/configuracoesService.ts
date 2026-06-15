@@ -16,13 +16,16 @@ function optionalNumber(value?: number | null) {
 }
 
 function buildAddress(data: EmpresaSettingsFormData) {
-  const streetLine = [optionalText(data.rua), optionalText(data.numero)]
+  const streetLine = [
+    optionalText(data.logradouro) ?? optionalText(data.rua),
+    optionalText(data.numero),
+  ]
     .filter(Boolean)
     .join(', ')
   const cityLine = [
     optionalText(data.bairro),
     optionalText(data.cidade),
-    optionalText(data.estado)?.toUpperCase(),
+    (optionalText(data.uf) ?? optionalText(data.estado))?.toUpperCase(),
   ]
     .filter(Boolean)
     .join(' - ')
@@ -38,21 +41,32 @@ export async function updateEmpresaSettings(
   data: EmpresaSettingsFormData,
 ) {
   const endereco = buildAddress(data)
+  const street = optionalText(data.logradouro) ?? optionalText(data.rua)
+  const state = (optionalText(data.uf) ?? optionalText(data.estado))?.toUpperCase() ?? null
   const locationPayload = {
     bairro: optionalText(data.bairro),
     cep: onlyDigits(data.cep) || null,
     cidade: optionalText(data.cidade),
     complemento: optionalText(data.complemento),
+    cpf_cnpj: onlyDigits(data.cpf_cnpj) || null,
     email: data.email || null,
+    email_financeiro: data.email_financeiro || null,
     endereco,
-    estado: optionalText(data.estado)?.toUpperCase() || null,
+    estado: state,
+    logradouro: street,
     latitude: optionalNumber(data.latitude),
     logo_url: data.logo_url || null,
     longitude: optionalNumber(data.longitude),
     nome: data.nome.trim(),
+    nome_fantasia: optionalText(data.nome_fantasia),
     numero: optionalText(data.numero),
-    rua: optionalText(data.rua),
+    razao_social: optionalText(data.razao_social),
+    responsavel_cpf: onlyDigits(data.responsavel_cpf) || null,
+    responsavel_nome: optionalText(data.responsavel_nome),
+    rua: street,
     telefone: onlyDigits(data.telefone) || null,
+    tipo_pessoa: data.tipo_pessoa || null,
+    uf: state,
   }
 
   const { error } = await supabase
