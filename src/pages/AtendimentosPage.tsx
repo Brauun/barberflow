@@ -107,11 +107,15 @@ function DateFilterField({ label, onChange, value }: DateFilterFieldProps) {
 
 function emptyFormValues(): AtendimentoFormInput {
   return {
+    atendimento_tipo: 'cadastrado',
     barbeiro_id: '',
     cliente_id: '',
+    cliente_avulso_nome: '',
+    cliente_avulso_observacao: '',
+    cliente_avulso_telefone: '',
     data: todayInputValue(),
     desconto_tipo: 'valor',
-    forma_pagamento: 'Dinheiro',
+    forma_pagamento: '',
     hora: currentTimeInputValue(),
     motivo_desconto: 'Outro',
     servico_id: '',
@@ -190,6 +194,10 @@ export function AtendimentosPage() {
   const selectedServicoId = useWatch({
     control,
     name: 'servico_id',
+  })
+  const atendimentoTipo = useWatch({
+    control,
+    name: 'atendimento_tipo',
   })
   const watchedValor = Number(
     useWatch({
@@ -486,8 +494,8 @@ export function AtendimentosPage() {
             Registro de atendimentos
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-            Ao salvar, o sistema registra o atendimento, atualiza o caixa e
-            calcula a comissão do barbeiro automaticamente.
+            Agende clientes cadastrados ou avulsos. O caixa e a comissão são
+            gerados somente quando o atendimento for concluído.
           </p>
         </div>
 
@@ -605,12 +613,22 @@ export function AtendimentosPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="font-black text-slate-950 dark:text-white">
-                      {appointment.cliente}
-                    </p>
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <p className="font-black text-slate-950 dark:text-white">
+                        {appointment.cliente}
+                      </p>
+                      {appointment.is_walk_in && (
+                        <Badge variant="info">Avulso</Badge>
+                      )}
+                    </div>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                       {appointment.servico}
                     </p>
+                    {appointment.cliente_telefone && (
+                      <p className="mt-1 text-xs font-medium text-slate-400 dark:text-slate-500">
+                        {appointment.cliente_telefone}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-950 dark:text-white">
@@ -988,12 +1006,58 @@ export function AtendimentosPage() {
             </p>
           )}
 
-          <Select
-            error={errors.cliente_id?.message}
-            label="Cliente"
-            options={clienteOptions}
-            {...register('cliente_id')}
-          />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:has-[:checked]:border-brand-400 dark:has-[:checked]:bg-brand-400/10">
+              <input
+                className="h-4 w-4 accent-brand-500"
+                type="radio"
+                value="cadastrado"
+                {...register('atendimento_tipo')}
+              />
+              Cliente cadastrado
+            </label>
+            <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:has-[:checked]:border-brand-400 dark:has-[:checked]:bg-brand-400/10">
+              <input
+                className="h-4 w-4 accent-brand-500"
+                type="radio"
+                value="avulso"
+                {...register('atendimento_tipo')}
+              />
+              Cliente avulso
+            </label>
+          </div>
+
+          {atendimentoTipo === 'avulso' ? (
+            <div className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/70 sm:grid-cols-2">
+              <Input
+                error={errors.cliente_avulso_nome?.message}
+                label="Nome do cliente"
+                placeholder="João da Silva"
+                {...register('cliente_avulso_nome')}
+              />
+              <Input
+                error={errors.cliente_avulso_telefone?.message}
+                label="Telefone"
+                placeholder="(51) 9 9999-9999"
+                {...register('cliente_avulso_telefone')}
+              />
+              <div className="sm:col-span-2">
+                <Input
+                  error={errors.cliente_avulso_observacao?.message}
+                  label="Observação"
+                  placeholder="Cliente presencial, indicação, preferência..."
+                  {...register('cliente_avulso_observacao')}
+                />
+              </div>
+            </div>
+          ) : (
+            <Select
+              error={errors.cliente_id?.message}
+              label="Cliente"
+              options={clienteOptions}
+              {...register('cliente_id')}
+            />
+          )}
 
           <Select
             error={errors.barbeiro_id?.message}

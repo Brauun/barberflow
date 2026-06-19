@@ -1,8 +1,9 @@
 import { CalendarDays, Loader2, Search, UserRound } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { cn } from '../../utils/cn'
 import { useGlobalSearch } from '../../hooks/useGlobalSearch'
+import { useClickOutside } from '../../hooks/useClickOutside'
 import type { NavigationItem } from './Sidebar'
 
 type GlobalSearchProps = {
@@ -32,6 +33,7 @@ export function GlobalSearch({
   onSelectAtendimento,
   onSelectCliente,
 }: GlobalSearchProps) {
+  const searchRef = useRef<HTMLDivElement | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [term, setTerm] = useState('')
 
@@ -42,6 +44,8 @@ export function GlobalSearch({
     setIsOpen(value)
     onOpenChange?.(value)
   }
+
+  useClickOutside(searchRef, () => setOpenState(false), { enabled: isOpen })
 
   function handleSelectNav(item: NavigationItem) {
     setTerm('')
@@ -62,7 +66,7 @@ export function GlobalSearch({
   }
 
   return (
-    <div className={cn('relative w-full', className)}>
+    <div className={cn('relative w-full', className)} ref={searchRef}>
       <div className="flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500 transition focus-within:border-brand-200 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-100/70 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:focus-within:border-brand-400/40 dark:focus-within:bg-slate-950 dark:focus-within:ring-brand-400/10">
         {isSearching ? (
           <Loader2 className="shrink-0 animate-spin text-brand-500" size={16} />
@@ -72,9 +76,7 @@ export function GlobalSearch({
         <input
           aria-label="Buscar no BW Barber"
           className="h-full w-full min-w-0 bg-transparent text-base font-medium text-slate-700 outline-none placeholder:text-slate-500 sm:text-sm dark:text-slate-100 dark:placeholder:text-slate-400"
-          onBlur={() => {
-            window.setTimeout(() => setOpenState(false), 120)
-          }}
+          aria-expanded={isOpen}
           onChange={(event) => {
             setTerm(event.target.value)
             setOpenState(true)

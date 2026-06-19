@@ -30,7 +30,10 @@ export function NotificationsPanel({
   unreadCount,
 }: NotificationsPanelProps) {
   return (
-    <div className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-[0_24px_80px_rgb(15_23_42/0.18)] dark:border-slate-800 dark:bg-slate-950">
+    <div
+      className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-[0_24px_80px_rgb(15_23_42/0.18)] dark:border-slate-800 dark:bg-slate-950"
+      role="menu"
+    >
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
         <div>
           <p className="text-sm font-black text-slate-950 dark:text-white">Notificações</p>

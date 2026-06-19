@@ -19,6 +19,7 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react'
+import { useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 
 import {
@@ -30,6 +31,7 @@ import {
   canViewFinance,
   canViewReports,
 } from '../../auth/permissions'
+import { useClickOutside } from '../../hooks/useClickOutside'
 import type { UserRole } from '../../types/database'
 import { cn } from '../../utils/cn'
 
@@ -117,7 +119,12 @@ export function Sidebar({
   visibleItems,
   visibleSettingsItems,
 }: SidebarProps) {
+  const sidebarRef = useRef<HTMLElement | null>(null)
   const sidebarWidthClass = isExpanded ? 'lg:w-[13.75rem]' : 'lg:w-[4.75rem]'
+
+  useClickOutside(sidebarRef, onCloseMobileMenu, {
+    enabled: isMobileMenuOpen,
+  })
 
   function renderNavItem(item: NavigationItem) {
     const Icon = item.icon
@@ -180,6 +187,7 @@ export function Sidebar({
         sidebarWidthClass,
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
       )}
+      ref={sidebarRef}
     >
       <div
         className={cn(

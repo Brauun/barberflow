@@ -1,8 +1,9 @@
 import { Bell, Menu, Moon, Sun } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { Button } from '../ui'
 import { useTheme } from '../../hooks/useTheme'
+import { useClickOutside } from '../../hooks/useClickOutside'
 import { cn } from '../../utils/cn'
 import { GlobalSearch } from './GlobalSearch'
 import { NotificationsPanel } from './NotificationsPanel'
@@ -18,6 +19,7 @@ type TopBarProps = {
   notifications: InternalNotification[]
   notificationsLoading: boolean
   onMarkAllNotificationsRead: () => void
+  onCloseNotifications: () => void
   onOpenMobileMenu: () => void
   onOpenNotification: (notification: InternalNotification) => void
   onSelectAtendimento: () => void
@@ -37,6 +39,7 @@ export function TopBar({
   notifications,
   notificationsLoading,
   onMarkAllNotificationsRead,
+  onCloseNotifications,
   onOpenMobileMenu,
   onOpenNotification,
   onSelectAtendimento,
@@ -47,11 +50,16 @@ export function TopBar({
   unreadCount,
 }: TopBarProps) {
   const { resolvedTheme, setTheme } = useTheme()
+  const notificationsRef = useRef<HTMLDivElement | null>(null)
   // FIX: rastreia se o dropdown da busca mobile está aberto
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
 
   // FIX: eleva o z-index do header acima do overlay da sidebar (z-40)
   // apenas quando a busca mobile está ativa e o menu não está aberto
+  useClickOutside(notificationsRef, onCloseNotifications, {
+    enabled: isNotificationsOpen,
+  })
+
   const headerZClass =
     isMobileSearchOpen && !isMobileMenuOpen ? 'z-50' : 'z-30'
 
@@ -125,8 +133,9 @@ export function TopBar({
             </button>
           </div>
 
-          <div className="relative">
+          <div className="relative" ref={notificationsRef}>
             <Button
+              aria-expanded={isNotificationsOpen}
               aria-label="Notificações"
               onClick={onToggleNotifications}
               size="icon-md"

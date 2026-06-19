@@ -1,7 +1,8 @@
 import { X } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
+import { useClickOutside } from '../../hooks/useClickOutside'
 import { Button } from './Button'
 
 type ModalProps = {
@@ -12,6 +13,10 @@ type ModalProps = {
 }
 
 export function Modal({ children, isOpen, onClose, title }: ModalProps) {
+  const modalRef = useRef<HTMLDivElement | null>(null)
+
+  useClickOutside(modalRef, onClose, { enabled: isOpen })
+
   useEffect(() => {
     if (!isOpen) {
       return
@@ -31,7 +36,12 @@ export function Modal({ children, isOpen, onClose, title }: ModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center sm:px-4 sm:py-6">
-      <div className="flex max-h-[100dvh] w-full flex-col overflow-hidden border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900 sm:max-w-lg sm:rounded-3xl">
+      <div
+        aria-modal="true"
+        className="flex max-h-[100dvh] w-full flex-col overflow-hidden border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900 sm:max-w-lg sm:rounded-3xl"
+        ref={modalRef}
+        role="dialog"
+      >
         <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-900">
           <h2 className="pr-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
             {title}

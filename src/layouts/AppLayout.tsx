@@ -114,6 +114,7 @@ export function AppLayout() {
           isNotificationsOpen={isNotificationsOpen}
           notifications={notifications}
           notificationsLoading={notificationsLoading}
+          onCloseNotifications={() => setIsNotificationsOpen(false)}
           onMarkAllNotificationsRead={markAllNotificationsRead}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           onOpenNotification={openNotification}

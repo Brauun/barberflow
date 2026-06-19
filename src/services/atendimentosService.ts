@@ -38,6 +38,8 @@ export type DailyAppointment = {
   starts_at: string
   ends_at: string
   cliente: string
+  cliente_telefone?: string | null
+  is_walk_in?: boolean
   barbeiro: string
   barbeiro_id: string | null
   service_id: string | null
@@ -60,6 +62,8 @@ export type ServicoOption = {
   id: string
   nome: string
   preco: number
+  duration_minutes: number | null
+  duracao_minutos?: number | null
 }
 
 export async function listAtendimentos(
@@ -93,7 +97,7 @@ export async function listDailyAppointments(input: {
   let appointmentsQuery = supabase
     .from('appointments')
     .select(
-      'id,atendimento_id,starts_at,ends_at,status,valor_final,barbeiro_id,auto_completed,auto_completed_at,client:profiles(nome),barbeiro:barbeiros(nome),items:appointment_items(nome,duration_minutes,servico_id,valor_final)',
+      'id,atendimento_id,starts_at,ends_at,status,valor_final,barbeiro_id,auto_completed,auto_completed_at,is_walk_in,walk_in_customer_name,walk_in_customer_phone,client:profiles(nome,telefone),cliente:clientes(nome,telefone),barbeiro:barbeiros(nome),items:appointment_items(nome,duration_minutes,servico_id,valor_final)',
     )
     .eq('empresa_id', input.empresaId)
     .gte('starts_at', dayStart.toISOString())
@@ -147,7 +151,11 @@ export async function listDailyAppointments(input: {
     barbeiro_id: string | null
     auto_completed?: boolean
     auto_completed_at?: string | null
-    client: { nome: string } | null
+    client: { nome: string; telefone: string | null } | null
+    cliente: { nome: string; telefone: string | null } | null
+    is_walk_in?: boolean
+    walk_in_customer_name?: string | null
+    walk_in_customer_phone?: string | null
     barbeiro: { nome: string } | null
     items: Array<{
       nome: string
@@ -180,7 +188,17 @@ export async function listDailyAppointments(input: {
       return {
         barbeiro: appointment.barbeiro?.nome ?? 'Barbeiro',
         barbeiro_id: appointment.barbeiro_id,
-        cliente: appointment.client?.nome ?? 'Cliente',
+        cliente:
+          appointment.walk_in_customer_name ??
+          appointment.cliente?.nome ??
+          appointment.client?.nome ??
+          'Cliente',
+        cliente_telefone:
+          appointment.walk_in_customer_phone ??
+          appointment.cliente?.telefone ??
+          appointment.client?.telefone ??
+          null,
+        is_walk_in: Boolean(appointment.is_walk_in),
         duration_minutes:
           firstItem?.duration_minutes ??
           Math.round(
@@ -628,7 +646,7 @@ export async function listAtendimentoServicos(
 ): Promise<ServicoOption[]> {
   const { data, error } = await supabase
     .from('servicos')
-    .select('id,nome,preco')
+    .select('id,nome,preco,duration_minutes,duracao_minutos')
     .eq('empresa_id', empresaId)
     .eq('ativo', true)
     .order('nome', { ascending: true })
@@ -645,6 +663,21 @@ export async function registrarAtendimento(
   data: AtendimentoFormData,
 ) {
   const dataHoraInicio = new Date(`${data.data}T${data.hora}:00`)
+  const { data: service, error: serviceError } = await supabase
+    .from('servicos')
+    .select('id,nome,preco,duration_minutes,duracao_minutos')
+    .eq('empresa_id', empresaId)
+    .eq('id', data.servico_id)
+    .single()
+
+  if (serviceError) {
+    throw new Error(serviceError.message)
+  }
+
+  const durationMinutes = Number(
+    service?.duration_minutes ?? service?.duracao_minutos ?? 30,
+  )
+  const dataHoraFim = new Date(dataHoraInicio.getTime() + durationMinutes * 60 * 1000)
 
   const valorOriginal = Number(data.valor)
   const valorDesconto =
@@ -653,45 +686,34 @@ export async function registrarAtendimento(
       : Number(data.valor_desconto)
   const valorFinal = Math.max(0, valorOriginal - valorDesconto)
 
-  const { data: atendimento, error } = await supabase.rpc('registrar_atendimento', {
+  const { data: appointment, error } = await supabase.rpc('create_internal_appointment', {
     p_barbeiro_id: data.barbeiro_id,
-    p_cliente_id: data.cliente_id,
-    p_data_hora_inicio: dataHoraInicio.toISOString(),
+    p_cliente_id: data.atendimento_tipo === 'cadastrado' ? data.cliente_id ?? null : null,
+    p_ends_at: dataHoraFim.toISOString(),
     p_empresa_id: empresaId,
-    p_forma_pagamento: data.forma_pagamento,
+    p_is_walk_in: data.atendimento_tipo === 'avulso',
+    p_motivo_desconto: data.motivo_desconto || null,
     p_servico_id: data.servico_id,
-    p_valor: valorFinal,
+    p_starts_at: dataHoraInicio.toISOString(),
+    p_valor_desconto: valorDesconto,
+    p_valor_final: valorFinal,
+    p_valor_original: valorOriginal,
+    p_walk_in_customer_name: data.cliente_avulso_nome ?? null,
+    p_walk_in_customer_phone: data.cliente_avulso_telefone ?? null,
+    p_walk_in_notes: data.cliente_avulso_observacao ?? null,
   })
 
   if (error) {
     throw new Error(error.message)
   }
 
-  if (!atendimento) {
+  if (!appointment) {
     return
-  }
-
-  const atendimentoId = (atendimento as Atendimento).id
-
-  const { error: updateError } = await supabase
-    .from('atendimentos')
-    .update({
-      comissao_base: data.comissao_base,
-      motivo_desconto: data.motivo_desconto || null,
-      valor_desconto: valorDesconto,
-      valor_final: valorFinal,
-      valor_original: valorOriginal,
-    })
-    .eq('empresa_id', empresaId)
-    .eq('id', atendimentoId)
-
-  if (updateError) {
-    throw new Error(updateError.message)
   }
 
   if (valorDesconto > 0) {
     const { error: discountError } = await supabase.from('discount_logs').insert({
-      atendimento_id: atendimentoId,
+      appointment_id: appointment.id,
       empresa_id: empresaId,
       motivo: data.motivo_desconto ?? 'Outro',
       tipo: data.desconto_tipo,
@@ -707,8 +729,8 @@ export async function registrarAtendimento(
     void createAuditLog({
       action: 'desconto_aplicado',
       empresaId,
-      entityId: atendimentoId,
-      entityType: 'atendimentos',
+      entityId: appointment.id,
+      entityType: 'appointments',
       metadata: {
         motivo: data.motivo_desconto ?? 'Outro',
         tipo: data.desconto_tipo,

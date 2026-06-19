@@ -716,6 +716,7 @@ export type Database = {
           id: string
           empresa_id: string | null
           barbershop_id: string | null
+          cliente_id: string | null
           client_profile_id: string | null
           atendimento_id: string | null
           barbeiro_id: string | null
@@ -746,6 +747,12 @@ export type Database = {
           rescheduled_from_ends_at: string | null
           rescheduled_at: string | null
           rescheduled_by: string | null
+          is_walk_in: boolean
+          walk_in_customer_name: string | null
+          walk_in_customer_phone: string | null
+          walk_in_notes: string | null
+          source: string
+          created_by_user_id: string | null
           created_at: string
           updated_at: string
         }
@@ -1316,6 +1323,25 @@ export type Database = {
           p_servico_id: string
           p_starts_at: string
           p_ends_at: string
+        }
+        Returns: Database['public']['Tables']['appointments']['Row']
+      }
+      create_internal_appointment: {
+        Args: {
+          p_empresa_id: string
+          p_cliente_id: string | null
+          p_is_walk_in: boolean
+          p_walk_in_customer_name: string | null
+          p_walk_in_customer_phone: string | null
+          p_walk_in_notes: string | null
+          p_barbeiro_id: string
+          p_servico_id: string
+          p_starts_at: string
+          p_ends_at: string
+          p_valor_original: number
+          p_valor_desconto?: number
+          p_valor_final?: number | null
+          p_motivo_desconto?: string | null
         }
         Returns: Database['public']['Tables']['appointments']['Row']
       }
