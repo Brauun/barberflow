@@ -2,12 +2,7 @@ import { z } from 'zod'
 
 import { onlyDigits } from '../utils/masks'
 
-export const userRoleSchema = z.enum([
-  'administrador',
-  'gerente',
-  'barbeiro',
-  'recepcao',
-])
+export const userRoleSchema = z.enum(['administrador', 'barbeiro'])
 export const accountTypeSchema = z.enum(['barbearia', 'cliente'])
 export const tipoPessoaSchema = z.enum(['pf', 'pj'])
 

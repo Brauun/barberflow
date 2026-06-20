@@ -3,9 +3,12 @@ import type {
   EmpresaSettingsFormData,
   UserProfileFormData,
 } from '../types/configuracoes'
-import type { Empresa, Usuario } from '../types/database'
+import type { Database, Empresa, Usuario } from '../types/database'
 import { onlyDigits } from '../utils/masks'
 import { createAuditLog } from './observabilityService'
+
+export type CurrentEmployeeParticipation =
+  Database['public']['Tables']['employees']['Row']
 
 function optionalText(value?: string | null) {
   return value?.trim() || null
@@ -120,6 +123,52 @@ export async function updateUserProfile(
   if (error) {
     throw new Error(error.message)
   }
+}
+
+export async function getCurrentEmployeeParticipation(authUserId: string) {
+  const { data, error } = await supabase
+    .from('employees')
+    .select('*')
+    .eq('auth_user_id', authUserId)
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data as CurrentEmployeeParticipation | null
+}
+
+export async function setCurrentAdminBarberParticipation(
+  empresaId: string,
+  appearsInSchedule: boolean,
+) {
+  const { data, error } = await supabase.rpc(
+    'set_current_admin_barber_participation',
+    {
+      p_appears_in_schedule: appearsInSchedule,
+      p_empresa_id: empresaId,
+    },
+  )
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  await createAuditLog({
+    action: appearsInSchedule
+      ? 'admin_ativou_atendimento_agenda'
+      : 'admin_desativou_atendimento_agenda',
+    empresaId,
+    entityId: data?.id,
+    entityType: 'employees',
+    metadata: {
+      appears_in_schedule: appearsInSchedule,
+    },
+    userRole: 'administrador',
+  })
+
+  return data as CurrentEmployeeParticipation
 }
 
 export type SettingsEmpresa = Empresa

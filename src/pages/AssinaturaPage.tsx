@@ -201,7 +201,7 @@ export function AssinaturaPage() {
       <Card>
         <CardContent>
           <p className="text-sm text-slate-500">
-            Apenas administradores e gerentes podem gerenciar a assinatura.
+            Apenas administradores podem gerenciar a assinatura.
           </p>
         </CardContent>
       </Card>

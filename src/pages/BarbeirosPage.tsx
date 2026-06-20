@@ -250,6 +250,20 @@ export function BarbeirosPage() {
     [barbeiros],
   )
 
+  const employeeMetaByEmail = useMemo(() => {
+    const meta = new Map<string, EmployeeLink>()
+
+    for (const link of employeeLinksQuery.data ?? []) {
+      const email = link.employee?.email?.trim().toLowerCase()
+
+      if (email) {
+        meta.set(email, link)
+      }
+    }
+
+    return meta
+  }, [employeeLinksQuery.data])
+
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -329,7 +343,7 @@ export function BarbeirosPage() {
       }
 
       if (!canManageUnavailability) {
-        throw new Error('Apenas administrador ou gerente pode criar bloqueios.')
+        throw new Error('Apenas administrador pode criar bloqueios.')
       }
 
       if (editingUnavailability) {
@@ -361,7 +375,7 @@ export function BarbeirosPage() {
       }
 
       if (!canManageUnavailability) {
-        throw new Error('Apenas administrador ou gerente pode excluir bloqueios.')
+        throw new Error('Apenas administrador pode excluir bloqueios.')
       }
 
       await deleteBarberUnavailability(empresaId, block.id)
@@ -381,7 +395,7 @@ export function BarbeirosPage() {
       }
 
       if (!canInviteEmployees) {
-        throw new Error('Apenas administrador ou gerente pode convidar.')
+        throw new Error('Apenas administrador pode convidar.')
       }
 
       return createEmployeeInvitation({
@@ -778,10 +792,43 @@ export function BarbeirosPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {barbeiros.map((barbeiro) => (
+                {barbeiros.map((barbeiro) => {
+                  const employeeMeta = barbeiro.email
+                    ? employeeMetaByEmail.get(barbeiro.email.trim().toLowerCase())
+                    : undefined
+
+                  return (
                   <TableRow key={barbeiro.id}>
                     <TableCell className="font-medium text-zinc-950 dark:text-zinc-50">
-                      {barbeiro.nome}
+                      <div className="space-y-2">
+                        <span>{barbeiro.nome}</span>
+                        {employeeMeta && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {employeeMeta.employee?.is_owner && (
+                              <Badge variant="info">Dono</Badge>
+                            )}
+                            <Badge variant="default">
+                              {employeeMeta.role === 'administrador'
+                                ? 'Administrador'
+                                : 'Barbeiro'}
+                            </Badge>
+                            {employeeMeta.employee?.is_barber && (
+                              <Badge variant="success">Barbeiro</Badge>
+                            )}
+                            <Badge
+                              variant={
+                                employeeMeta.employee?.appears_in_schedule
+                                  ? 'success'
+                                  : 'default'
+                              }
+                            >
+                              {employeeMeta.employee?.appears_in_schedule
+                                ? 'Atende na agenda'
+                                : 'Somente administrativo'}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {barbeiro.telefone ? formatPhone(barbeiro.telefone) : '-'}
@@ -825,7 +872,8 @@ export function BarbeirosPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                  )
+                })}
               </TableBody>
             </Table>
           )}
@@ -867,6 +915,25 @@ export function BarbeirosPage() {
                       <p className="mt-1 text-sm text-slate-500">
                         {link.employee?.email ?? '-'} · {link.role}
                       </p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {link.employee?.is_owner && (
+                          <Badge variant="info">Dono</Badge>
+                        )}
+                        {link.employee?.is_barber && (
+                          <Badge variant="success">Barbeiro</Badge>
+                        )}
+                        <Badge
+                          variant={
+                            link.employee?.appears_in_schedule
+                              ? 'success'
+                              : 'default'
+                          }
+                        >
+                          {link.employee?.appears_in_schedule
+                            ? 'Atende na agenda'
+                            : 'Somente administrativo'}
+                        </Badge>
+                      </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant={link.status === 'ativo' ? 'success' : 'default'}>

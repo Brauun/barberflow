@@ -19,14 +19,16 @@ import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
-import { canExportData } from '../auth/permissions'
+import { canExportData, canManageEmployees } from '../auth/permissions'
 import { Button, Card, CardContent, CardHeader, Input, Select } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { queryKeys } from '../lib/queryKeys'
 import {
   getAppointmentAutomationSettings,
+  getCurrentEmployeeParticipation,
   saveAppointmentAutomationSettings,
+  setCurrentAdminBarberParticipation,
   updateEmpresaSettings,
   updateUserProfile,
   type AppointmentAutomationSettings,
@@ -86,8 +88,6 @@ type SettingsRowProps = {
 const roleLabels: Record<string, string> = {
   administrador: 'Administrador',
   barbeiro: 'Barbeiro',
-  gerente: 'Gerente',
-  recepcao: 'Recepcao',
 }
 
 const auditActionLabels: Record<string, string> = {
@@ -196,6 +196,7 @@ export function ConfiguracoesPage() {
   const empresaId = profile?.empresa_id
   const empresa = profile?.empresa
   const isAdmin = canExportData(profile?.papel)
+  const canManageOwnScheduleParticipation = canManageEmployees(profile?.papel)
 
   const empresaForm = useForm<
     EmpresaSettingsFormInput,
@@ -246,6 +247,12 @@ export function ConfiguracoesPage() {
     enabled: Boolean(empresaId && isAdmin),
     queryFn: () => listAuditLogs(empresaId as string),
     queryKey: queryKeys.configuracoes.auditLogs(empresaId),
+  })
+
+  const employeeParticipationQuery = useQuery({
+    enabled: Boolean(profile?.auth_user_id && canManageOwnScheduleParticipation),
+    queryFn: () => getCurrentEmployeeParticipation(profile?.auth_user_id as string),
+    queryKey: ['current-employee-participation', profile?.auth_user_id],
   })
 
   useEffect(() => {
@@ -469,6 +476,33 @@ export function ConfiguracoesPage() {
     },
   })
 
+  const scheduleParticipationMutation = useMutation({
+    mutationFn: async (appearsInSchedule: boolean) => {
+      if (!empresaId) {
+        throw new Error('Empresa não encontrada.')
+      }
+
+      await setCurrentAdminBarberParticipation(empresaId, appearsInSchedule)
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        employeeParticipationQuery.refetch(),
+        queryClient.invalidateQueries({ queryKey: queryKeys.barbeiros.all }),
+        queryClient.invalidateQueries({ queryKey: ['employee-links'] }),
+        queryClient.invalidateQueries({ queryKey: ['atendimento-barbeiros'] }),
+        queryClient.invalidateQueries({ queryKey: ['booking-barbers'] }),
+      ])
+      setPerfilError(null)
+    },
+    onError: (error) => {
+      setPerfilError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível alterar sua participação na agenda.',
+      )
+    },
+  })
+
   const businessHoursMutation = useMutation({
     mutationFn: async () => {
       if (!empresaId) {
@@ -660,6 +694,13 @@ export function ConfiguracoesPage() {
       )
     }
   }
+
+  const currentEmployeeParticipation = employeeParticipationQuery.data
+  const adminAppearsInSchedule = Boolean(
+    currentEmployeeParticipation?.appears_in_schedule,
+  )
+  const isScheduleParticipationBusy =
+    employeeParticipationQuery.isLoading || scheduleParticipationMutation.isPending
 
   if (!empresaId) {
     return (
@@ -1589,6 +1630,50 @@ export function ConfiguracoesPage() {
                     onChange: maskPhoneChange,
                   })}
                 />
+
+                {canManageOwnScheduleParticipation && (
+                  <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-slate-950 dark:text-slate-50">
+                          Também atendo como barbeiro
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                          Quando ativado, seu usuário aparece na agenda e conta
+                          como barbeiro ativo do plano.
+                        </p>
+                      </div>
+                      <div className="grid w-full gap-2 sm:flex sm:w-auto">
+                        <Button
+                          disabled={
+                            isScheduleParticipationBusy ||
+                            adminAppearsInSchedule
+                          }
+                          onClick={() =>
+                            scheduleParticipationMutation.mutate(true)
+                          }
+                          type="button"
+                          variant={adminAppearsInSchedule ? 'primary' : 'secondary'}
+                        >
+                          Atendo
+                        </Button>
+                        <Button
+                          disabled={
+                            isScheduleParticipationBusy ||
+                            !adminAppearsInSchedule
+                          }
+                          onClick={() =>
+                            scheduleParticipationMutation.mutate(false)
+                          }
+                          type="button"
+                          variant={!adminAppearsInSchedule ? 'primary' : 'secondary'}
+                        >
+                          Somente gestão
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex justify-end">
                   <Button

@@ -1135,6 +1135,9 @@ export type Database = {
           email: string
           telefone: string | null
           avatar_url: string | null
+          is_owner: boolean
+          is_barber: boolean
+          appears_in_schedule: boolean
           status: 'ativo' | 'inativo'
           created_at: string
           updated_at: string
@@ -1345,6 +1348,13 @@ export type Database = {
         }
         Returns: Database['public']['Tables']['appointments']['Row']
       }
+      set_current_admin_barber_participation: {
+        Args: {
+          p_empresa_id: string
+          p_appears_in_schedule: boolean
+        }
+        Returns: Database['public']['Tables']['employees']['Row']
+      }
       complete_appointment_financial_flow: {
         Args: {
           p_empresa_id: string
@@ -1398,7 +1408,7 @@ export type Database = {
   }
 }
 
-export type UserRole = 'administrador' | 'gerente' | 'barbeiro' | 'recepcao'
+export type UserRole = 'administrador' | 'barbeiro'
 
 export type Empresa = Database['public']['Tables']['empresas']['Row']
 

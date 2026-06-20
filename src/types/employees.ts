@@ -3,10 +3,7 @@ import { z } from 'zod'
 import { onlyDigits } from '../utils/masks'
 
 export const employeeRoleOptions = [
-  { label: 'Administrador', value: 'administrador' },
-  { label: 'Gerente', value: 'gerente' },
   { label: 'Barbeiro', value: 'barbeiro' },
-  { label: 'Recepcao', value: 'recepcao' },
 ] as const
 
 export const employeeInvitationSchema = z.object({
@@ -16,7 +13,7 @@ export const employeeInvitationSchema = z.object({
     .max(100, 'A comissao nao pode passar de 100%.'),
   email: z.string().email('Informe um e-mail valido.'),
   nome: z.string().min(2, 'Informe o nome.'),
-  role: z.enum(['administrador', 'gerente', 'barbeiro', 'recepcao']),
+  role: z.enum(['barbeiro']),
   telefone: z
     .string()
     .optional()

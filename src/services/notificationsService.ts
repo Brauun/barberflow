@@ -20,7 +20,7 @@ type NotificationEventInput = {
 }
 
 function canSeeAllNotifications(role: UserRole | null | undefined) {
-  return role === 'administrador' || role === 'gerente'
+  return role === 'administrador'
 }
 
 export async function listNotifications(input: {

@@ -6,14 +6,6 @@ function isAdmin(role: AppRole) {
   return role === 'administrador'
 }
 
-function isManager(role: AppRole) {
-  return role === 'gerente'
-}
-
-function isAdminOrManager(role: AppRole) {
-  return isAdmin(role) || isManager(role)
-}
-
 export function canManageServices(role: AppRole) {
   return isAdmin(role)
 }
@@ -31,23 +23,23 @@ export function canDeleteService(role: AppRole) {
 }
 
 export function canViewFinance(role: AppRole) {
-  return isAdminOrManager(role)
+  return isAdmin(role)
 }
 
 export function canManageFinance(role: AppRole) {
-  return isAdminOrManager(role)
+  return isAdmin(role)
 }
 
 export function canInviteEmployee(role: AppRole) {
-  return isAdminOrManager(role)
+  return isAdmin(role)
 }
 
 export function canManageEmployees(role: AppRole) {
-  return isAdminOrManager(role)
+  return isAdmin(role)
 }
 
 export function canManageClients(role: AppRole) {
-  return role === 'administrador' || role === 'gerente' || role === 'recepcao'
+  return isAdmin(role)
 }
 
 export function canExportData(role: AppRole) {
@@ -59,14 +51,9 @@ export function canManageSettings(role: AppRole) {
 }
 
 export function canManageAppointments(role: AppRole) {
-  return (
-    role === 'administrador' ||
-    role === 'gerente' ||
-    role === 'barbeiro' ||
-    role === 'recepcao'
-  )
+  return role === 'administrador' || role === 'barbeiro'
 }
 
 export function canViewReports(role: AppRole) {
-  return isAdminOrManager(role)
+  return isAdmin(role)
 }

@@ -23,8 +23,6 @@ import {
 const roleLabels: Record<string, string> = {
   administrador: 'Administrador',
   barbeiro: 'Barbeiro',
-  gerente: 'Gerente',
-  recepcao: 'Recepção',
 }
 
 export const allowedExpiredPaths = [

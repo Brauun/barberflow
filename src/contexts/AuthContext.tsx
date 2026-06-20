@@ -18,7 +18,7 @@ import { logger } from '../lib/logger'
 import { createClientProfile, createCompanyUser } from '../services/authService'
 import type { UserRole } from '../types/database'
 
-const roles: UserRole[] = ['administrador', 'gerente', 'barbeiro', 'recepcao']
+const roles: UserRole[] = ['administrador', 'barbeiro']
 
 function devAuthLog(message: string, details?: unknown) {
   if (!import.meta.env.DEV) {
