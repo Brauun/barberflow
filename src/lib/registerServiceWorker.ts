@@ -17,15 +17,16 @@ export function registerServiceWorker() {
           }
 
           nextWorker.addEventListener('statechange', () => {
-            if (nextWorker.state === 'installed') {
+            if (
+              nextWorker.state === 'installed' &&
+              navigator.serviceWorker.controller
+            ) {
               logger.info({
                 action: 'service_worker_update_available',
                 area: 'pwa',
-                message: 'Nova versão do BW Barber disponível para a próxima abertura.',
-                metadata: {
-                  hasController: Boolean(navigator.serviceWorker.controller),
-                },
+                message: 'Nova versão do BW Barber instalada, assumindo controle.',
               })
+              nextWorker.postMessage({ type: 'SKIP_WAITING' })
             }
           })
         })
@@ -40,11 +41,19 @@ export function registerServiceWorker() {
       })
   })
 
+  let refreshing = false
+
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) {
+      return
+    }
+
+    refreshing = true
     logger.info({
       action: 'service_worker_controller_changed',
       area: 'pwa',
-      message: 'Controle do service worker atualizado.',
+      message: 'Controle do service worker atualizado, recarregando.',
     })
+    window.location.reload()
   })
 }
