@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type MouseEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import {
@@ -19,6 +19,7 @@ import {
   markNotificationAsRead,
   type InternalNotification,
 } from '../services/notificationsService'
+import type { Json } from '../types/database'
 
 const roleLabels: Record<string, string> = {
   administrador: 'Administrador',
@@ -31,6 +32,126 @@ export const allowedExpiredPaths = [
   '/app/configuracoes',
   '/app/perfil',
 ]
+
+function notificationMetadata(value: Json): Record<string, unknown> {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>
+  }
+
+  return {}
+}
+
+function metadataString(metadata: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = metadata[key]
+
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim()
+    }
+  }
+
+  return null
+}
+
+function appendQuery(path: string, params: Record<string, string | null | undefined>) {
+  const searchParams = new URLSearchParams()
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) {
+      searchParams.set(key, value)
+    }
+  })
+
+  const query = searchParams.toString()
+
+  return query ? `${path}?${query}` : path
+}
+
+function routeForNotification(notification: InternalNotification) {
+  const metadata = notificationMetadata(notification.metadata)
+  const notificationType = notification.type.toLowerCase()
+  const appointmentId = metadataString(metadata, [
+    'appointmentId',
+    'appointment_id',
+    'appointment_id',
+    'atendimentoId',
+    'atendimento_id',
+  ])
+  const waitlistId = metadataString(metadata, ['waitlistId', 'waitlist_id'])
+  const clientId = metadataString(metadata, ['clientId', 'client_id', 'clienteId', 'cliente_id'])
+  const startsAt = metadataString(metadata, [
+    'starts_at',
+    'to_starts_at',
+    'from_starts_at',
+    'startsAt',
+  ])
+  const date =
+    metadataString(metadata, ['date', 'data', 'appointmentDate']) ??
+    startsAt?.slice(0, 10)
+  const barberId = metadataString(metadata, ['barber_id', 'barberId', 'barbeiro_id', 'barbeiroId'])
+  const route = metadataString(metadata, ['route'])
+
+  if (route?.startsWith('/')) {
+    return route
+  }
+
+  if (
+    notificationType === 'appointment_pending_completion' ||
+    notificationType === 'appointment_pending_confirmation'
+  ) {
+    return appendQuery('/app/atendimentos', {
+      appointmentId,
+      barberId,
+      date,
+      focus: 'completion',
+      status: 'aguardando_finalizacao',
+    })
+  }
+
+  if (
+    [
+      'appointment_created',
+      'appointment_cancelled',
+      'appointment_rescheduled',
+      'appointment_upcoming',
+    ].includes(notificationType)
+  ) {
+    return appendQuery('/app/atendimentos', {
+      appointmentId,
+      barberId,
+      date,
+    })
+  }
+
+  if (['waitlist_joined', 'waitlist_vacancy'].includes(notificationType)) {
+    return appendQuery('/app/atendimentos', {
+      tab: 'espera',
+      waitlistId,
+    })
+  }
+
+  if (notificationType === 'employee_invitation') {
+    return '/app/barbeiros'
+  }
+
+  if (notificationType === 'subscription_expired') {
+    return '/app/assinatura'
+  }
+
+  if (notificationType === 'payment_received') {
+    return '/app/fluxo-de-caixa'
+  }
+
+  if (notificationType === 'plan_purchased') {
+    return '/app/planos-fidelidade'
+  }
+
+  if (notificationType === 'client_created') {
+    return appendQuery('/app/clientes', { id: clientId })
+  }
+
+  return '/app/dashboard'
+}
 
 export function useAppLayout() {
   const { isLoading, profile, user, userType } = useAuth()
@@ -189,7 +310,10 @@ export function useAppLayout() {
     })
   }
 
-  function openNotification(notification: InternalNotification) {
+  function openNotification(
+    notification: InternalNotification,
+    event?: MouseEvent<HTMLButtonElement>,
+  ) {
     if (!profile?.empresa_id) return
 
     if (!notification.read_at) {
@@ -201,21 +325,14 @@ export function useAppLayout() {
 
     setIsNotificationsOpen(false)
 
-    if (
-      [
-        'appointment_created',
-        'appointment_cancelled',
-        'appointment_rescheduled',
-        'appointment_upcoming',
-      ].includes(notification.type)
-    ) {
-      navigate('/app/atendimentos')
+    const targetRoute = routeForNotification(notification)
+
+    if (event?.ctrlKey || event?.metaKey) {
+      window.open(targetRoute, '_blank', 'noopener,noreferrer')
       return
     }
 
-    if (['waitlist_joined', 'waitlist_vacancy'].includes(notification.type)) {
-      navigate('/app/atendimentos')
-    }
+    navigate(targetRoute)
   }
 
   function markAllNotificationsRead() {

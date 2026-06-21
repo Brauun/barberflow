@@ -1,5 +1,6 @@
 import {
   CalendarCheck,
+  Gift,
   Home,
   LogOut,
   MapPin,
@@ -21,6 +22,7 @@ const clientNavigation = [
   { icon: Home, label: 'Inicio', path: '/cliente' },
   { icon: CalendarCheck, label: 'Agendamentos', path: '/cliente/agendamentos' },
   { icon: Scissors, label: 'Minha Barbearia', path: '/cliente/minha-barbearia' },
+  { icon: Gift, label: 'Benefícios', path: '/cliente/beneficios' },
   { icon: UserRound, label: 'Perfil', path: '/cliente/perfil' },
 ]
 
@@ -161,7 +163,7 @@ export function ClientLayout() {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/88 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 md:hidden">
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-5 gap-1">
           {clientNavigation.map((item) => {
             const Icon = item.icon
 

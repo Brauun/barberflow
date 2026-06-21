@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bell, CalendarPlus, Eye, Loader2, Plus, RefreshCw, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
+import { useSearchParams } from 'react-router-dom'
 
 import {
   Badge,
@@ -44,6 +45,7 @@ import {
   type AtendimentoFormData,
   type AtendimentoFormInput,
 } from '../types/atendimentos'
+import { listClientBenefits } from '../services/benefitsService'
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
@@ -109,6 +111,7 @@ function emptyFormValues(): AtendimentoFormInput {
   return {
     atendimento_tipo: 'cadastrado',
     barbeiro_id: '',
+    benefit_id: '',
     cliente_id: '',
     cliente_avulso_nome: '',
     cliente_avulso_observacao: '',
@@ -166,18 +169,28 @@ export function AtendimentosPage() {
   const empresaId = profile?.empresa_id
   const waitlistAccess = useFeatureAccess('HAS_WAITLIST')
   const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
+  const deepLinkAppointmentId = searchParams.get('appointmentId')
+  const deepLinkFocus = searchParams.get('focus')
   const today = todayInputValue()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
-  const [dailyDate, setDailyDate] = useState(todayInputValue())
-  const [dailyBarberId, setDailyBarberId] = useState('')
-  const [dailyStatus, setDailyStatus] = useState('')
+  const [dailyDate, setDailyDate] = useState(
+    () => searchParams.get('date') ?? todayInputValue(),
+  )
+  const [dailyBarberId, setDailyBarberId] = useState(
+    () => searchParams.get('barberId') ?? '',
+  )
+  const [dailyStatus, setDailyStatus] = useState(
+    () => searchParams.get('status') ?? '',
+  )
   const [selectedDailyAppointment, setSelectedDailyAppointment] =
     useState<DailyAppointment | null>(null)
   const [rescheduleAppointment, setRescheduleAppointment] =
     useState<DailyAppointment | null>(null)
   const [rescheduleDate, setRescheduleDate] = useState(todayInputValue())
   const [rescheduleTime, setRescheduleTime] = useState(currentTimeInputValue())
+  const handledDeepLinkRef = useRef<string | null>(null)
 
   const {
     formState: { errors, isSubmitting },
@@ -194,6 +207,10 @@ export function AtendimentosPage() {
   const selectedServicoId = useWatch({
     control,
     name: 'servico_id',
+  })
+  const selectedClienteId = useWatch({
+    control,
+    name: 'cliente_id',
   })
   const atendimentoTipo = useWatch({
     control,
@@ -232,6 +249,12 @@ export function AtendimentosPage() {
     enabled: Boolean(empresaId),
     queryFn: () => listAtendimentoClientes(empresaId as string),
     queryKey: ['atendimentos-clientes', empresaId],
+  })
+
+  const clientBenefitsQuery = useQuery({
+    enabled: Boolean(empresaId),
+    queryFn: () => listClientBenefits(empresaId as string),
+    queryKey: ['client-benefits', empresaId, 'atendimentos'],
   })
 
   const barbeirosQuery = useQuery({
@@ -287,6 +310,50 @@ export function AtendimentosPage() {
     queryKey: ['admin-waitlist', empresaId],
   })
 
+  const benefitOptions = useMemo(() => {
+    const benefits = (clientBenefitsQuery.data ?? []).filter(
+      (benefit) =>
+        benefit.cliente_id === selectedClienteId &&
+        benefit.status === 'ativo' &&
+        (Number(benefit.saldo_usos) > 0 || Number(benefit.saldo_credito) > 0),
+    )
+
+    return [
+      { label: 'Não aplicar benefício', value: '' },
+      ...benefits.map((benefit) => ({
+        label: `${benefit.program?.nome ?? 'Benefício'} (${Number(benefit.saldo_usos)} uso(s))`,
+        value: benefit.id,
+      })),
+    ]
+  }, [clientBenefitsQuery.data, selectedClienteId])
+
+  useEffect(() => {
+    if (
+      !deepLinkAppointmentId ||
+      dailyAppointmentsQuery.isLoading ||
+      handledDeepLinkRef.current === deepLinkAppointmentId
+    ) {
+      return
+    }
+
+    const appointment = dailyAppointmentsQuery.data?.find(
+      (item) => item.id === deepLinkAppointmentId,
+    )
+
+    handledDeepLinkRef.current = deepLinkAppointmentId
+
+    if (appointment) {
+      setSelectedDailyAppointment(appointment)
+      return
+    }
+
+    window.alert('Registro não encontrado.')
+  }, [
+    dailyAppointmentsQuery.data,
+    dailyAppointmentsQuery.isLoading,
+    deepLinkAppointmentId,
+  ])
+
   const clienteOptions = useMemo(
     () => [
       { label: 'Selecione um cliente', value: '' },
@@ -332,6 +399,10 @@ export function AtendimentosPage() {
       })
     }
   }, [selectedServicoId, servicosQuery.data, setValue])
+
+  useEffect(() => {
+    setValue('benefit_id', '', { shouldDirty: true })
+  }, [selectedClienteId, setValue])
 
   const saveMutation = useMutation({
     mutationFn: async (data: AtendimentoFormData) => {
@@ -1051,12 +1122,21 @@ export function AtendimentosPage() {
               </div>
             </div>
           ) : (
-            <Select
-              error={errors.cliente_id?.message}
-              label="Cliente"
-              options={clienteOptions}
-              {...register('cliente_id')}
-            />
+            <div className="space-y-4">
+              <Select
+                error={errors.cliente_id?.message}
+                label="Cliente"
+                options={clienteOptions}
+                {...register('cliente_id')}
+              />
+              {benefitOptions.length > 1 && (
+                <Select
+                  label="Benefício disponível"
+                  options={benefitOptions}
+                  {...register('benefit_id')}
+                />
+              )}
+            </div>
           )}
 
           <Select
@@ -1231,6 +1311,52 @@ export function AtendimentosPage() {
                 </span>
               </div>
             ))}
+            {selectedDailyAppointment.status === 'aguardando_finalizacao' && (
+              <div
+                className={
+                  deepLinkFocus === 'completion'
+                    ? 'rounded-2xl border border-brand-200 bg-brand-50 p-4 dark:border-brand-400/30 dark:bg-brand-400/10'
+                    : 'rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/70'
+                }
+              >
+                <p className="text-sm font-semibold text-slate-950 dark:text-white">
+                  Finalização pendente
+                </p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Confirme se o atendimento foi concluído ou se o cliente não
+                  compareceu.
+                </p>
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    disabled={updateStatusMutation.isPending}
+                    onClick={() => {
+                      updateStatusMutation.mutate({
+                        appointment: selectedDailyAppointment,
+                        status: 'concluido',
+                      })
+                      setSelectedDailyAppointment(null)
+                    }}
+                    type="button"
+                  >
+                    Concluir
+                  </Button>
+                  <Button
+                    disabled={updateStatusMutation.isPending}
+                    onClick={() => {
+                      updateStatusMutation.mutate({
+                        appointment: selectedDailyAppointment,
+                        status: 'nao_compareceu',
+                      })
+                      setSelectedDailyAppointment(null)
+                    }}
+                    type="button"
+                    variant="secondary"
+                  >
+                    Não compareceu
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Modal>

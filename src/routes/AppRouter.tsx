@@ -52,6 +52,11 @@ const ClientBookingPage = lazy(lazyWithRetry(() =>
     default: ClientBookingPage,
   })),
 ))
+const ClientBenefitsPage = lazy(lazyWithRetry(() =>
+  import('../pages/ClientBenefitsPage').then(({ ClientBenefitsPage }) => ({
+    default: ClientBenefitsPage,
+  })),
+))
 const ClientHomePage = lazy(lazyWithRetry(() =>
   import('../pages/ClientHomePage').then(({ ClientHomePage }) => ({
     default: ClientHomePage,
@@ -219,6 +224,10 @@ const router = createBrowserRouter([
               {
                 path: 'minha-barbearia',
                 element: withSuspense(<ClientBarbershopPage />),
+              },
+              {
+                path: 'beneficios',
+                element: withSuspense(<ClientBenefitsPage />),
               },
               {
                 path: 'perfil',

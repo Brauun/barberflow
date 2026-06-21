@@ -1,13 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  CheckCircle2,
   Edit,
   Gift,
+  HeartHandshake,
   Loader2,
   Plus,
   Repeat,
   Sparkles,
   Users,
+  XCircle,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
@@ -26,9 +29,12 @@ import { useAuth } from '../hooks/useAuth'
 import { useFeatureAccess } from '../hooks/useSubscription'
 import {
   createBenefitProgram,
+  listBenefitInterests,
   listBenefitPrograms,
   listBenefitUsageLogs,
   listClientBenefits,
+  reviewBenefitInterest,
+  updateBenefitProgramStatus,
   updateBenefitProgram,
   type BenefitProgramWithDetails,
 } from '../services/benefitsService'
@@ -157,6 +163,12 @@ export function PlanosFidelidadePage() {
     queryKey: ['benefit-usage-logs', empresaId],
   })
 
+  const interestsQuery = useQuery({
+    enabled: Boolean(empresaId),
+    queryFn: () => listBenefitInterests(empresaId as string),
+    queryKey: ['benefit-interests', empresaId],
+  })
+
   const servicosQuery = useQuery({
     enabled: Boolean(empresaId),
     queryFn: () => listServicos(empresaId as string, ''),
@@ -179,8 +191,11 @@ export function PlanosFidelidadePage() {
         0,
       ),
       usage: programs.reduce((total, program) => total + program.usageCount, 0),
+      pendingInterests: (interestsQuery.data ?? []).filter(
+        (interest) => interest.status === 'pendente',
+      ).length,
     }
-  }, [programsQuery.data])
+  }, [interestsQuery.data, programsQuery.data])
 
   const {
     control,
@@ -221,6 +236,36 @@ export function PlanosFidelidadePage() {
       setEditingProgram(null)
       setFormError(null)
       reset(emptyFormValues())
+    },
+  })
+
+  const statusMutation = useMutation({
+    mutationFn: ({
+      programId,
+      status,
+    }: {
+      programId: string
+      status: 'ativo' | 'inativo'
+    }) => updateBenefitProgramStatus(empresaId as string, programId, status),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['benefit-programs'] })
+    },
+  })
+
+  const reviewInterestMutation = useMutation({
+    mutationFn: ({
+      interestId,
+      status,
+    }: {
+      interestId: string
+      status: 'aprovado' | 'negado'
+    }) => reviewBenefitInterest(interestId, status),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['benefit-interests'] }),
+        queryClient.invalidateQueries({ queryKey: ['client-benefits'] }),
+        queryClient.invalidateQueries({ queryKey: ['benefit-usage-logs'] }),
+      ])
     },
   })
 
@@ -330,7 +375,7 @@ export function PlanosFidelidadePage() {
         </Button>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -358,6 +403,16 @@ export function PlanosFidelidadePage() {
             </p>
             <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
               {totals.usage}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Interesses pendentes
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
+              {totals.pendingInterests}
             </p>
           </CardContent>
         </Card>
@@ -414,14 +469,28 @@ export function PlanosFidelidadePage() {
                         </div>
                       </div>
 
-                      <Button
-                        aria-label="Editar programa"
-                        onClick={() => openEditModal(program)}
-                        size="icon-sm"
-                        variant="ghost"
-                      >
-                        <Edit size={16} />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={() =>
+                            statusMutation.mutate({
+                              programId: program.id,
+                              status: program.status === 'ativo' ? 'inativo' : 'ativo',
+                            })
+                          }
+                          size="sm"
+                          variant="secondary"
+                        >
+                          {program.status === 'ativo' ? 'Inativar' : 'Ativar'}
+                        </Button>
+                        <Button
+                          aria-label="Editar programa"
+                          onClick={() => openEditModal(program)}
+                          size="icon-sm"
+                          variant="ghost"
+                        >
+                          <Edit size={16} />
+                        </Button>
+                      </div>
                     </div>
 
                     {program.descricao && (
@@ -486,6 +555,81 @@ export function PlanosFidelidadePage() {
                 barbearia.
               </p>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <HeartHandshake className="text-brand-600" size={20} />
+            <div>
+              <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+                Interesses de clientes
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Solicitações feitas pelo app do cliente para planos e pacotes.
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {interestsQuery.data?.length ? (
+            <div className="space-y-3">
+              {interestsQuery.data.slice(0, 8).map((interest) => (
+                <div
+                  className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between"
+                  key={interest.id}
+                >
+                  <div>
+                    <p className="font-black text-slate-950 dark:text-slate-50">
+                      {interest.profile?.nome ?? interest.cliente?.nome ?? 'Cliente'}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      {interest.program?.nome ?? 'Programa'} ·{' '}
+                      {interest.status.charAt(0).toUpperCase() + interest.status.slice(1)}
+                    </p>
+                  </div>
+                  {interest.status === 'pendente' ? (
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        leftIcon={<CheckCircle2 size={16} />}
+                        onClick={() =>
+                          reviewInterestMutation.mutate({
+                            interestId: interest.id,
+                            status: 'aprovado',
+                          })
+                        }
+                        size="sm"
+                      >
+                        Aprovar
+                      </Button>
+                      <Button
+                        leftIcon={<XCircle size={16} />}
+                        onClick={() =>
+                          reviewInterestMutation.mutate({
+                            interestId: interest.id,
+                            status: 'negado',
+                          })
+                        }
+                        size="sm"
+                        variant="secondary"
+                      >
+                        Negar
+                      </Button>
+                    </div>
+                  ) : (
+                    <Badge variant={interest.status === 'negado' ? 'danger' : 'success'}>
+                      {interest.status.charAt(0).toUpperCase() + interest.status.slice(1)}
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Nenhum cliente demonstrou interesse ainda.
+            </p>
           )}
         </CardContent>
       </Card>

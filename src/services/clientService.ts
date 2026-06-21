@@ -537,6 +537,8 @@ export async function createClientAppointment(input: {
     title: 'Novo agendamento',
     type: 'appointment_created',
   })
+
+  return appointment
 }
 
 export async function cancelClientAppointment(input: {

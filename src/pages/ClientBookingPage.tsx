@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CalendarPlus } from 'lucide-react'
+import { CalendarPlus, Gift } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { Button, Card, CardContent, CardHeader, Select } from '../components/ui'
+import { Badge, Button, Card, CardContent, CardHeader, Select } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import {
   createWaitlistEntry,
@@ -22,6 +22,7 @@ import {
   canUseFeature,
   getSubscriptionState,
 } from '../services/subscriptionsService'
+import { listMyClientBenefits, redeemClientBenefit } from '../services/benefitsService'
 import { buildBookingSlots } from '../utils/bookingSlots'
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
@@ -44,6 +45,7 @@ export function ClientBookingPage() {
   const [preferredPeriod, setPreferredPeriod] = useState<
     'manha' | 'tarde' | 'noite' | 'qualquer'
   >('qualquer')
+  const [selectedBenefitId, setSelectedBenefitId] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
 
   const primaryQuery = useQuery({
@@ -110,6 +112,23 @@ export function ClientBookingPage() {
     queryKey: ['special-business-hours', barbershop?.empresa_id, date],
   })
 
+  const benefitsQuery = useQuery({
+    enabled: Boolean(barbershop?.empresa_id && clientProfile?.id),
+    queryFn: () =>
+      listMyClientBenefits(barbershop?.empresa_id as string, clientProfile?.id as string),
+    queryKey: ['client-benefits-own', barbershop?.empresa_id, clientProfile?.id],
+  })
+
+  const availableBenefits = useMemo(
+    () =>
+      (benefitsQuery.data ?? []).filter(
+        (benefit) =>
+          benefit.status === 'ativo' &&
+          (Number(benefit.saldo_usos) > 0 || Number(benefit.saldo_credito) > 0),
+      ),
+    [benefitsQuery.data],
+  )
+
   const slotResult = useMemo(
     () =>
       buildBookingSlots({
@@ -153,7 +172,7 @@ export function ClientBookingPage() {
       const startsAt = new Date(slot)
       const endsAt = new Date(startsAt.getTime() + duration * 60 * 1000)
 
-      await createClientAppointment({
+      const appointment = await createClientAppointment({
         barber: selectedBarber,
         barbershop,
         clientProfile,
@@ -161,11 +180,16 @@ export function ClientBookingPage() {
         service: selectedService,
         startsAt: startsAt.toISOString(),
       })
+
+      if (selectedBenefitId) {
+        await redeemClientBenefit(selectedBenefitId, appointment.id)
+      }
     },
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['client-appointments'] }),
         queryClient.invalidateQueries({ queryKey: ['booking-busy'] }),
+        queryClient.invalidateQueries({ queryKey: ['client-benefits-own'] }),
       ])
       navigate('/cliente/agendamentos')
     },
@@ -225,6 +249,7 @@ export function ClientBookingPage() {
               setBarberId(event.target.value)
               setServiceId('')
               setSlot('')
+              setSelectedBenefitId('')
             }}
             options={[
               { label: 'Selecione', value: '' },
@@ -241,6 +266,7 @@ export function ClientBookingPage() {
             onChange={(event) => {
               setServiceId(event.target.value)
               setSlot('')
+              setSelectedBenefitId('')
             }}
             options={[
               {
@@ -256,6 +282,59 @@ export function ClientBookingPage() {
             ]}
             value={serviceId}
           />
+
+          {availableBenefits.length > 0 && (
+            <div className="rounded-[1.25rem] border border-brand-100 bg-brand-50/60 p-4 dark:border-brand-500/20 dark:bg-brand-500/10">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-brand-600 dark:bg-slate-900 dark:text-brand-300">
+                  <Gift size={18} />
+                </span>
+                <div>
+                  <p className="font-black text-slate-950 dark:text-white">
+                    Você possui benefício disponível
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Escolha se deseja aplicar neste agendamento.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <button
+                  className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${
+                    selectedBenefitId === ''
+                      ? 'border-slate-950 bg-slate-950 text-white dark:border-brand-400 dark:bg-brand-500 dark:text-slate-950'
+                      : 'border-slate-200 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
+                  }`}
+                  onClick={() => setSelectedBenefitId('')}
+                  type="button"
+                >
+                  Não usar agora
+                </button>
+                {availableBenefits.map((benefit) => (
+                  <button
+                    className={`rounded-2xl border px-4 py-3 text-left transition ${
+                      selectedBenefitId === benefit.id
+                        ? 'border-slate-950 bg-slate-950 text-white dark:border-brand-400 dark:bg-brand-500 dark:text-slate-950'
+                        : 'border-slate-200 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
+                    }`}
+                    key={benefit.id}
+                    onClick={() => setSelectedBenefitId(benefit.id)}
+                    type="button"
+                  >
+                    <span className="block text-sm font-black">
+                      {benefit.program?.nome ?? 'Benefício'}
+                    </span>
+                    <span className="mt-2 flex flex-wrap gap-2 text-xs">
+                      <Badge variant="success">{Number(benefit.saldo_usos)} uso(s)</Badge>
+                      {Number(benefit.saldo_credito) > 0 && (
+                        <Badge>{currencyFormatter.format(Number(benefit.saldo_credito))}</Badge>
+                      )}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {barberId && !servicesQuery.isLoading && servicesQuery.data?.length === 0 && (
             <p className="rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-brand-500/20 dark:bg-brand-500/10 dark:text-slate-200">

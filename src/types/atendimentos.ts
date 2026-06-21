@@ -4,6 +4,7 @@ export const atendimentoSchema = z
   .object({
     atendimento_tipo: z.enum(['cadastrado', 'avulso']).default('cadastrado'),
     barbeiro_id: z.string().uuid('Selecione um barbeiro.'),
+    benefit_id: z.string().optional(),
     cliente_id: z.string().optional(),
     cliente_avulso_nome: z.string().optional(),
     cliente_avulso_observacao: z.string().optional(),

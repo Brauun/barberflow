@@ -1,3 +1,5 @@
+import type { MouseEvent } from 'react'
+
 import { cn } from '../../utils/cn'
 import type { InternalNotification } from '../../services/notificationsService'
 
@@ -6,7 +8,10 @@ type NotificationsPanelProps = {
   isMarkingAllRead: boolean
   notifications: InternalNotification[]
   onMarkAllRead: () => void
-  onOpenNotification: (notification: InternalNotification) => void
+  onOpenNotification: (
+    notification: InternalNotification,
+    event?: MouseEvent<HTMLButtonElement>,
+  ) => void
   unreadCount: number
 }
 
@@ -63,12 +68,13 @@ export function NotificationsPanel({
         ) : (
           notifications.map((notification) => (
             <button
+              aria-label={`Abrir notificação: ${notification.title}`}
               className={cn(
-                'mb-2 w-full rounded-2xl px-3 py-3 text-left transition last:mb-0 hover:bg-slate-50 dark:hover:bg-slate-900',
+                'mb-2 w-full cursor-pointer rounded-2xl px-3 py-3 text-left transition last:mb-0 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-300 dark:hover:bg-slate-900',
                 !notification.read_at && 'bg-brand-50/70 dark:bg-brand-400/10',
               )}
               key={notification.id}
-              onClick={() => onOpenNotification(notification)}
+              onClick={(event) => onOpenNotification(notification, event)}
               type="button"
             >
               <div className="flex items-start gap-3">

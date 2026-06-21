@@ -17,12 +17,23 @@ export type BenefitUsageLog =
     cliente?: { nome: string } | null
     program?: { nome: string } | null
   }
+export type BenefitInterest =
+  Database['public']['Tables']['benefit_interests']['Row'] & {
+    cliente?: { nome: string | null; telefone: string | null } | null
+    profile?: { nome: string | null; telefone: string | null } | null
+    program?: { nome: string | null; tipo: string | null; valor: number | null } | null
+  }
 
 export type BenefitProgramWithDetails = BenefitProgram & {
   rules: BenefitRule[]
   rewards: BenefitReward[]
   participantsCount: number
   usageCount: number
+}
+
+export type ClientBenefitWithDetails = ClientBenefit & {
+  rules?: BenefitRule[]
+  rewards?: BenefitReward[]
 }
 
 function splitCommaList(value: string | undefined) {
@@ -247,4 +258,176 @@ export async function listBenefitUsageLogs(empresaId: string) {
   }
 
   return (data ?? []) as unknown as BenefitUsageLog[]
+}
+
+export async function listClientAvailableBenefitPrograms(empresaId: string) {
+  const [programsResponse, rulesResponse, rewardsResponse] = await Promise.all([
+    supabase
+      .from('benefit_programs')
+      .select('*')
+      .eq('empresa_id', empresaId)
+      .eq('status', 'ativo')
+      .order('created_at', { ascending: false }),
+    supabase.from('benefit_rules').select('*').eq('empresa_id', empresaId),
+    supabase.from('benefit_rewards').select('*').eq('empresa_id', empresaId),
+  ])
+
+  const failedResponse = [programsResponse, rulesResponse, rewardsResponse].find(
+    (response) => response.error,
+  )
+
+  if (failedResponse?.error) {
+    throw new Error(failedResponse.error.message)
+  }
+
+  const rules = (rulesResponse.data ?? []) as BenefitRule[]
+  const rewards = (rewardsResponse.data ?? []) as BenefitReward[]
+
+  return ((programsResponse.data ?? []) as BenefitProgram[]).map((program) => ({
+    ...program,
+    participantsCount: 0,
+    rewards: rewards.filter((reward) => reward.program_id === program.id),
+    rules: rules.filter((rule) => rule.program_id === program.id),
+    usageCount: 0,
+  }))
+}
+
+export async function listMyClientBenefits(empresaId: string, clientProfileId: string) {
+  const [benefitsResponse, rulesResponse, rewardsResponse] = await Promise.all([
+    supabase
+      .from('client_benefits')
+      .select('*,program:benefit_programs(nome)')
+      .eq('empresa_id', empresaId)
+      .eq('client_profile_id', clientProfileId)
+      .order('created_at', { ascending: false }),
+    supabase.from('benefit_rules').select('*').eq('empresa_id', empresaId),
+    supabase.from('benefit_rewards').select('*').eq('empresa_id', empresaId),
+  ])
+
+  const failedResponse = [benefitsResponse, rulesResponse, rewardsResponse].find(
+    (response) => response.error,
+  )
+
+  if (failedResponse?.error) {
+    throw new Error(failedResponse.error.message)
+  }
+
+  const rules = (rulesResponse.data ?? []) as BenefitRule[]
+  const rewards = (rewardsResponse.data ?? []) as BenefitReward[]
+
+  return ((benefitsResponse.data ?? []) as unknown as ClientBenefit[]).map(
+    (benefit) => ({
+      ...benefit,
+      rewards: rewards.filter((reward) => reward.program_id === benefit.program_id),
+      rules: rules.filter((rule) => rule.program_id === benefit.program_id),
+    }),
+  )
+}
+
+export async function listBenefitInterests(empresaId: string) {
+  const { data, error } = await supabase
+    .from('benefit_interests')
+    .select(
+      '*,cliente:clientes(nome,telefone),profile:profiles(nome,telefone),program:benefit_programs(nome,tipo,valor)',
+    )
+    .eq('empresa_id', empresaId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return (data ?? []) as unknown as BenefitInterest[]
+}
+
+export async function listMyBenefitInterests(
+  empresaId: string,
+  clientProfileId: string,
+) {
+  const { data, error } = await supabase
+    .from('benefit_interests')
+    .select('*,program:benefit_programs(nome,tipo,valor)')
+    .eq('empresa_id', empresaId)
+    .eq('client_profile_id', clientProfileId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return (data ?? []) as unknown as BenefitInterest[]
+}
+
+export async function requestBenefitInterest(programId: string) {
+  const { data, error } = await supabase.rpc('request_benefit_interest', {
+    p_program_id: programId,
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data as BenefitInterest
+}
+
+export async function reviewBenefitInterest(
+  interestId: string,
+  status: 'aprovado' | 'negado' | 'ativado' | 'cancelado',
+) {
+  const { data, error } = await supabase.rpc('review_benefit_interest', {
+    p_interest_id: interestId,
+    p_status: status,
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data as BenefitInterest
+}
+
+export async function updateBenefitProgramStatus(
+  empresaId: string,
+  programId: string,
+  status: 'ativo' | 'inativo',
+) {
+  const { error } = await supabase
+    .from('benefit_programs')
+    .update({ status })
+    .eq('empresa_id', empresaId)
+    .eq('id', programId)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
+export async function applyLoyaltyProgressForAppointment(
+  empresaId: string,
+  appointmentId: string,
+) {
+  const { error } = await supabase.rpc('apply_loyalty_progress_for_appointment', {
+    p_appointment_id: appointmentId,
+    p_empresa_id: empresaId,
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
+export async function redeemClientBenefit(
+  clientBenefitId: string,
+  appointmentId: string,
+) {
+  const { data, error } = await supabase.rpc('redeem_client_benefit', {
+    p_appointment_id: appointmentId,
+    p_client_benefit_id: clientBenefitId,
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data as ClientBenefit
 }

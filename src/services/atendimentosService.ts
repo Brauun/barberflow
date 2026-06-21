@@ -3,6 +3,10 @@ import {
   listBarberAppointments,
   notifyWaitlistForVacancy,
 } from './clientService'
+import {
+  applyLoyaltyProgressForAppointment,
+  redeemClientBenefit,
+} from './benefitsService'
 import type { AtendimentoFormData } from '../types/atendimentos'
 import type { Database } from '../types/database'
 import { createAuditLog } from './observabilityService'
@@ -361,6 +365,21 @@ export async function updateDailyAppointmentStatus(input: {
 
   if (error) {
     throw new Error(error.message)
+  }
+
+  if (
+    input.source === 'appointment' &&
+    (input.status === 'concluido' || input.status === 'concluido_automatico')
+  ) {
+    try {
+      await applyLoyaltyProgressForAppointment(input.empresaId, input.id)
+    } catch (loyaltyError) {
+      console.warn('[benefits] Não foi possível aplicar progresso de fidelidade.', {
+        appointmentId: input.id,
+        empresaId: input.empresaId,
+        error: loyaltyError instanceof Error ? loyaltyError.message : loyaltyError,
+      })
+    }
   }
 
   const { error: logError } = await supabase
@@ -724,6 +743,10 @@ export async function registrarAtendimento(
     return
   }
 
+  if (data.benefit_id) {
+    await redeemClientBenefit(data.benefit_id, appointment.id)
+  }
+
   if (valorDesconto > 0) {
     const { error: discountError } = await supabase.from('discount_logs').insert({
       appointment_id: appointment.id,
@@ -754,4 +777,6 @@ export async function registrarAtendimento(
       userRole: 'administrador',
     })
   }
+
+  return appointment
 }

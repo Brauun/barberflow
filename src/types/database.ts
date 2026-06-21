@@ -1089,6 +1089,7 @@ export type Database = {
           empresa_id: string
           program_id: string
           cliente_id: string | null
+          client_profile_id: string | null
           status: 'ativo' | 'pausado' | 'expirado' | 'cancelado' | 'concluido'
           saldo_usos: number
           saldo_credito: number
@@ -1113,6 +1114,7 @@ export type Database = {
           program_id: string
           client_benefit_id: string | null
           cliente_id: string | null
+          client_profile_id: string | null
           atendimento_id: string | null
           tipo: string
           valor_desconto: number
@@ -1125,6 +1127,28 @@ export type Database = {
           program_id: string
         }
         Update: Partial<Database['public']['Tables']['benefit_usage_logs']['Insert']>
+        Relationships: []
+      }
+      benefit_interests: {
+        Row: {
+          id: string
+          empresa_id: string
+          program_id: string
+          client_profile_id: string
+          cliente_id: string | null
+          status: 'pendente' | 'aprovado' | 'negado' | 'ativado' | 'cancelado'
+          message: string | null
+          decided_at: string | null
+          decided_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['benefit_interests']['Row']> & {
+          empresa_id: string
+          program_id: string
+          client_profile_id: string
+        }
+        Update: Partial<Database['public']['Tables']['benefit_interests']['Insert']>
         Relationships: []
       }
       employees: {
@@ -1377,6 +1401,34 @@ export type Database = {
           p_empresa_id: string
         }
         Returns: number
+      }
+      request_benefit_interest: {
+        Args: {
+          p_program_id: string
+          p_message?: string | null
+        }
+        Returns: Database['public']['Tables']['benefit_interests']['Row']
+      }
+      review_benefit_interest: {
+        Args: {
+          p_interest_id: string
+          p_status: string
+        }
+        Returns: Database['public']['Tables']['benefit_interests']['Row']
+      }
+      apply_loyalty_progress_for_appointment: {
+        Args: {
+          p_empresa_id: string
+          p_appointment_id: string
+        }
+        Returns: number
+      }
+      redeem_client_benefit: {
+        Args: {
+          p_client_benefit_id: string
+          p_appointment_id: string
+        }
+        Returns: Database['public']['Tables']['client_benefits']['Row']
       }
       reverse_auto_completed_appointment: {
         Args: {

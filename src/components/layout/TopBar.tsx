@@ -1,5 +1,5 @@
 import { Bell, Menu, Moon, Sun } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useRef, useState, type MouseEvent } from 'react'
 
 import { Button } from '../ui'
 import { useTheme } from '../../hooks/useTheme'
@@ -21,7 +21,10 @@ type TopBarProps = {
   onMarkAllNotificationsRead: () => void
   onCloseNotifications: () => void
   onOpenMobileMenu: () => void
-  onOpenNotification: (notification: InternalNotification) => void
+  onOpenNotification: (
+    notification: InternalNotification,
+    event?: MouseEvent<HTMLButtonElement>,
+  ) => void
   onSelectAtendimento: () => void
   onSelectCliente: (clienteId: string) => void
   onSelectSearchItem: (item: NavigationItem) => void

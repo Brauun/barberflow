@@ -325,7 +325,8 @@ function buildPdfHtml(input: {
       `).join('')
     : ''
 
-  const reportTables = buildReportTables(data, tipo, atendimentos, ticketMedio)
+  const reportTables =
+    tipo === 'barbeiro' ? [] : buildReportTables(data, tipo, atendimentos, ticketMedio)
   const tablePanels = reportTables
     .map((table) => {
       const colSpan = Math.max(1, table.headers.length)
@@ -355,7 +356,6 @@ function buildPdfHtml(input: {
       `
     })
     .join('')
-
   return `<!doctype html>
     <html lang="pt-BR">
       <head>
