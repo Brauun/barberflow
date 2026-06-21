@@ -19,27 +19,18 @@ type NotificationEventInput = {
   barberName?: string | null
 }
 
-function canSeeAllNotifications(role: UserRole | null | undefined) {
-  return role === 'administrador'
-}
-
 export async function listNotifications(input: {
   empresaId: string
   usuarioId: string
   papel: UserRole
 }) {
-  let query = supabase
+  const { data, error } = await supabase
     .from('notifications')
     .select('*')
     .eq('empresa_id', input.empresaId)
+    .or(`recipient_user_id.is.null,recipient_user_id.eq.${input.usuarioId}`)
     .order('created_at', { ascending: false })
     .limit(30)
-
-  if (!canSeeAllNotifications(input.papel)) {
-    query = query.eq('recipient_user_id', input.usuarioId)
-  }
-
-  const { data, error } = await query
 
   if (error) {
     throw new Error(error.message)
@@ -68,17 +59,12 @@ export async function markAllNotificationsAsRead(input: {
   usuarioId: string
   papel: UserRole
 }) {
-  let query = supabase
+  const { error } = await supabase
     .from('notifications')
     .update({ read_at: new Date().toISOString() })
     .eq('empresa_id', input.empresaId)
     .is('read_at', null)
-
-  if (!canSeeAllNotifications(input.papel)) {
-    query = query.eq('recipient_user_id', input.usuarioId)
-  }
-
-  const { error } = await query
+    .or(`recipient_user_id.is.null,recipient_user_id.eq.${input.usuarioId}`)
 
   if (error) {
     throw new Error(error.message)

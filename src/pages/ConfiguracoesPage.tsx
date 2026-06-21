@@ -20,6 +20,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { canExportData, canManageEmployees } from '../auth/permissions'
+import { PWAInstallButton } from '../components/pwa/PWAInstallButton'
 import { Button, Card, CardContent, CardHeader, Input, Select } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
@@ -781,6 +782,17 @@ export function ConfiguracoesPage() {
                       : 'Escuro'
                 }
               />
+              <div className="flex min-w-0 flex-col gap-4 rounded-[1.1rem] border border-slate-200/70 bg-white p-3 shadow-[0_12px_44px_rgb(15_23_42/0.025)] sm:rounded-[1.35rem] sm:p-4 dark:border-slate-800 dark:bg-slate-950">
+                <div>
+                  <p className="font-black text-slate-950 dark:text-white">
+                    Aplicativo no celular
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Instale o BW Barber na tela inicial do celular ou computador.
+                  </p>
+                </div>
+                <PWAInstallButton />
+              </div>
               <SettingsRow
                 description={
                   profile?.telefone

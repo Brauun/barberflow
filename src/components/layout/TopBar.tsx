@@ -2,6 +2,7 @@ import { Bell, Menu, Moon, Sun } from 'lucide-react'
 import { useRef, useState, type MouseEvent } from 'react'
 
 import { Button } from '../ui'
+import { PWAInstallButton } from '../pwa/PWAInstallButton'
 import { useTheme } from '../../hooks/useTheme'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { cn } from '../../utils/cn'
@@ -135,6 +136,8 @@ export function TopBar({
               <Moon size={16} />
             </button>
           </div>
+
+          <PWAInstallButton className="hidden lg:block" compact variant="secondary" />
 
           <div className="relative" ref={notificationsRef}>
             <Button
