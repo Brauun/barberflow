@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -20,6 +21,7 @@ import type { UserRole } from '../types/database'
 
 const roles: UserRole[] = ['administrador', 'barbeiro']
 const PROFILE_LOAD_TIMEOUT_MS = 12000
+const STALE_PROFILE_LOAD_MS = PROFILE_LOAD_TIMEOUT_MS + 3000
 
 function devAuthLog(message: string, details?: unknown) {
   if (!import.meta.env.DEV) {
@@ -51,6 +53,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [profileLoading, setProfileLoading] = useState(false)
+  const profileLoadRef = useRef<{
+    abortController: AbortController
+    requestId: number
+    startedAt: number
+  } | null>(null)
+  const profileLoadRequestIdRef = useRef(0)
 
   const createProfileFromMetadata = useCallback(async (user: User) => {
     const nome = String(user.user_metadata.nome ?? '').trim()
@@ -95,6 +103,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setClientProfile(null)
     devAuthLog('carregando profile', { userId: user.id })
     const abortController = new AbortController()
+    const requestId = profileLoadRequestIdRef.current + 1
+    const isCurrentProfileLoad = () =>
+      profileLoadRef.current?.requestId === requestId
+
+    profileLoadRequestIdRef.current = requestId
+    profileLoadRef.current = {
+      abortController,
+      requestId,
+      startedAt: Date.now(),
+    }
+
     const timeoutId = window.setTimeout(() => {
       abortController.abort()
     }, PROFILE_LOAD_TIMEOUT_MS)
@@ -112,6 +131,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .eq('auth_user_id', user.id)
         .eq('status', 'ativo')
         .maybeSingle()
+
+      if (!isCurrentProfileLoad()) {
+        return null
+      }
 
       if (error) {
         logger.error({
@@ -144,6 +167,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .eq('auth_user_id', user.id)
         .eq('role', 'cliente')
         .maybeSingle()
+
+      if (!isCurrentProfileLoad()) {
+        return null
+      }
 
       if (clientError) {
         if (isMissingClientSchemaError(clientError.message)) {
@@ -187,6 +214,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
             telefone: String(user.user_metadata.telefone ?? '') || null,
           })
         } catch (error) {
+          if (!isCurrentProfileLoad()) {
+            return null
+          }
+
           logger.error({
             action: 'auth_create_client_profile_failed',
             area: 'auth',
@@ -207,6 +238,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           .eq('role', 'cliente')
           .maybeSingle()
 
+        if (!isCurrentProfileLoad()) {
+          return null
+        }
+
         setProfile(null)
         setClientProfile((createdClientData as ClientProfile | null) ?? null)
         devAuthLog('profile cliente criado/carregado', { userId: user.id })
@@ -214,6 +249,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       const createdProfile = await createProfileFromMetadata(user)
+
+      if (!isCurrentProfileLoad()) {
+        return null
+      }
 
       if (!createdProfile) {
         setProfile(null)
@@ -232,6 +271,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .abortSignal(abortController.signal)
         .eq('id', createdProfile.id)
         .maybeSingle()
+
+      if (!isCurrentProfileLoad()) {
+        return null
+      }
 
       if (profileError) {
         logger.error({
@@ -270,7 +313,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return null
     } finally {
       window.clearTimeout(timeoutId)
-      setProfileLoading(false)
+      if (isCurrentProfileLoad()) {
+        profileLoadRef.current = null
+        setProfileLoading(false)
+      }
     }
   }, [createProfileFromMetadata])
 
@@ -362,7 +408,67 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return () => {
       isMounted = false
+      profileLoadRef.current?.abortController.abort()
+      profileLoadRef.current = null
       subscription.unsubscribe()
+    }
+  }, [loadProfile])
+
+  useEffect(() => {
+    function recoverStaleProfileLoad() {
+      const currentLoad = profileLoadRef.current
+
+      if (!currentLoad) {
+        return
+      }
+
+      const elapsedMs = Date.now() - currentLoad.startedAt
+
+      if (elapsedMs < STALE_PROFILE_LOAD_MS) {
+        return
+      }
+
+      logger.warn({
+        action: 'auth_profile_load_recovered_after_resume',
+        area: 'auth',
+        message: 'Carregamento de perfil travado foi reiniciado após retorno do PWA.',
+        metadata: {
+          elapsedMs,
+          requestId: currentLoad.requestId,
+        },
+      })
+
+      currentLoad.abortController.abort()
+      profileLoadRef.current = null
+      setProfileLoading(false)
+
+      void supabase.auth.getSession().then(({ data }) => {
+        setSession(data.session)
+
+        if (data.session?.user) {
+          void loadProfile(data.session.user)
+          return
+        }
+
+        setProfile(null)
+        setClientProfile(null)
+      })
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        recoverStaleProfileLoad()
+      }
+    }
+
+    window.addEventListener('focus', recoverStaleProfileLoad)
+    window.addEventListener('pageshow', recoverStaleProfileLoad)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', recoverStaleProfileLoad)
+      window.removeEventListener('pageshow', recoverStaleProfileLoad)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [loadProfile])
 
