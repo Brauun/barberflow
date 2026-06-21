@@ -125,7 +125,7 @@ export function ClientLayout() {
         </div>
       </header>
 
-      <main className="mx-auto grid w-full min-w-0 max-w-7xl gap-6 overflow-x-hidden px-4 py-6 pb-[calc(env(safe-area-inset-bottom)+7.25rem)] sm:px-5 sm:py-8 xl:grid-cols-[14rem_minmax(0,1fr)]">
+      <main className="mx-auto grid w-full min-w-0 max-w-7xl gap-6 overflow-x-hidden px-4 py-6 pb-[calc(env(safe-area-inset-bottom)+8rem)] sm:px-5 sm:py-8 xl:grid-cols-[14rem_minmax(0,1fr)]">
         <aside className="hidden self-start rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-[0_18px_70px_rgb(15_23_42/0.05)] dark:border-slate-800 dark:bg-slate-950 xl:block">
           <div className="mb-3 flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
             <MapPin size={14} />
@@ -163,7 +163,7 @@ export function ClientLayout() {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:hidden">
-        <div className="mx-auto grid h-[4.75rem] w-full max-w-[34rem] grid-cols-5 items-stretch gap-1 rounded-[1.65rem] border border-slate-200 bg-white/94 p-1.5 shadow-[0_18px_60px_rgb(15_23_42/0.12)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/94 dark:shadow-[0_18px_60px_rgb(0_0_0/0.35)]">
+        <div className="mx-auto grid h-[5.4rem] w-full max-w-[34rem] grid-cols-5 items-stretch gap-1 rounded-[1.65rem] border border-slate-200 bg-white/94 p-1.5 shadow-[0_18px_60px_rgb(15_23_42/0.12)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/94 dark:shadow-[0_18px_60px_rgb(0_0_0/0.35)]">
           {clientNavigation.map((item) => {
             const Icon = item.icon
 
@@ -171,7 +171,7 @@ export function ClientLayout() {
               <NavLink
                 className={({ isActive }) =>
                   cn(
-                    'flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-[1.25rem] px-1 text-center text-[0.64rem] font-semibold leading-[1.05] text-slate-500 transition',
+                    'flex h-full min-w-0 flex-col items-center justify-center gap-1.5 rounded-[1.25rem] px-0.5 text-center text-[0.62rem] font-semibold leading-[1.1] text-slate-500 transition min-[390px]:text-[0.66rem]',
                     'dark:text-slate-300',
                     isActive &&
                       'bg-brand-50 text-brand-600 dark:bg-brand-400/15 dark:text-brand-100',
@@ -182,7 +182,7 @@ export function ClientLayout() {
                 to={item.path}
               >
                 <Icon className="shrink-0" size={18} />
-                <span className="flex h-[1.65rem] w-full max-w-full items-center justify-center overflow-hidden text-balance leading-[1.05]">
+                <span className="flex min-h-[2.15rem] w-full max-w-full items-center justify-center whitespace-normal break-words leading-[1.08]">
                   {item.label}
                 </span>
               </NavLink>

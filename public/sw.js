@@ -1,13 +1,12 @@
-const CACHE_NAME = 'bw-barber-static-v3'
+const CACHE_NAME = 'bw-barber-static-v4'
 const OFFLINE_URL = '/offline.html'
 const STATIC_ASSETS = [
-  '/',
   '/offline.html',
   '/manifest.webmanifest',
   '/favicon.svg',
   '/icons/apple-touch-icon.png',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
   '/icons/maskable-512.png',
 ]
 
@@ -40,7 +39,7 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('message', (event) => {
-  if (event.data?.type === 'SKIP_WAITING') {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting()
   }
 })
