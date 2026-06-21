@@ -8,12 +8,14 @@ import { Button } from '../ui/Button'
 type PWAInstallButtonProps = {
   className?: string
   compact?: boolean
+  iconOnly?: boolean
   variant?: 'primary' | 'secondary' | 'ghost'
 }
 
 export function PWAInstallButton({
   className,
   compact = false,
+  iconOnly = false,
   variant = 'secondary',
 }: PWAInstallButtonProps) {
   const { canUseNativePrompt, device, install, isInstalled, message, setMessage } =
@@ -61,14 +63,24 @@ export function PWAInstallButton({
       <div className={className}>
         <Button
           aria-label={label}
-          leftIcon={isInstalled ? <CheckCircle2 size={17} /> : <Download size={17} />}
+          leftIcon={
+            iconOnly ? undefined : isInstalled ? <CheckCircle2 size={17} /> : <Download size={17} />
+          }
           onClick={handleInstallClick}
-          size={compact ? 'sm' : 'md'}
+          size={iconOnly ? 'icon-md' : compact ? 'sm' : 'md'}
+          tooltipPosition="bottom"
+          title={label}
           variant={variant}
         >
-          {compact ? (isInstalled ? 'Instalado' : 'Instalar') : label}
+          {iconOnly ? (
+            isInstalled ? <CheckCircle2 size={17} /> : <Download size={17} />
+          ) : compact ? (
+            isInstalled ? 'Instalado' : 'Instalar'
+          ) : (
+            label
+          )}
         </Button>
-        {message && (
+        {message && !iconOnly && (
           <p className="mt-2 text-xs font-semibold text-brand-600 dark:text-brand-300">
             {message}
           </p>

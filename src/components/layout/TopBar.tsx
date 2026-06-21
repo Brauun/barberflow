@@ -138,6 +138,7 @@ export function TopBar({
           </div>
 
           <PWAInstallButton className="hidden lg:block" compact variant="secondary" />
+          <PWAInstallButton className="lg:hidden" iconOnly variant="ghost" />
 
           <div className="relative" ref={notificationsRef}>
             <Button

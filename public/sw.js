@@ -1,26 +1,121 @@
-// VERSAO TEMPORARIA "KILL SWITCH"
-// Objetivo unico: se desinstalar e limpar todo cache de qualquer cliente
-// (inclusive apps instalados no iOS) que ainda esteja com uma versao antiga
-// presa. Depois que todo mundo tiver passado por essa versao, podemos
-// trocar por uma versao com cache de novo (o arquivo antigo esta salvo
-// em public/sw.js.backup-v4-cache-logic).
+const CACHE_VERSION = 'ios-fix-8f3c2a91-20260621'
+const STATIC_CACHE = `bw-barber-static-${CACHE_VERSION}`
+const ASSET_CACHE = `bw-barber-assets-${CACHE_VERSION}`
+const OFFLINE_URL = '/offline.html'
 
-self.addEventListener('install', () => {
-  self.skipWaiting()
+const STATIC_ASSETS = [
+  OFFLINE_URL,
+  '/manifest.webmanifest',
+  '/favicon.svg',
+  '/favicon.ico',
+  '/icons/apple-touch-icon.png',
+  '/icons/favicon-16x16.png',
+  '/icons/favicon-32x32.png',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
+  '/icons/maskable-512.png',
+]
+
+function isSupabaseRequest(url) {
+  return url.hostname.includes('supabase.co') || url.pathname.includes('/auth/v1/')
+}
+
+function isStaticAsset(url) {
+  return (
+    url.origin === self.location.origin &&
+    (url.pathname.startsWith('/assets/') ||
+      url.pathname.startsWith('/icons/') ||
+      url.pathname === '/favicon.svg' ||
+      url.pathname === '/favicon.ico' ||
+      url.pathname === '/manifest.webmanifest')
+  )
+}
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(STATIC_CACHE).then(async (cache) => {
+      await Promise.allSettled(STATIC_ASSETS.map((asset) => cache.add(asset)))
+      await self.skipWaiting()
+    }),
+  )
 })
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    (async () => {
-      const cacheNames = await caches.keys()
-      await Promise.all(cacheNames.map((name) => caches.delete(name)))
-
-      await self.registration.unregister()
-    })(),
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== STATIC_CACHE && key !== ASSET_CACHE)
+            .map((key) => caches.delete(key)),
+        ),
+      )
+      .then(() => self.clients.claim()),
   )
 })
 
-// Nao intercepta nenhum fetch - deixa tudo passar direto pra rede.
-// Nao forca reload aqui: isso evitaria um loop (cada reload registraria
-// esse mesmo script de novo). O usuario so precisa reabrir o app uma vez
-// depois do deploy pra ficar livre do service worker antigo de vez.
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'CLEAR_BW_BARBER_CACHES') {
+    event.waitUntil(
+      caches
+        .keys()
+        .then((keys) => Promise.all(keys.map((key) => caches.delete(key)))),
+    )
+  }
+})
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event
+  const url = new URL(request.url)
+
+  if (request.method !== 'GET' || isSupabaseRequest(url)) {
+    return
+  }
+
+  if (request.mode === 'navigate') {
+    event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)))
+    return
+  }
+
+  if (!isStaticAsset(url)) {
+    return
+  }
+
+  if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const responseClone = response.clone()
+            caches.open(ASSET_CACHE).then((cache) => {
+              cache.put(request, responseClone)
+            })
+          }
+
+          return response
+        })
+        .catch(() => caches.match(request)),
+    )
+    return
+  }
+
+  event.respondWith(
+    caches.match(request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse
+      }
+
+      return fetch(request).then((response) => {
+        if (response.ok) {
+          const responseClone = response.clone()
+          caches.open(STATIC_CACHE).then((cache) => {
+            cache.put(request, responseClone)
+          })
+        }
+
+        return response
+      })
+    }),
+  )
+})
