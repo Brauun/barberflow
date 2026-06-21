@@ -18,5 +18,20 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // Permite variaveis prefixadas com `_` em destructuring para descartar
+      // campos intencionalmente (ex.: remover dados sensiveis de um objeto
+      // antes de exportar/logar), sem reportar como variavel nao usada.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+          varsIgnorePattern: '^_',
+        },
+      ],
+    },
   },
 ])

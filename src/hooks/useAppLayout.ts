@@ -8,7 +8,7 @@ import {
   navigationItems,
   settingsItems,
   type NavigationItem,
-} from '../components/layout/Sidebar'
+} from '../components/layout/navigation'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
 import { queryKeys } from '../lib/queryKeys'

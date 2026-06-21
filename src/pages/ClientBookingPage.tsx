@@ -82,7 +82,6 @@ export function ClientBookingPage() {
         barberId,
         date,
         undefined,
-        barbershop?.empresa_id,
       ),
     queryKey: ['booking-busy', barbershop?.id, barbershop?.empresa_id, barberId, date],
   })

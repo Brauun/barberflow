@@ -1,88 +1,16 @@
 import {
-  Activity,
-  BarChart3,
-  BadgeCheck,
-  CalendarDays,
-  CreditCard,
-  DollarSign,
-  Gift,
-  LayoutDashboard,
   LogOut,
-  Package,
   PanelLeftClose,
   PanelLeftOpen,
-  Scissors,
-  Settings,
-  Sparkles,
   UserRound,
-  Users,
   X,
-  type LucideIcon,
 } from 'lucide-react'
 import { useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 
-import {
-  canManageAppointments,
-  canManageClients,
-  canManageEmployees,
-  canManageFinance,
-  canManageSettings,
-  canViewFinance,
-  canViewReports,
-} from '../../auth/permissions'
 import { useClickOutside } from '../../hooks/useClickOutside'
-import type { UserRole } from '../../types/database'
 import { cn } from '../../utils/cn'
-
-export type NavigationItem = {
-  canAccess?: (role: UserRole | undefined) => boolean
-  icon: LucideIcon
-  label: string
-  path: string
-}
-
-export const navigationItems: NavigationItem[] = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/app/dashboard' },
-]
-
-export const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
-  {
-    items: [
-      { canAccess: canManageClients, icon: Users, label: 'Clientes', path: '/app/clientes' },
-      { canAccess: canManageEmployees, icon: Scissors, label: 'Barbeiros', path: '/app/barbeiros' },
-      { canAccess: canManageAppointments, icon: Sparkles, label: 'Serviços', path: '/app/servicos' },
-      { canAccess: canManageAppointments, icon: CalendarDays, label: 'Atendimentos', path: '/app/atendimentos' },
-    ],
-    label: 'OPERAÇÃO',
-  },
-  {
-    items: [
-      { canAccess: canViewFinance, icon: Package, label: 'Produtos', path: '/app/produtos' },
-      { canAccess: canManageFinance, icon: Gift, label: 'Planos e Fidelidade', path: '/app/planos-fidelidade' },
-      { canAccess: canViewFinance, icon: DollarSign, label: 'Fluxo de Caixa', path: '/app/fluxo-de-caixa' },
-      { canAccess: canManageFinance, icon: CreditCard, label: 'Contas a Pagar', path: '/app/contas-a-pagar' },
-    ],
-    label: 'GESTÃO',
-  },
-  {
-    items: [
-      { canAccess: canViewReports, icon: BarChart3, label: 'Relatórios', path: '/app/relatorios' },
-      {
-        canAccess: canViewReports,
-        icon: Activity,
-        label: 'Relatórios Executivos',
-        path: '/app/relatorios-executivos',
-      },
-    ],
-    label: 'INTELIGÊNCIA',
-  },
-]
-
-export const settingsItems: NavigationItem[] = [
-  { canAccess: canManageFinance, icon: BadgeCheck, label: 'Assinatura', path: '/app/assinatura' },
-  { canAccess: canManageSettings, icon: Settings, label: 'Configurações', path: '/app/configuracoes' },
-]
+import type { NavigationItem } from './navigation'
 
 type SidebarProps = {
   avatarSrc: string | null
@@ -98,10 +26,6 @@ type SidebarProps = {
   visibleGroups: Array<{ label: string; items: NavigationItem[] }>
   visibleItems: NavigationItem[]
   visibleSettingsItems: NavigationItem[]
-}
-
-export function canAccessNavigationItem(item: NavigationItem, role: UserRole | undefined) {
-  return !item.canAccess || item.canAccess(role)
 }
 
 export function Sidebar({

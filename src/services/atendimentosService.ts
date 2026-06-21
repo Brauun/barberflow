@@ -42,6 +42,7 @@ export type DailyAppointment = {
   is_walk_in?: boolean
   barbeiro: string
   barbeiro_id: string | null
+  barbershop_id: string | null
   service_id: string | null
   servico: string
   duration_minutes: number
@@ -97,7 +98,7 @@ export async function listDailyAppointments(input: {
   let appointmentsQuery = supabase
     .from('appointments')
     .select(
-      'id,atendimento_id,starts_at,ends_at,status,valor_final,barbeiro_id,auto_completed,auto_completed_at,is_walk_in,walk_in_customer_name,walk_in_customer_phone,client:profiles(nome,telefone),cliente:clientes(nome,telefone),barbeiro:barbeiros(nome),items:appointment_items(nome,duration_minutes,servico_id,valor_final)',
+      'id,atendimento_id,starts_at,ends_at,status,valor_final,barbeiro_id,barbershop_id,auto_completed,auto_completed_at,is_walk_in,walk_in_customer_name,walk_in_customer_phone,client:profiles(nome,telefone),cliente:clientes(nome,telefone),barbeiro:barbeiros(nome),items:appointment_items(nome,duration_minutes,servico_id,valor_final)',
     )
     .eq('empresa_id', input.empresaId)
     .gte('starts_at', dayStart.toISOString())
@@ -149,6 +150,7 @@ export async function listDailyAppointments(input: {
     status: DailyAppointmentStatus
     valor_final: number
     barbeiro_id: string | null
+    barbershop_id: string | null
     auto_completed?: boolean
     auto_completed_at?: string | null
     client: { nome: string; telefone: string | null } | null
@@ -188,6 +190,7 @@ export async function listDailyAppointments(input: {
       return {
         barbeiro: appointment.barbeiro?.nome ?? 'Barbeiro',
         barbeiro_id: appointment.barbeiro_id,
+        barbershop_id: appointment.barbershop_id,
         cliente:
           appointment.walk_in_customer_name ??
           appointment.cliente?.nome ??
@@ -227,6 +230,7 @@ export async function listDailyAppointments(input: {
     ...unlinkedAtendimentos.map((atendimento) => ({
       barbeiro: atendimento.barbeiros?.nome ?? 'Barbeiro',
       barbeiro_id: atendimento.barbeiro_id,
+      barbershop_id: null,
       cliente: atendimento.clientes?.nome ?? 'Cliente',
       duration_minutes: atendimento.servicos?.duracao_minutos ?? 30,
       id: atendimento.id,
@@ -440,25 +444,34 @@ export async function rescheduleDailyAppointment(input: {
   }
 
   const date = input.startsAt.slice(0, 10)
-  const busy = await listBarberAppointments(
-    '',
-    input.appointment.barbeiro_id,
-    date,
-    input.appointment.source === 'appointment' ? input.appointment.id : undefined,
-    input.empresaId,
-  )
   const start = new Date(input.startsAt).getTime()
   const end = new Date(input.endsAt).getTime()
-  const hasConflict = busy.some((item) => {
-    if (
-      input.appointment.source === 'atendimento' &&
-      item.starts_at === input.appointment.starts_at
-    ) {
-      return false
-    }
+  let hasConflict = false
 
-    return start < new Date(item.ends_at).getTime() && end > new Date(item.starts_at).getTime()
-  })
+  // Atendimentos legados (tabela `atendimentos`) nao possuem barbershop_id,
+  // pois nao passam pelo fluxo de agendamento online. Nesse caso nao ha como
+  // consultar a RPC get_booking_busy_slots (ela exige um barbershop_id valido),
+  // entao a checagem de conflito e pulada — mesmo comportamento que ja existia
+  // antes desta correcao, so que sem lancar um erro de UUID invalido no meio do caminho.
+  if (input.appointment.barbershop_id) {
+    const busy = await listBarberAppointments(
+      input.appointment.barbershop_id,
+      input.appointment.barbeiro_id,
+      date,
+      input.appointment.source === 'appointment' ? input.appointment.id : undefined,
+    )
+
+    hasConflict = busy.some((item) => {
+      if (
+        input.appointment.source === 'atendimento' &&
+        item.starts_at === input.appointment.starts_at
+      ) {
+        return false
+      }
+
+      return start < new Date(item.ends_at).getTime() && end > new Date(item.starts_at).getTime()
+    })
+  }
 
   if (hasConflict) {
     throw new Error('Este horário nao esta disponivel para remarcacao.')

@@ -7,7 +7,7 @@ import { useClickOutside } from '../../hooks/useClickOutside'
 import { cn } from '../../utils/cn'
 import { GlobalSearch } from './GlobalSearch'
 import { NotificationsPanel } from './NotificationsPanel'
-import type { NavigationItem } from './Sidebar'
+import type { NavigationItem } from './navigation'
 import type { InternalNotification } from '../../services/notificationsService'
 
 type TopBarProps = {

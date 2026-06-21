@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { supabase } from '../lib/supabase'
-import type { NavigationItem } from '../components/layout/Sidebar'
+import type { NavigationItem } from '../components/layout/navigation'
 
 export type GlobalSearchResultItem =
   | { kind: 'nav'; item: NavigationItem }
@@ -52,16 +52,15 @@ export function useGlobalSearch(
   empresaId: string | undefined,
   term: string,
 ) {
-  const [clientes, setClientes] = useState<
-    Array<{ id: string; nome: string; telefone: string | null }>
-  >([])
-  const [atendimentos, setAtendimentos] = useState<
-    Array<{ id: string; cliente: string; servico: string; data: string }>
-  >([])
-  const [isSearching, setIsSearching] = useState(false)
+  const [searchResults, setSearchResults] = useState<{
+    atendimentos: Array<{ id: string; cliente: string; servico: string; data: string }>
+    clientes: Array<{ id: string; nome: string; telefone: string | null }>
+  }>({ atendimentos: [], clientes: [] })
+  const [pendingQuery, setPendingQuery] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const normalizedTerm = term.trim().toLowerCase()
+  const hasQuery = Boolean(empresaId && normalizedTerm)
 
   const navResults = useMemo(() => {
     if (!normalizedTerm) return navItems.slice(0, 5)
@@ -71,29 +70,40 @@ export function useGlobalSearch(
       .slice(0, 5)
   }, [navItems, normalizedTerm])
 
-  useEffect(() => {
-    if (!empresaId || !normalizedTerm) {
-      setClientes([])
-      setAtendimentos([])
-      setIsSearching(false)
-      return
+  // Resultados exibidos: vazios quando nao ha empresa/termo, sem precisar de
+  // setState no efeito so para "limpar" o estado a cada mudanca de termo.
+  const { atendimentos, clientes } = useMemo(() => {
+    if (!hasQuery) {
+      return { atendimentos: [], clientes: [] }
     }
 
-    setIsSearching(true)
+    return searchResults
+  }, [hasQuery, searchResults])
 
+  // Busca ainda em andamento se ha uma query pendente cujo termo bate com o
+  // termo atual normalizado (evita "preso em true" se o termo mudar antes do
+  // debounce anterior resolver).
+  const isSearching = hasQuery && pendingQuery === normalizedTerm
+
+  useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current)
     }
 
-    debounceRef.current = setTimeout(async () => {
-      const [clienteResults, atendimentoResults] = await Promise.all([
+    if (!empresaId || !normalizedTerm) {
+      return
+    }
+
+    debounceRef.current = setTimeout(() => {
+      setPendingQuery(normalizedTerm)
+
+      void Promise.all([
         searchClientes(empresaId, normalizedTerm),
         searchAtendimentos(empresaId, normalizedTerm),
-      ])
-
-      setClientes(clienteResults)
-      setAtendimentos(atendimentoResults)
-      setIsSearching(false)
+      ]).then(([clienteResults, atendimentoResults]) => {
+        setSearchResults({ atendimentos: atendimentoResults, clientes: clienteResults })
+        setPendingQuery((current) => (current === normalizedTerm ? null : current))
+      })
     }, 300)
 
     return () => {

@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import { cn } from '../../utils/cn'
 import { useGlobalSearch } from '../../hooks/useGlobalSearch'
 import { useClickOutside } from '../../hooks/useClickOutside'
-import type { NavigationItem } from './Sidebar'
+import type { NavigationItem } from './navigation'
 
 type GlobalSearchProps = {
   className?: string

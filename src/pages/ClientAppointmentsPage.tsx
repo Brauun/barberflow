@@ -102,7 +102,6 @@ export function ClientAppointmentsPage() {
         selectedAppointment?.barbeiro_id as string,
         rescheduleDate,
         selectedAppointment?.id,
-        selectedAppointment?.empresa_id,
       ),
     queryKey: [
       'booking-busy',

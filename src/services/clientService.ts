@@ -319,7 +319,6 @@ export async function listBarberAppointments(
   barbeiroId: string,
   date: string,
   excludeAppointmentId?: string,
-  _empresaId?: string | null,
 ) {
   if (!barbershopId || !barbeiroId || !date) {
     return []

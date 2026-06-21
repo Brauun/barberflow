@@ -1,0 +1,382 @@
+diff -ru barberflow-original/src/components/layout/GlobalSearch.tsx barberflow-main/src/components/layout/GlobalSearch.tsx
+--- barberflow-original/src/components/layout/GlobalSearch.tsx	2026-06-21 00:24:57.000000000 +0000
++++ barberflow-main/src/components/layout/GlobalSearch.tsx	2026-06-21 00:34:36.647992784 +0000
+@@ -4,7 +4,7 @@
+ import { cn } from '../../utils/cn'
+ import { useGlobalSearch } from '../../hooks/useGlobalSearch'
+ import { useClickOutside } from '../../hooks/useClickOutside'
+-import type { NavigationItem } from './Sidebar'
++import type { NavigationItem } from './navigation'
+ 
+ type GlobalSearchProps = {
+   className?: string
+diff -ru barberflow-original/src/components/layout/Sidebar.tsx barberflow-main/src/components/layout/Sidebar.tsx
+--- barberflow-original/src/components/layout/Sidebar.tsx	2026-06-21 00:24:57.000000000 +0000
++++ barberflow-main/src/components/layout/Sidebar.tsx	2026-06-21 00:33:33.958965813 +0000
+@@ -1,88 +1,16 @@
+ import {
+-  Activity,
+-  BarChart3,
+-  BadgeCheck,
+-  CalendarDays,
+-  CreditCard,
+-  DollarSign,
+-  Gift,
+-  LayoutDashboard,
+   LogOut,
+-  Package,
+   PanelLeftClose,
+   PanelLeftOpen,
+-  Scissors,
+-  Settings,
+-  Sparkles,
+   UserRound,
+-  Users,
+   X,
+-  type LucideIcon,
+ } from 'lucide-react'
+ import { useRef } from 'react'
+ import { NavLink } from 'react-router-dom'
+ 
+-import {
+-  canManageAppointments,
+-  canManageClients,
+-  canManageEmployees,
+-  canManageFinance,
+-  canManageSettings,
+-  canViewFinance,
+-  canViewReports,
+-} from '../../auth/permissions'
+ import { useClickOutside } from '../../hooks/useClickOutside'
+-import type { UserRole } from '../../types/database'
+ import { cn } from '../../utils/cn'
+-
+-export type NavigationItem = {
+-  canAccess?: (role: UserRole | undefined) => boolean
+-  icon: LucideIcon
+-  label: string
+-  path: string
+-}
+-
+-export const navigationItems: NavigationItem[] = [
+-  { icon: LayoutDashboard, label: 'Dashboard', path: '/app/dashboard' },
+-]
+-
+-export const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
+-  {
+-    items: [
+-      { canAccess: canManageClients, icon: Users, label: 'Clientes', path: '/app/clientes' },
+-      { canAccess: canManageEmployees, icon: Scissors, label: 'Barbeiros', path: '/app/barbeiros' },
+-      { canAccess: canManageAppointments, icon: Sparkles, label: 'Serviços', path: '/app/servicos' },
+-      { canAccess: canManageAppointments, icon: CalendarDays, label: 'Atendimentos', path: '/app/atendimentos' },
+-    ],
+-    label: 'OPERAÇÃO',
+-  },
+-  {
+-    items: [
+-      { canAccess: canViewFinance, icon: Package, label: 'Produtos', path: '/app/produtos' },
+-      { canAccess: canManageFinance, icon: Gift, label: 'Planos e Fidelidade', path: '/app/planos-fidelidade' },
+-      { canAccess: canViewFinance, icon: DollarSign, label: 'Fluxo de Caixa', path: '/app/fluxo-de-caixa' },
+-      { canAccess: canManageFinance, icon: CreditCard, label: 'Contas a Pagar', path: '/app/contas-a-pagar' },
+-    ],
+-    label: 'GESTÃO',
+-  },
+-  {
+-    items: [
+-      { canAccess: canViewReports, icon: BarChart3, label: 'Relatórios', path: '/app/relatorios' },
+-      {
+-        canAccess: canViewReports,
+-        icon: Activity,
+-        label: 'Relatórios Executivos',
+-        path: '/app/relatorios-executivos',
+-      },
+-    ],
+-    label: 'INTELIGÊNCIA',
+-  },
+-]
+-
+-export const settingsItems: NavigationItem[] = [
+-  { canAccess: canManageFinance, icon: BadgeCheck, label: 'Assinatura', path: '/app/assinatura' },
+-  { canAccess: canManageSettings, icon: Settings, label: 'Configurações', path: '/app/configuracoes' },
+-]
++import type { NavigationItem } from './navigation'
+ 
+ type SidebarProps = {
+   avatarSrc: string | null
+@@ -100,10 +28,6 @@
+   visibleSettingsItems: NavigationItem[]
+ }
+ 
+-export function canAccessNavigationItem(item: NavigationItem, role: UserRole | undefined) {
+-  return !item.canAccess || item.canAccess(role)
+-}
+-
+ export function Sidebar({
+   avatarSrc,
+   companyInitials,
+diff -ru barberflow-original/src/components/layout/TopBar.tsx barberflow-main/src/components/layout/TopBar.tsx
+--- barberflow-original/src/components/layout/TopBar.tsx	2026-06-21 00:24:57.000000000 +0000
++++ barberflow-main/src/components/layout/TopBar.tsx	2026-06-21 00:34:39.447426038 +0000
+@@ -7,7 +7,7 @@
+ import { cn } from '../../utils/cn'
+ import { GlobalSearch } from './GlobalSearch'
+ import { NotificationsPanel } from './NotificationsPanel'
+-import type { NavigationItem } from './Sidebar'
++import type { NavigationItem } from './navigation'
+ import type { InternalNotification } from '../../services/notificationsService'
+ 
+ type TopBarProps = {
+Only in barberflow-main/src/components/layout: navigation.ts
+diff -ru barberflow-original/src/hooks/useAppLayout.ts barberflow-main/src/hooks/useAppLayout.ts
+--- barberflow-original/src/hooks/useAppLayout.ts	2026-06-21 00:24:57.000000000 +0000
++++ barberflow-main/src/hooks/useAppLayout.ts	2026-06-21 00:33:18.917981946 +0000
+@@ -8,7 +8,7 @@
+   navigationItems,
+   settingsItems,
+   type NavigationItem,
+-} from '../components/layout/Sidebar'
++} from '../components/layout/navigation'
+ import { useAuth } from '../hooks/useAuth'
+ import { useSubscription } from '../hooks/useSubscription'
+ import { queryKeys } from '../lib/queryKeys'
+diff -ru barberflow-original/src/hooks/useGlobalSearch.ts barberflow-main/src/hooks/useGlobalSearch.ts
+--- barberflow-original/src/hooks/useGlobalSearch.ts	2026-06-21 00:24:57.000000000 +0000
++++ barberflow-main/src/hooks/useGlobalSearch.ts	2026-06-21 00:36:00.010322199 +0000
+@@ -1,7 +1,7 @@
+ import { useEffect, useMemo, useRef, useState } from 'react'
+ 
+ import { supabase } from '../lib/supabase'
+-import type { NavigationItem } from '../components/layout/Sidebar'
++import type { NavigationItem } from '../components/layout/navigation'
+ 
+ export type GlobalSearchResultItem =
+   | { kind: 'nav'; item: NavigationItem }
+@@ -52,16 +52,15 @@
+   empresaId: string | undefined,
+   term: string,
+ ) {
+-  const [clientes, setClientes] = useState<
+-    Array<{ id: string; nome: string; telefone: string | null }>
+-  >([])
+-  const [atendimentos, setAtendimentos] = useState<
+-    Array<{ id: string; cliente: string; servico: string; data: string }>
+-  >([])
+-  const [isSearching, setIsSearching] = useState(false)
++  const [searchResults, setSearchResults] = useState<{
++    atendimentos: Array<{ id: string; cliente: string; servico: string; data: string }>
++    clientes: Array<{ id: string; nome: string; telefone: string | null }>
++  }>({ atendimentos: [], clientes: [] })
++  const [pendingQuery, setPendingQuery] = useState<string | null>(null)
+   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+ 
+   const normalizedTerm = term.trim().toLowerCase()
++  const hasQuery = Boolean(empresaId && normalizedTerm)
+ 
+   const navResults = useMemo(() => {
+     if (!normalizedTerm) return navItems.slice(0, 5)
+@@ -71,29 +70,40 @@
+       .slice(0, 5)
+   }, [navItems, normalizedTerm])
+ 
+-  useEffect(() => {
+-    if (!empresaId || !normalizedTerm) {
+-      setClientes([])
+-      setAtendimentos([])
+-      setIsSearching(false)
+-      return
++  // Resultados exibidos: vazios quando nao ha empresa/termo, sem precisar de
++  // setState no efeito so para "limpar" o estado a cada mudanca de termo.
++  const { atendimentos, clientes } = useMemo(() => {
++    if (!hasQuery) {
++      return { atendimentos: [], clientes: [] }
+     }
+ 
+-    setIsSearching(true)
++    return searchResults
++  }, [hasQuery, searchResults])
+ 
++  // Busca ainda em andamento se ha uma query pendente cujo termo bate com o
++  // termo atual normalizado (evita "preso em true" se o termo mudar antes do
++  // debounce anterior resolver).
++  const isSearching = hasQuery && pendingQuery === normalizedTerm
++
++  useEffect(() => {
+     if (debounceRef.current) {
+       clearTimeout(debounceRef.current)
+     }
+ 
+-    debounceRef.current = setTimeout(async () => {
+-      const [clienteResults, atendimentoResults] = await Promise.all([
++    if (!empresaId || !normalizedTerm) {
++      return
++    }
++
++    debounceRef.current = setTimeout(() => {
++      setPendingQuery(normalizedTerm)
++
++      void Promise.all([
+         searchClientes(empresaId, normalizedTerm),
+         searchAtendimentos(empresaId, normalizedTerm),
+-      ])
+-
+-      setClientes(clienteResults)
+-      setAtendimentos(atendimentoResults)
+-      setIsSearching(false)
++      ]).then(([clienteResults, atendimentoResults]) => {
++        setSearchResults({ atendimentos: atendimentoResults, clientes: clienteResults })
++        setPendingQuery((current) => (current === normalizedTerm ? null : current))
++      })
+     }, 300)
+ 
+     return () => {
+diff -ru barberflow-original/src/pages/ClientAppointmentsPage.tsx barberflow-main/src/pages/ClientAppointmentsPage.tsx
+--- barberflow-original/src/pages/ClientAppointmentsPage.tsx	2026-06-21 00:24:57.000000000 +0000
++++ barberflow-main/src/pages/ClientAppointmentsPage.tsx	2026-06-21 00:31:39.498580051 +0000
+@@ -102,7 +102,6 @@
+         selectedAppointment?.barbeiro_id as string,
+         rescheduleDate,
+         selectedAppointment?.id,
+-        selectedAppointment?.empresa_id,
+       ),
+     queryKey: [
+       'booking-busy',
+diff -ru barberflow-original/src/pages/ClientBookingPage.tsx barberflow-main/src/pages/ClientBookingPage.tsx
+--- barberflow-original/src/pages/ClientBookingPage.tsx	2026-06-21 00:24:57.000000000 +0000
++++ barberflow-main/src/pages/ClientBookingPage.tsx	2026-06-21 00:31:32.427014723 +0000
+@@ -82,7 +82,6 @@
+         barberId,
+         date,
+         undefined,
+-        barbershop?.empresa_id,
+       ),
+     queryKey: ['booking-busy', barbershop?.id, barbershop?.empresa_id, barberId, date],
+   })
+diff -ru barberflow-original/src/services/atendimentosService.ts barberflow-main/src/services/atendimentosService.ts
+--- barberflow-original/src/services/atendimentosService.ts	2026-06-21 00:24:57.000000000 +0000
++++ barberflow-main/src/services/atendimentosService.ts	2026-06-21 00:31:24.387057522 +0000
+@@ -42,6 +42,7 @@
+   is_walk_in?: boolean
+   barbeiro: string
+   barbeiro_id: string | null
++  barbershop_id: string | null
+   service_id: string | null
+   servico: string
+   duration_minutes: number
+@@ -97,7 +98,7 @@
+   let appointmentsQuery = supabase
+     .from('appointments')
+     .select(
+-      'id,atendimento_id,starts_at,ends_at,status,valor_final,barbeiro_id,auto_completed,auto_completed_at,is_walk_in,walk_in_customer_name,walk_in_customer_phone,client:profiles(nome,telefone),cliente:clientes(nome,telefone),barbeiro:barbeiros(nome),items:appointment_items(nome,duration_minutes,servico_id,valor_final)',
++      'id,atendimento_id,starts_at,ends_at,status,valor_final,barbeiro_id,barbershop_id,auto_completed,auto_completed_at,is_walk_in,walk_in_customer_name,walk_in_customer_phone,client:profiles(nome,telefone),cliente:clientes(nome,telefone),barbeiro:barbeiros(nome),items:appointment_items(nome,duration_minutes,servico_id,valor_final)',
+     )
+     .eq('empresa_id', input.empresaId)
+     .gte('starts_at', dayStart.toISOString())
+@@ -149,6 +150,7 @@
+     status: DailyAppointmentStatus
+     valor_final: number
+     barbeiro_id: string | null
++    barbershop_id: string | null
+     auto_completed?: boolean
+     auto_completed_at?: string | null
+     client: { nome: string; telefone: string | null } | null
+@@ -188,6 +190,7 @@
+       return {
+         barbeiro: appointment.barbeiro?.nome ?? 'Barbeiro',
+         barbeiro_id: appointment.barbeiro_id,
++        barbershop_id: appointment.barbershop_id,
+         cliente:
+           appointment.walk_in_customer_name ??
+           appointment.cliente?.nome ??
+@@ -227,6 +230,7 @@
+     ...unlinkedAtendimentos.map((atendimento) => ({
+       barbeiro: atendimento.barbeiros?.nome ?? 'Barbeiro',
+       barbeiro_id: atendimento.barbeiro_id,
++      barbershop_id: null,
+       cliente: atendimento.clientes?.nome ?? 'Cliente',
+       duration_minutes: atendimento.servicos?.duracao_minutos ?? 30,
+       id: atendimento.id,
+@@ -440,25 +444,34 @@
+   }
+ 
+   const date = input.startsAt.slice(0, 10)
+-  const busy = await listBarberAppointments(
+-    '',
+-    input.appointment.barbeiro_id,
+-    date,
+-    input.appointment.source === 'appointment' ? input.appointment.id : undefined,
+-    input.empresaId,
+-  )
+   const start = new Date(input.startsAt).getTime()
+   const end = new Date(input.endsAt).getTime()
+-  const hasConflict = busy.some((item) => {
+-    if (
+-      input.appointment.source === 'atendimento' &&
+-      item.starts_at === input.appointment.starts_at
+-    ) {
+-      return false
+-    }
++  let hasConflict = false
+ 
+-    return start < new Date(item.ends_at).getTime() && end > new Date(item.starts_at).getTime()
+-  })
++  // Atendimentos legados (tabela `atendimentos`) nao possuem barbershop_id,
++  // pois nao passam pelo fluxo de agendamento online. Nesse caso nao ha como
++  // consultar a RPC get_booking_busy_slots (ela exige um barbershop_id valido),
++  // entao a checagem de conflito e pulada — mesmo comportamento que ja existia
++  // antes desta correcao, so que sem lancar um erro de UUID invalido no meio do caminho.
++  if (input.appointment.barbershop_id) {
++    const busy = await listBarberAppointments(
++      input.appointment.barbershop_id,
++      input.appointment.barbeiro_id,
++      date,
++      input.appointment.source === 'appointment' ? input.appointment.id : undefined,
++    )
++
++    hasConflict = busy.some((item) => {
++      if (
++        input.appointment.source === 'atendimento' &&
++        item.starts_at === input.appointment.starts_at
++      ) {
++        return false
++      }
++
++      return start < new Date(item.ends_at).getTime() && end > new Date(item.starts_at).getTime()
++    })
++  }
+ 
+   if (hasConflict) {
+     throw new Error('Este horário nao esta disponivel para remarcacao.')
+diff -ru barberflow-original/src/services/clientService.ts barberflow-main/src/services/clientService.ts
+--- barberflow-original/src/services/clientService.ts	2026-06-21 00:24:57.000000000 +0000
++++ barberflow-main/src/services/clientService.ts	2026-06-21 00:31:20.305998764 +0000
+@@ -319,7 +319,6 @@
+   barbeiroId: string,
+   date: string,
+   excludeAppointmentId?: string,
+-  _empresaId?: string | null,
+ ) {
+   if (!barbershopId || !barbeiroId || !date) {
+     return []
+--- barberflow-original/eslint.config.js	2026-06-21 00:24:57.000000000 +0000
++++ barberflow-main/eslint.config.js	2026-06-21 00:34:05.255594724 +0000
+@@ -18,5 +18,20 @@
+     languageOptions: {
+       globals: globals.browser,
+     },
++    rules: {
++      // Permite variaveis prefixadas com `_` em destructuring para descartar
++      // campos intencionalmente (ex.: remover dados sensiveis de um objeto
++      // antes de exportar/logar), sem reportar como variavel nao usada.
++      '@typescript-eslint/no-unused-vars': [
++        'error',
++        {
++          args: 'after-used',
++          argsIgnorePattern: '^_',
++          destructuredArrayIgnorePattern: '^_',
++          ignoreRestSiblings: true,
++          varsIgnorePattern: '^_',
++        },
++      ],
++    },
+   },
+ ])
