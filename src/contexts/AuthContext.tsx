@@ -19,6 +19,7 @@ import { createClientProfile, createCompanyUser } from '../services/authService'
 import type { UserRole } from '../types/database'
 
 const roles: UserRole[] = ['administrador', 'barbeiro']
+const PROFILE_LOAD_TIMEOUT_MS = 12000
 
 function devAuthLog(message: string, details?: unknown) {
   if (!import.meta.env.DEV) {
@@ -93,6 +94,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setProfileLoading(true)
     setClientProfile(null)
     devAuthLog('carregando profile', { userId: user.id })
+    const abortController = new AbortController()
+    const timeoutId = window.setTimeout(() => {
+      abortController.abort()
+    }, PROFILE_LOAD_TIMEOUT_MS)
 
     try {
       const { data, error } = await supabase
@@ -103,6 +108,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             empresa:empresas(*)
           `,
         )
+        .abortSignal(abortController.signal)
         .eq('auth_user_id', user.id)
         .eq('status', 'ativo')
         .maybeSingle()
@@ -134,6 +140,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { data: clientData, error: clientError } = await supabase
         .from('profiles')
         .select('*')
+        .abortSignal(abortController.signal)
         .eq('auth_user_id', user.id)
         .eq('role', 'cliente')
         .maybeSingle()
@@ -195,6 +202,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const { data: createdClientData } = await supabase
           .from('profiles')
           .select('*')
+          .abortSignal(abortController.signal)
           .eq('auth_user_id', user.id)
           .eq('role', 'cliente')
           .maybeSingle()
@@ -221,6 +229,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             empresa:empresas(*)
           `,
         )
+        .abortSignal(abortController.signal)
         .eq('id', createdProfile.id)
         .maybeSingle()
 
@@ -244,7 +253,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
         userId: user.id,
       })
       return loadedProfile
+    } catch (error) {
+      logger.error({
+        action: 'auth_load_profile_unexpected_failed',
+        area: 'auth',
+        error,
+        message: 'Não foi possível carregar o perfil do usuário.',
+        metadata: {
+          aborted: abortController.signal.aborted,
+          timeoutMs: PROFILE_LOAD_TIMEOUT_MS,
+        },
+        userId: user.id,
+      })
+      setProfile(null)
+      setClientProfile(null)
+      return null
     } finally {
+      window.clearTimeout(timeoutId)
       setProfileLoading(false)
     }
   }, [createProfileFromMetadata])
