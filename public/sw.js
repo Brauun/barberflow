@@ -1,102 +1,26 @@
-const CACHE_NAME = 'bw-barber-static-v4'
-const OFFLINE_URL = '/offline.html'
-const STATIC_ASSETS = [
-  '/offline.html',
-  '/manifest.webmanifest',
-  '/favicon.svg',
-  '/icons/apple-touch-icon.png',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  '/icons/maskable-512.png',
-]
+// VERSAO TEMPORARIA "KILL SWITCH"
+// Objetivo unico: se desinstalar e limpar todo cache de qualquer cliente
+// (inclusive apps instalados no iOS) que ainda esteja com uma versao antiga
+// presa. Depois que todo mundo tiver passado por essa versao, podemos
+// trocar por uma versao com cache de novo (o arquivo antigo esta salvo
+// em public/sw.js.backup-v4-cache-logic).
 
-function isSupabaseRequest(url) {
-  return url.hostname.includes('supabase.co') || url.pathname.includes('/auth/v1/')
-}
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) => cache.addAll(STATIC_ASSETS))
-      .then(() => self.skipWaiting()),
-  )
+self.addEventListener('install', () => {
+  self.skipWaiting()
 })
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys
-            .filter((key) => key !== CACHE_NAME)
-            .map((key) => caches.delete(key)),
-        ),
-      )
-      .then(() => self.clients.claim()),
+    (async () => {
+      const cacheNames = await caches.keys()
+      await Promise.all(cacheNames.map((name) => caches.delete(name)))
+
+      await self.registration.unregister()
+    })(),
   )
 })
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting()
-  }
-})
-
-self.addEventListener('fetch', (event) => {
-  const { request } = event
-  const url = new URL(request.url)
-
-  if (request.method !== 'GET' || isSupabaseRequest(url)) {
-    return
-  }
-
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request).catch(() => caches.match(OFFLINE_URL)),
-    )
-    return
-  }
-
-  if (url.origin !== self.location.origin) {
-    return
-  }
-
-  if (url.pathname.startsWith('/assets/')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const responseClone = response.clone()
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone)
-            })
-          }
-
-          return response
-        })
-        .catch(() => caches.match(request)),
-    )
-    return
-  }
-
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      const networkResponse = fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const responseClone = response.clone()
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone)
-            })
-          }
-
-          return response
-        })
-        .catch(() => cachedResponse)
-
-      return cachedResponse || networkResponse
-    }),
-  )
-})
+// Nao intercepta nenhum fetch - deixa tudo passar direto pra rede.
+// Nao forca reload aqui: isso evitaria um loop (cada reload registraria
+// esse mesmo script de novo). O usuario so precisa reabrir o app uma vez
+// depois do deploy pra ficar livre do service worker antigo de vez.
