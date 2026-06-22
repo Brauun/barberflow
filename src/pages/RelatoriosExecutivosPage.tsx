@@ -58,6 +58,9 @@ const quickFilters: Array<{ label: string; value: QuickFilter }> = [
   { label: 'Personalizado', value: 'custom' },
 ]
 
+const dateInputClass =
+  'h-12 w-full min-w-0 max-w-full rounded-2xl border border-slate-200 bg-white px-3 pr-3 text-[16px] leading-none text-slate-950 outline-none transition [color-scheme:light] focus:border-brand-300 focus:ring-4 focus:ring-brand-100 sm:px-4 sm:pr-4 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:[color-scheme:dark] dark:focus:ring-brand-400/10'
+
 function dateInputValue(date: Date) {
   return date.toISOString().slice(0, 10)
 }
@@ -669,11 +672,11 @@ export function RelatoriosExecutivosPage() {
             ))}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
             <label className="space-y-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
               Data inicial
               <input
-                className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base text-slate-950 outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-100 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:focus:ring-brand-400/10"
+                className={dateInputClass}
                 onChange={(event) => setPendingInicio(event.target.value)}
                 type="date"
                 value={pendingInicio}
@@ -682,7 +685,7 @@ export function RelatoriosExecutivosPage() {
             <label className="space-y-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
               Data final
               <input
-                className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base text-slate-950 outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-100 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:focus:ring-brand-400/10"
+                className={dateInputClass}
                 onChange={(event) => setPendingFim(event.target.value)}
                 type="date"
                 value={pendingFim}

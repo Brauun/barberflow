@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { CalendarDays, FileSpreadsheet, FileText, RotateCcw } from 'lucide-react'
+import { FileSpreadsheet, FileText, RotateCcw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import {
@@ -41,6 +41,9 @@ const reportTypes: Array<{ label: string; value: RelatorioTipo }> = [
   { label: 'Clientes', value: 'clientes' },
   { label: 'Agenda', value: 'agenda' },
 ]
+
+const dateInputClass =
+  'h-12 min-w-0 max-w-full px-3 pr-3 text-[16px] leading-none sm:px-4 sm:pr-4 [color-scheme:light] dark:[color-scheme:dark]'
 
 function todayInputValue() {
   return new Date().toISOString().slice(0, 10)
@@ -959,30 +962,24 @@ export function RelatoriosPage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto_auto_auto_auto] lg:items-end">
-            <div className="relative">
+            <div className="min-w-0">
               <Input
+                className={dateInputClass}
                 label="Data inicial"
                 onChange={(event) => setDataInicio(event.target.value)}
                 placeholder="DD/MM/AAAA"
                 type="date"
                 value={dataInicio}
               />
-              <CalendarDays
-                className="pointer-events-none absolute bottom-3 right-3 text-slate-400"
-                size={17}
-              />
             </div>
-            <div className="relative">
+            <div className="min-w-0">
               <Input
+                className={dateInputClass}
                 label="Data final"
                 onChange={(event) => setDataFim(event.target.value)}
                 placeholder="DD/MM/AAAA"
                 type="date"
                 value={dataFim}
-              />
-              <CalendarDays
-                className="pointer-events-none absolute bottom-3 right-3 text-slate-400"
-                size={17}
               />
             </div>
             <Button onClick={applyFilters} type="button" variant="secondary">
