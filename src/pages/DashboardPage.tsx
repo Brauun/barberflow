@@ -121,17 +121,17 @@ function MetricCard({
   }[iconColor]
 
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
-        <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', iconBg)}>
-          <Icon size={18} />
+    <div className="rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:rounded-2xl sm:p-5">
+      <div className="flex items-start justify-between gap-2 sm:gap-3">
+        <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">{label}</p>
+        <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 sm:rounded-xl', iconBg)}>
+          <Icon className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
         </span>
       </div>
-      <p className="mt-3 text-2xl font-black tracking-normal text-slate-950 dark:text-white sm:text-3xl">
+      <p className="mt-2 text-xl font-black tracking-normal text-slate-950 dark:text-white sm:mt-3 sm:text-3xl">
         {value}
       </p>
-      <p className={cn('mt-2 inline-flex items-center gap-1 text-xs font-semibold', deltaUp ? 'text-emerald-500' : 'text-red-400')}>
+      <p className={cn('mt-1.5 inline-flex items-center gap-1 text-[0.68rem] font-semibold sm:mt-2 sm:text-xs', deltaUp ? 'text-emerald-500' : 'text-red-400')}>
         {deltaUp ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
         {delta}
       </p>
@@ -359,10 +359,6 @@ export function DashboardPage() {
   }
   const monthRevenue = data.metrics[2]
   const netProfit = data.metrics[3]
-  const ticketMedio =
-    Number(String(todayRevenue?.value ?? '0').replace(/\D/g, '')) /
-    Math.max(1, Number(String(appointments?.value ?? '1').replace(/\D/g, '')))
-
   function formatDelta(current: number, previous: number): { text: string; up: boolean } {
     if (previous === 0) {
       return current > 0
@@ -379,13 +375,17 @@ export function DashboardPage() {
 
   const todayRevenueRaw = data.todayRevenue
   const yesterdayRevenueRaw = data.yesterdayRevenue
+  const todayTicketRevenue = data.todayTicketRevenue
+  const yesterdayTicketRevenue = data.yesterdayTicketRevenue
   const todayAppointmentsCount = data.todayAppointments
   const yesterdayAppointmentsCount = data.yesterdayAppointments
 
   const revenueTicketHoje =
-    todayAppointmentsCount > 0 ? todayRevenueRaw / todayAppointmentsCount : 0
+    todayAppointmentsCount > 0 ? todayTicketRevenue / todayAppointmentsCount : 0
   const revenueTicketOntem =
-    yesterdayAppointmentsCount > 0 ? yesterdayRevenueRaw / yesterdayAppointmentsCount : 0
+    yesterdayAppointmentsCount > 0
+      ? yesterdayTicketRevenue / yesterdayAppointmentsCount
+      : 0
 
   const revenueDelta = formatDelta(todayRevenueRaw, yesterdayRevenueRaw)
   const appointmentsDelta = formatDelta(todayAppointmentsCount, yesterdayAppointmentsCount)
@@ -422,7 +422,7 @@ export function DashboardPage() {
         </p>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
         <MetricCard
           delta={revenueDelta.text}
           deltaUp={revenueDelta.up}
@@ -445,15 +445,15 @@ export function DashboardPage() {
           icon={CreditCard}
           iconColor="amber"
           label="Ticket médio"
-          value={formatCurrency(ticketMedio)}
+          value={formatCurrency(revenueTicketHoje)}
         />
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.45fr_0.95fr]">
-        <div className="rounded-2xl border border-slate-100 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-5 flex items-center justify-between gap-4">
+      <section className="grid gap-3 sm:gap-4 xl:grid-cols-[1.45fr_0.95fr]">
+        <div className="rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:rounded-2xl sm:p-5">
+          <div className="mb-3 flex items-center justify-between gap-3 sm:mb-5 sm:gap-4">
             <div>
-              <h3 className="text-base font-semibold text-slate-950 dark:text-white">Fluxo de Receita</h3>
+              <h3 className="text-sm font-semibold text-slate-950 dark:text-white sm:text-base">Fluxo de Receita</h3>
               <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Ultimos 6 meses</p>
             </div>
             <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
@@ -463,15 +463,15 @@ export function DashboardPage() {
           <RevenueChart data={data.monthlyFinance} />
         </div>
 
-        <div className="rounded-2xl border border-slate-100 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-5">
-            <h3 className="text-base font-semibold text-slate-950 dark:text-white">Serviços Populares</h3>
+        <div className="rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:rounded-2xl sm:p-5">
+          <div className="mb-3 sm:mb-5">
+            <h3 className="text-sm font-semibold text-slate-950 dark:text-white sm:text-base">Serviços Populares</h3>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Hoje</p>
           </div>
           {popularServices.length === 0 ? (
             <p className="text-sm text-slate-500">Nenhum serviço registrado ainda.</p>
           ) : (
-            <div className="space-y-5">
+            <div className="space-y-3 sm:space-y-5">
               {popularServices.map((service) => (
                 <div key={service.name}>
                   <div className="flex items-center justify-between gap-3 mb-2">
@@ -491,10 +491,10 @@ export function DashboardPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-100 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <section className="rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:rounded-2xl sm:p-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 sm:mb-5">
           <div>
-            <h3 className="text-base font-semibold text-slate-950 dark:text-white">Atividade Recente</h3>
+            <h3 className="text-sm font-semibold text-slate-950 dark:text-white sm:text-base">Atividade Recente</h3>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Ultimos atendimentos</p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -521,7 +521,7 @@ export function DashboardPage() {
               {data.latestAppointments.map((appointment) => (
                 <TableRow key={appointment.id}>
                   <TableCell className="font-semibold text-slate-950 dark:text-white">
-                    {appointment.clientes?.nome ?? 'Cliente'}
+                    {appointment.clientes?.nome?.trim() || 'Cliente não identificado'}
                   </TableCell>
                   <TableCell>{appointment.servicos?.nome ?? 'Serviço'}</TableCell>
                   <TableCell>{appointment.barbeiros?.nome ?? 'Barbeiro'}</TableCell>

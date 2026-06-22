@@ -954,16 +954,16 @@ export function RelatoriosPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <section className="flex flex-wrap items-end justify-between gap-5">
+    <div className="space-y-5 md:space-y-8">
+      <section className="flex flex-wrap items-end justify-between gap-3 md:gap-5">
         <div>
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">
             Relatórios
           </p>
-          <h2 className="mt-3 text-3xl font-black tracking-normal text-slate-950 dark:text-white">
+          <h2 className="mt-2 text-2xl font-black tracking-normal text-slate-950 dark:text-white md:mt-3 md:text-3xl">
             Análises do BW Barber
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
+          <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-600 dark:text-slate-400 md:mt-2 md:leading-6">
             Escolha o tipo, ajuste o período e gere um PDF operacional pronto para
             enviar.
           </p>
@@ -971,7 +971,7 @@ export function RelatoriosPage() {
       </section>
 
       <Card className="overflow-hidden">
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 md:space-y-6">
           <div>
             <p className="text-sm font-bold text-slate-950 dark:text-white">
               Tipo de relatório
@@ -983,7 +983,7 @@ export function RelatoriosPage() {
                 return (
                   <button
                     className={cn(
-                      'min-h-11 rounded-full border px-4 text-sm font-black transition duration-200',
+                      'min-h-10 rounded-full border px-3 text-xs font-black transition duration-200 md:min-h-11 md:px-4 md:text-sm',
                       isActive
                         ? 'border-brand-300 bg-brand-500 text-slate-950 shadow-[0_12px_28px_rgb(18_198_243/0.22)]'
                         : 'border-slate-200 bg-white text-slate-600 hover:-translate-y-0.5 hover:border-brand-200 hover:bg-brand-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-brand-800 dark:hover:bg-brand-950/40',
@@ -999,7 +999,7 @@ export function RelatoriosPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto_auto_auto_auto] lg:items-end">
+          <div className="grid gap-3 md:gap-4 lg:grid-cols-[1fr_1fr_auto_auto_auto_auto] lg:items-end">
             <DateFilterField
               label="Data inicial"
               onChange={setDataInicio}
@@ -1039,7 +1039,7 @@ export function RelatoriosPage() {
             </Button>
           </div>
           {!advancedReportsAccess.isLoading && !advancedReportsAccess.canUse && (
-            <p className="rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-brand-800 dark:bg-brand-950/40 dark:text-slate-200">
+            <p className="rounded-xl border border-brand-100 bg-brand-50 px-3 py-2.5 text-sm font-semibold text-slate-700 dark:border-brand-800 dark:bg-brand-950/40 dark:text-slate-200 md:rounded-2xl md:px-4 md:py-3">
               Exportações em PDF e Excel exigem upgrade de
               plano.
             </p>
@@ -1065,10 +1065,10 @@ export function RelatoriosPage() {
           </div>
         </div>
       ) : data ? (
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           <section className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-xl font-semibold text-slate-950 dark:text-white">
+              <h3 className="text-lg font-semibold text-slate-950 dark:text-white md:text-xl">
                 {title}
               </h3>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -1094,7 +1094,7 @@ export function RelatoriosPage() {
               <Card key={label}>
                 <CardContent>
                   <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
-                  <p className="mt-2 text-xl font-black text-slate-950 dark:text-white">
+                  <p className="mt-1.5 text-lg font-black text-slate-950 dark:text-white md:mt-2 md:text-xl">
                     {value}
                   </p>
                 </CardContent>
@@ -1102,7 +1102,7 @@ export function RelatoriosPage() {
             ))}
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-2">
+          <section className="grid gap-4 md:gap-6 xl:grid-cols-2">
             <Card>
               <CardHeader>
                 <h3 className="text-base font-semibold text-slate-950 dark:text-white">
@@ -1111,7 +1111,7 @@ export function RelatoriosPage() {
               </CardHeader>
               <CardContent className="p-0">
                 {data.topProducts.length === 0 ? (
-                  <div className="p-5 text-sm text-slate-500 dark:text-slate-400">
+                  <div className="p-3 text-sm text-slate-500 dark:text-slate-400 md:p-5">
                     Nenhuma venda de produto no período.
                   </div>
                 ) : (
@@ -1149,7 +1149,7 @@ export function RelatoriosPage() {
               </CardHeader>
               <CardContent className="p-0">
                 {data.topBarbers.length === 0 ? (
-                  <div className="p-5 text-sm text-slate-500 dark:text-slate-400">
+                  <div className="p-3 text-sm text-slate-500 dark:text-slate-400 md:p-5">
                     Nenhum atendimento concluído no período.
                   </div>
                 ) : (

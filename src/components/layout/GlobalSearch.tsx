@@ -67,7 +67,7 @@ export function GlobalSearch({
 
   return (
     <div className={cn('relative w-full', className)} ref={searchRef}>
-      <div className="flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500 transition focus-within:border-brand-200 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-100/70 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:focus-within:border-brand-400/40 dark:focus-within:bg-slate-950 dark:focus-within:ring-brand-400/10">
+      <div className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500 transition focus-within:border-brand-200 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-100/70 sm:h-11 sm:rounded-2xl dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:focus-within:border-brand-400/40 dark:focus-within:bg-slate-950 dark:focus-within:ring-brand-400/10">
         {isSearching ? (
           <Loader2 className="shrink-0 animate-spin text-brand-500" size={16} />
         ) : (
@@ -98,7 +98,7 @@ export function GlobalSearch({
       </div>
 
       {isOpen && (
-        <div className="absolute right-0 top-12 z-50 w-full overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white p-2 shadow-[0_24px_80px_rgb(15_23_42/0.16)] dark:border-slate-800 dark:bg-slate-950">
+        <div className="absolute right-0 top-11 z-50 max-h-[min(22rem,calc(100dvh-8rem))] w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_54px_rgb(15_23_42/0.14)] sm:top-12 sm:rounded-[1.25rem] sm:p-2 sm:shadow-[0_24px_80px_rgb(15_23_42/0.16)] dark:border-slate-800 dark:bg-slate-950">
 
           {/* Páginas / Navegação */}
           {navResults.length > 0 && (
@@ -112,7 +112,7 @@ export function GlobalSearch({
                 const Icon = item.icon
                 return (
                   <button
-                    className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-semibold text-slate-600 transition hover:bg-brand-50 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-brand-400/10 dark:hover:text-white"
+                    className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm font-semibold text-slate-600 transition hover:bg-brand-50 hover:text-slate-950 sm:gap-3 sm:rounded-2xl sm:px-3 sm:py-2.5 dark:text-slate-300 dark:hover:bg-brand-400/10 dark:hover:text-white"
                     key={item.path}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => handleSelectNav(item)}
@@ -134,7 +134,7 @@ export function GlobalSearch({
               </p>
               {clientes.map((cliente) => (
                 <button
-                  className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-semibold text-slate-600 transition hover:bg-brand-50 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-brand-400/10 dark:hover:text-white"
+                  className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm font-semibold text-slate-600 transition hover:bg-brand-50 hover:text-slate-950 sm:gap-3 sm:rounded-2xl sm:px-3 sm:py-2.5 dark:text-slate-300 dark:hover:bg-brand-400/10 dark:hover:text-white"
                   key={cliente.id}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleSelectCliente(cliente.id)}
@@ -162,7 +162,7 @@ export function GlobalSearch({
               </p>
               {atendimentos.map((atendimento) => (
                 <button
-                  className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-semibold text-slate-600 transition hover:bg-brand-50 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-brand-400/10 dark:hover:text-white"
+                  className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm font-semibold text-slate-600 transition hover:bg-brand-50 hover:text-slate-950 sm:gap-3 sm:rounded-2xl sm:px-3 sm:py-2.5 dark:text-slate-300 dark:hover:bg-brand-400/10 dark:hover:text-white"
                   key={atendimento.id}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={handleSelectAtendimento}

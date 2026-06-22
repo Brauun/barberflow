@@ -28,9 +28,9 @@ const variantClasses: Record<ButtonVariant, string> = {
 const sizeClasses: Record<ButtonSize, string> = {
   'icon-md': 'h-9 w-9 px-0 text-sm',
   'icon-sm': 'h-8 w-8 px-0 text-sm',
-  sm: 'h-9 px-3 text-sm',
-  md: 'h-10 px-4 text-sm',
-  lg: 'h-11 px-5 text-base',
+  sm: 'h-9 px-2.5 text-sm sm:px-3',
+  md: 'h-10 px-3 text-sm sm:px-4',
+  lg: 'h-11 px-4 text-sm sm:px-5 sm:text-base',
 }
 
 const tooltipPositionClasses: Record<TooltipPosition, string> = {

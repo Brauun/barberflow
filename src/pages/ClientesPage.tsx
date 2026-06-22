@@ -186,30 +186,30 @@ export function ClientesPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <section className="flex flex-wrap items-end justify-between gap-5">
-        <div>
+    <div className="w-full max-w-full min-w-0 space-y-5 overflow-x-hidden md:space-y-8">
+      <section className="flex min-w-0 flex-wrap items-end justify-between gap-3 md:gap-5">
+        <div className="min-w-0">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">
             Clientes
           </p>
-          <h2 className="mt-3 text-3xl font-black tracking-normal text-zinc-950 dark:text-zinc-50">
+          <h2 className="mt-2 text-2xl font-black tracking-normal text-zinc-950 dark:text-zinc-50 md:mt-3 md:text-3xl">
             Base de clientes
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1.5 max-w-2xl text-sm leading-5 text-zinc-600 dark:text-zinc-400 md:mt-2 md:leading-6">
             Cadastre, edite, pesquise e acompanhe o histórico de atendimentos
             dos clientes da empresa.
           </p>
         </div>
 
-        <Button leftIcon={<Plus size={18} />} onClick={openCreateModal}>
+        <Button className="max-w-full" leftIcon={<Plus size={18} />} onClick={openCreateModal}>
           Novo cliente
         </Button>
       </section>
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+          <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
               <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
                 Clientes cadastrados
               </h3>
@@ -219,7 +219,7 @@ export function ClientesPage() {
               </p>
             </div>
 
-            <div className="w-full lg:max-w-sm">
+            <div className="w-full max-w-full min-w-0 lg:max-w-sm">
               <SearchInput
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Pesquisar por nome ou telefone"
@@ -231,13 +231,13 @@ export function ClientesPage() {
 
         <CardContent className="p-0">
           {clientesError && (
-            <div className="p-5 text-sm text-red-600">
+            <div className="p-3 text-sm text-red-600 md:p-5">
               {clientesError.message}
             </div>
           )}
 
           {isLoadingClientes ? (
-            <div className="space-y-3 p-6">
+            <div className="space-y-3 p-3 md:p-6">
               <Skeleton className="h-12" />
               <Skeleton className="h-12" />
               <Skeleton className="h-12" />
@@ -249,15 +249,15 @@ export function ClientesPage() {
               title="Nenhum cliente encontrado"
             />
           ) : (
-            <div className="space-y-3 p-4 sm:p-5">
+            <div className="w-full max-w-full min-w-0 space-y-3 p-3 sm:p-5">
               {clientes.map((cliente) => (
                 <RecordCard key={cliente.id}>
-                  <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex min-w-0 items-start gap-4">
+                  <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex min-w-0 items-start gap-3 sm:gap-4">
                       <RecordAvatar>{getInitials(cliente.nome)}</RecordAvatar>
                       <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h4 className="truncate text-base font-black text-slate-950">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <h4 className="min-w-0 truncate text-sm font-black text-slate-950 md:text-base">
                             {cliente.nome}
                           </h4>
                           <Badge
@@ -271,11 +271,16 @@ export function ClientesPage() {
                             <Badge variant="info">Agendado</Badge>
                           )}
                         </div>
-                        <p className="mt-1 text-sm text-slate-500">
-                          {cliente.telefone
-                            ? formatPhone(cliente.telefone)
-                            : 'Telefone não informado'} ·{' '}
-                          {cliente.email ?? 'Email não informado'}
+                        <p className="mt-1 min-w-0 break-words text-xs leading-5 text-slate-500 md:text-sm">
+                          <span className="break-words">
+                            {cliente.telefone
+                              ? formatPhone(cliente.telefone)
+                              : 'Telefone não informado'}
+                          </span>
+                          <span className="mx-1 hidden sm:inline">·</span>
+                          <span className="block min-w-0 break-all sm:inline">
+                            {cliente.email ?? 'Email não informado'}
+                          </span>
                         </p>
                         <p className="mt-2 text-xs font-medium text-slate-400">
                           Nascimento:{' '}
@@ -288,7 +293,7 @@ export function ClientesPage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
+                    <div className="grid min-w-0 grid-cols-2 gap-3 sm:flex sm:flex-row sm:items-center sm:justify-end sm:gap-4">
                       <RecordMetric
                         label="Última visita"
                         value={
@@ -314,7 +319,7 @@ export function ClientesPage() {
                         }
                         value={cliente.visitas_count}
                       />
-                      <div className="flex gap-2 sm:justify-end">
+                      <div className="col-span-2 flex min-w-0 flex-wrap gap-2 sm:col-span-1 sm:justify-end">
                         {!cliente.is_online_only && (
                           <>
                             <Button

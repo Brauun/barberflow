@@ -58,7 +58,7 @@ export function Sidebar({
         aria-label={item.label}
         className={({ isActive }) =>
           cn(
-            'group relative flex h-10 w-full items-center rounded-xl text-slate-500 transition duration-150 hover:bg-slate-50 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60 dark:hover:text-white',
+          'group relative flex h-9 w-full items-center rounded-xl text-slate-500 transition duration-150 hover:bg-slate-50 hover:text-slate-800 sm:h-10 dark:text-slate-300 dark:hover:bg-slate-800/60 dark:hover:text-white',
             isExpanded ? 'justify-start gap-3 px-3.5' : 'justify-center px-0',
             isActive && 'bg-brand-50 text-brand-600 dark:bg-brand-400/12 dark:text-brand-300',
           )
@@ -115,7 +115,7 @@ export function Sidebar({
     >
       <div
         className={cn(
-          'flex min-h-24 w-full items-center border-b border-slate-100 px-4 py-4 dark:border-slate-800',
+          'flex min-h-20 w-full items-center border-b border-slate-100 px-3.5 py-3 dark:border-slate-800 sm:min-h-24 sm:px-4 sm:py-4',
           isExpanded ? 'justify-between' : 'justify-center',
         )}
       >
@@ -127,7 +127,7 @@ export function Sidebar({
           <span
             className={cn(
               'flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-50 font-black text-slate-950 ring-1 ring-brand-100 shadow-[0_12px_30px_rgb(15_23_42/0.08)] dark:bg-brand-400/12 dark:text-white dark:ring-brand-400/30',
-              isExpanded ? 'h-[3.25rem] w-[3.25rem] text-base' : 'h-11 w-11 text-sm',
+              isExpanded ? 'h-12 w-12 text-sm sm:h-[3.25rem] sm:w-[3.25rem] sm:text-base' : 'h-11 w-11 text-sm',
             )}
           >
             {companyLogoSrc ? (
@@ -175,13 +175,13 @@ export function Sidebar({
 
       <nav
         className={cn(
-          'bw-sidebar-scroll flex flex-1 flex-col gap-2 overflow-y-auto py-7',
+          'bw-sidebar-scroll flex flex-1 flex-col gap-1.5 overflow-y-auto py-4 sm:gap-2 sm:py-7',
           isExpanded ? 'px-3' : 'items-center px-3',
         )}
       >
-        <div className="mb-5 w-full space-y-2">{visibleItems.map(renderNavItem)}</div>
+        <div className="mb-3 w-full space-y-1.5 sm:mb-5 sm:space-y-2">{visibleItems.map(renderNavItem)}</div>
         {visibleGroups.map((group) => (
-          <div className="w-full space-y-2" key={group.label}>
+          <div className="w-full space-y-1.5 sm:space-y-2" key={group.label}>
             <p
               className={cn(
                 'px-3.5 text-[0.63rem] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300',
@@ -190,7 +190,7 @@ export function Sidebar({
             >
               {group.label}
             </p>
-            <div className="space-y-2">{group.items.map(renderNavItem)}</div>
+            <div className="space-y-1.5 sm:space-y-2">{group.items.map(renderNavItem)}</div>
           </div>
         ))}
       </nav>
@@ -206,7 +206,7 @@ export function Sidebar({
         </button>
       )}
 
-      <div className="w-full border-t border-slate-100 px-3 py-4 dark:border-slate-800">
+      <div className="w-full border-t border-slate-100 px-3 py-3 dark:border-slate-800 sm:py-4">
         <p
           className={cn(
             'mb-2 px-3.5 text-[0.63rem] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300',
@@ -220,7 +220,7 @@ export function Sidebar({
 
       <div
         className={cn(
-          'flex w-full items-center gap-3 border-t border-slate-100 py-5 dark:border-slate-800',
+          'flex w-full items-center gap-3 border-t border-slate-100 py-3.5 dark:border-slate-800 sm:py-5',
           isExpanded ? 'px-4' : 'justify-center px-3',
         )}
       >

@@ -50,6 +50,10 @@ export type ReportData = {
   topBarbers: TopBarber[]
 }
 
+function displayCustomerName(value: string | null | undefined) {
+  return value?.trim() || 'Cliente não identificado'
+}
+
 export type ExecutiveBarber = TopBarber & {
   cancelamentos: number
   comissao: number
@@ -458,7 +462,7 @@ export async function getRelatorioData(
       const clientId = appointment.cliente_id ?? appointment.clientes?.nome ?? 'cliente'
       const current = clientsMap.get(clientId) ?? {
         gastoTotal: 0,
-        nome: appointment.clientes?.nome ?? 'Cliente',
+        nome: displayCustomerName(appointment.clientes?.nome),
         novo: false,
         recorrente: false,
         ultimaVisita: null,
@@ -484,7 +488,7 @@ export async function getRelatorioData(
 
   const agendaItems = barberAppointments.map<ReportAgendaItem>((appointment) => ({
     barbeiro: appointment.barbeiros?.nome ?? 'Barbeiro',
-    cliente: appointment.clientes?.nome ?? 'Cliente',
+    cliente: displayCustomerName(appointment.clientes?.nome),
     horario: appointment.data_hora_inicio ?? '',
     servico: appointment.servicos?.nome ?? 'Serviço',
     status: appointment.status ?? 'agendado',
@@ -590,7 +594,7 @@ export async function getExecutiveRelatorioData(
 
   const clientMap = new Map<string, ExecutiveClient>()
   concluidoAppointments.forEach((appointment) => {
-    const nome = appointment.clientes?.nome ?? 'Cliente'
+    const nome = displayCustomerName(appointment.clientes?.nome)
     const currentClient = clientMap.get(nome) ?? {
       gastoTotal: 0,
       nome,

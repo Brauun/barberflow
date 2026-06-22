@@ -23,6 +23,12 @@ type LatestAppointment = {
   servicos: { nome: string } | null
 }
 
+type CompletedAppointmentValue = {
+  id: string
+  valor: number | null
+  valor_final: number | null
+}
+
 type DueBill = {
   id: string
   descricao: string
@@ -60,8 +66,10 @@ export type DashboardData = {
   popularServicesToday: LatestAppointment[]
   todayAppointments: number
   todayRevenue: number
+  todayTicketRevenue: number
   yesterdayAppointments: number
   yesterdayRevenue: number
+  yesterdayTicketRevenue: number
   dueBills: DueBill[]
 }
 
@@ -132,6 +140,20 @@ function sumCommissions(commissions: Commission[], from: string, to: string) {
         commission.created_at >= from && commission.created_at < to,
     )
     .reduce((total, commission) => total + Number(commission.valor_comissao), 0)
+}
+
+function sumCompletedAppointmentRevenue(appointments: CompletedAppointmentValue[]) {
+  const uniqueAppointments = new Map<string, CompletedAppointmentValue>()
+
+  appointments.forEach((appointment) => {
+    uniqueAppointments.set(appointment.id, appointment)
+  })
+
+  return Array.from(uniqueAppointments.values()).reduce(
+    (total, appointment) =>
+      total + Number(appointment.valor_final ?? appointment.valor ?? 0),
+    0,
+  )
 }
 
 function getMonthlyFinance(movements: FinanceMovement[]) {
@@ -232,7 +254,7 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
       .eq('status', 'ativo'),
     supabase
       .from('atendimentos')
-      .select('id', { count: 'exact', head: true })
+      .select('id,valor,valor_final', { count: 'exact' })
       .eq('empresa_id', empresaId)
       .in('status', ['concluido', 'concluido_automatico'])
       .gte('data_hora_inicio', today.toISOString())
@@ -280,7 +302,7 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
       .eq('status', 'paga'),
     supabase
       .from('atendimentos')
-      .select('id', { count: 'exact', head: true })
+      .select('id,valor,valor_final', { count: 'exact' })
       .eq('empresa_id', empresaId)
       .in('status', ['concluido', 'concluido_automatico'])
       .gte('data_hora_inicio', yesterday.toISOString())
@@ -321,6 +343,10 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
     ...getMissingPaidBillMovements(movementsFromDatabase, paidBills),
   ]
   const commissions = (commissionsResponse.data ?? []) as Commission[]
+  const completedTodayAppointments =
+    (completedTodayResponse.data ?? []) as CompletedAppointmentValue[]
+  const completedYesterdayAppointments =
+    (yesterdayAppointmentsResponse.data ?? []) as CompletedAppointmentValue[]
   const monthFrom = toDateInputValue(monthStart)
   const monthTo = toDateInputValue(nextMonth)
   const todayFrom = toDateInputValue(today)
@@ -339,6 +365,8 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
     todayFrom,
     tomorrowTo,
   )
+  const ticketRevenueHoje = sumCompletedAppointmentRevenue(completedTodayAppointments)
+  const ticketRevenueOntem = sumCompletedAppointmentRevenue(completedYesterdayAppointments)
   const faturamentoSemana = sumMovements(
     movements,
     'entrada',
@@ -362,7 +390,9 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
 
   return {
     todayRevenue: faturamentoHoje,
+    todayTicketRevenue: ticketRevenueHoje,
     yesterdayRevenue: faturamentoOntem,
+    yesterdayTicketRevenue: ticketRevenueOntem,
     yesterdayAppointments: yesterdayAppointmentsResponse.count ?? 0,
     dueBills: (dueBillsResponse.data ?? []) as DueBill[],
     latestAppointments:

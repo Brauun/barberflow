@@ -658,16 +658,16 @@ export function BarbeirosPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase text-brand-600 dark:text-brand-400">
+          <p className="text-xs font-semibold uppercase text-brand-600 dark:text-brand-400 md:text-sm">
             Barbeiros
           </p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-normal text-zinc-950 dark:text-zinc-50">
+          <h2 className="mt-1.5 text-xl font-semibold tracking-normal text-zinc-950 dark:text-zinc-50 md:mt-2 md:text-2xl">
             Equipe e comissões
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1.5 max-w-2xl text-sm leading-5 text-zinc-600 dark:text-zinc-400 md:mt-2 md:leading-6">
             Convide funcionários, acompanhe desempenho e gerencie comissões
             respeitando o isolamento por empresa.
           </p>
@@ -693,33 +693,33 @@ export function BarbeirosPage() {
         </Card>
       )}
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
         <Card>
           <CardContent>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 md:text-sm">
               Quantidade de atendimentos
             </p>
-            <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
+            <p className="mt-1.5 text-xl font-semibold text-zinc-950 dark:text-zinc-50 md:mt-2 md:text-2xl">
               {totals.atendimentos}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 md:text-sm">
               Valor faturado
             </p>
-            <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
+            <p className="mt-1.5 text-xl font-semibold text-zinc-950 dark:text-zinc-50 md:mt-2 md:text-2xl">
               {currencyFormatter.format(totals.faturamento)}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 md:text-sm">
               Comissão acumulada
             </p>
-            <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
+            <p className="mt-1.5 text-xl font-semibold text-zinc-950 dark:text-zinc-50 md:mt-2 md:text-2xl">
               {currencyFormatter.format(totals.comissao)}
             </p>
           </CardContent>
@@ -831,15 +831,44 @@ export function BarbeirosPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {barbeiro.telefone ? formatPhone(barbeiro.telefone) : '-'}
+                      <div className="space-y-0.5">
+                        <span className="block text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">
+                          Tel.
+                        </span>
+                        <span>{barbeiro.telefone ? formatPhone(barbeiro.telefone) : '-'}</span>
+                      </div>
                     </TableCell>
-                    <TableCell>{Number(barbeiro.percentual_comissao)}%</TableCell>
-                    <TableCell>{barbeiro.atendimentos_count}</TableCell>
                     <TableCell>
-                      {currencyFormatter.format(barbeiro.valor_faturado)}
+                      <div className="space-y-0.5">
+                        <span className="block text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">
+                          Comissão
+                        </span>
+                        <span>{Number(barbeiro.percentual_comissao)}%</span>
+                      </div>
                     </TableCell>
                     <TableCell>
-                      {currencyFormatter.format(barbeiro.comissao_acumulada)}
+                      <div className="space-y-0.5">
+                        <span className="block text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">
+                          Atendimentos
+                        </span>
+                        <span>{barbeiro.atendimentos_count}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-0.5">
+                        <span className="block text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">
+                          Faturado
+                        </span>
+                        <span>{currencyFormatter.format(barbeiro.valor_faturado)}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-0.5">
+                        <span className="block text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">
+                          Comissão acumulada
+                        </span>
+                        <span>{currencyFormatter.format(barbeiro.comissao_acumulada)}</span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge

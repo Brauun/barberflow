@@ -222,16 +222,16 @@ export function ServicosPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase text-brand-600 dark:text-brand-400">
+          <p className="text-xs font-semibold uppercase text-brand-600 dark:text-brand-400 md:text-sm">
             Serviços
           </p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-normal text-zinc-950 dark:text-zinc-50">
+          <h2 className="mt-1.5 text-xl font-semibold tracking-normal text-zinc-950 dark:text-zinc-50 md:mt-2 md:text-2xl">
             Catálogo de serviços
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1.5 max-w-2xl text-sm leading-5 text-zinc-600 dark:text-zinc-400 md:mt-2 md:leading-6">
             {canManageServices
               ? 'Cadastre serviços, defina preços, duração, comissão padrão e quais barbeiros executam cada item.'
               : 'Serviços definidos pela administração. Barbeiros apenas utilizam o catálogo existente.'}
@@ -275,18 +275,18 @@ export function ServicosPage() {
 
         <CardContent className="p-0">
           {servicosError && (
-            <div className="p-5 text-sm text-red-600">
+            <div className="p-3 text-sm text-red-600 md:p-5">
               {servicosError.message}
             </div>
           )}
 
           {isLoadingServicos ? (
-            <div className="flex min-h-56 items-center justify-center">
+            <div className="flex min-h-40 items-center justify-center md:min-h-56">
               <Loader2 className="animate-spin text-brand-500" size={28} />
             </div>
           ) : servicos.length === 0 ? (
-            <div className="flex min-h-56 flex-col items-center justify-center px-5 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-md bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+            <div className="flex min-h-40 flex-col items-center justify-center px-4 text-center md:min-h-56 md:px-5">
+              <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400 md:h-12 md:w-12">
                 <Sparkles size={22} />
               </span>
               <p className="mt-4 font-semibold text-zinc-950 dark:text-zinc-50">

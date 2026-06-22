@@ -653,7 +653,9 @@ export function PlanosFidelidadePage() {
                 >
                   <div>
                     <p className="font-black text-slate-950 dark:text-slate-50">
-                      {interest.profile?.nome ?? interest.cliente?.nome ?? 'Cliente'}
+                      {interest.profile?.nome?.trim() ||
+                        interest.cliente?.nome?.trim() ||
+                        'Cliente não identificado'}
                     </p>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                       {interest.program?.nome ?? 'Programa'} ·{' '}
@@ -729,7 +731,7 @@ export function PlanosFidelidadePage() {
                   >
                     <div>
                       <p className="font-black text-slate-950 dark:text-slate-50">
-                        {benefit.cliente?.nome ?? 'Cliente'}
+                        {benefit.cliente?.nome?.trim() || 'Cliente não identificado'}
                       </p>
                       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                         {benefit.program?.nome ?? 'Programa'} · {benefit.status}
@@ -775,7 +777,7 @@ export function PlanosFidelidadePage() {
                           {log.program?.nome ?? 'Programa'}
                         </p>
                         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                          {log.cliente?.nome ?? 'Cliente'} · {log.tipo}
+                          {log.cliente?.nome?.trim() || 'Cliente não identificado'} · {log.tipo}
                         </p>
                       </div>
                       <p className="font-black text-brand-600 dark:text-brand-300">

@@ -717,15 +717,15 @@ export function ConfiguracoesPage() {
   }
 
   return (
-    <div className="min-w-0 space-y-5 overflow-x-hidden pb-[env(safe-area-inset-bottom)] sm:space-y-6">
+    <div className="min-w-0 space-y-4 overflow-x-hidden pb-[env(safe-area-inset-bottom)] sm:space-y-6">
       <section className="min-w-0">
-        <p className="text-sm font-semibold uppercase text-brand-600 dark:text-brand-400">
+        <p className="text-xs font-semibold uppercase text-brand-600 dark:text-brand-400 md:text-sm">
           Configurações
         </p>
-        <h2 className="mt-2 text-2xl font-semibold tracking-normal text-zinc-950 dark:text-zinc-50">
+        <h2 className="mt-1.5 text-xl font-semibold tracking-normal text-zinc-950 dark:text-zinc-50 md:mt-2 md:text-2xl">
           Empresa, perfil e tema
         </h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+        <p className="mt-1.5 max-w-2xl text-sm leading-5 text-zinc-600 dark:text-zinc-400 md:mt-2 md:leading-6">
           Atualize os dados da barbearia, comissão padrão, aparência do sistema
           e informações do usuário.
         </p>

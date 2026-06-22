@@ -27,6 +27,10 @@ export type AppointmentWaitlist =
     service?: { nome: string } | null
   }
 
+function displayClientName(value: string | null | undefined) {
+  return value?.trim() || 'Cliente não identificado'
+}
+
 function appointmentTimeLabel(value: string) {
   return new Date(value).toLocaleTimeString('pt-BR', {
     hour: '2-digit',
@@ -583,10 +587,16 @@ export async function cancelClientAppointment(input: {
     .eq('appointment_id', input.appointment.id)
 
   if (input.appointment.empresa_id) {
+    const { data: clientData } = await supabase
+      .from('profiles')
+      .select('nome')
+      .eq('id', input.appointment.client_profile_id)
+      .maybeSingle()
+
     await tryCreateInternalNotification({
       barberName: input.appointment.barbeiro?.nome,
       empresaId: input.appointment.empresa_id,
-      message: `${input.appointment.barbershop?.nome ? 'Um cliente' : 'Cliente'} cancelou o agendamento de ${appointmentDateLabel(input.appointment.starts_at)} as ${appointmentTimeLabel(input.appointment.starts_at)}.`,
+      message: `${displayClientName(clientData?.nome)} cancelou o agendamento de ${appointmentDateLabel(input.appointment.starts_at)} as ${appointmentTimeLabel(input.appointment.starts_at)}.`,
       metadata: {
         appointment_id: input.appointment.id,
         reason: input.reason ?? null,

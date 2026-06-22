@@ -74,8 +74,8 @@ export function TopBar({
         headerZClass,
       )}
     >
-      <div className="flex min-h-16 flex-col justify-center gap-3 px-4 py-3 sm:min-h-20 sm:px-6 md:px-8 lg:px-10 xl:px-12">
-        <div className="flex items-center gap-3">
+      <div className="flex min-h-14 flex-col justify-center gap-2 px-3 py-2 sm:min-h-20 sm:gap-3 sm:px-6 sm:py-3 md:px-8 lg:px-10 xl:px-12">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <Button
             aria-label="Abrir menu"
             className="lg:hidden"
@@ -87,10 +87,10 @@ export function TopBar({
           </Button>
 
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-300">
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-brand-600 sm:text-xs sm:tracking-[0.18em] dark:text-brand-300">
               {currentItem.label}
             </p>
-            <h1 className="truncate text-lg font-black tracking-normal text-slate-950 sm:text-xl dark:text-white">
+            <h1 className="truncate text-base font-black tracking-normal text-slate-950 sm:text-xl dark:text-white">
               BW Barber
             </h1>
           </div>
@@ -106,13 +106,13 @@ export function TopBar({
 
           <div
             aria-label="Alternar tema"
-            className="flex h-11 items-center rounded-2xl border border-slate-200 bg-slate-50 p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            className="flex h-10 items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5 shadow-sm sm:h-11 sm:rounded-2xl sm:p-1 dark:border-slate-800 dark:bg-slate-900"
             role="group"
           >
             <button
               aria-label="Usar tema claro"
               className={cn(
-                'flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition duration-200 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white',
+                'flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition duration-200 hover:text-slate-950 sm:h-9 sm:w-9 sm:rounded-xl dark:text-slate-400 dark:hover:text-white',
                 resolvedTheme === 'light' &&
                   'bg-white text-brand-600 shadow-sm dark:bg-slate-950 dark:text-brand-300',
               )}
@@ -125,7 +125,7 @@ export function TopBar({
             <button
               aria-label="Usar tema escuro"
               className={cn(
-                'flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition duration-200 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white',
+                'flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition duration-200 hover:text-slate-950 sm:h-9 sm:w-9 sm:rounded-xl dark:text-slate-400 dark:hover:text-white',
                 resolvedTheme === 'dark' &&
                   'bg-white text-brand-600 shadow-sm dark:bg-slate-950 dark:text-brand-300',
               )}

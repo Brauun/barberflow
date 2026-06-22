@@ -41,7 +41,7 @@ async function searchAtendimentos(empresaId: string, term: string) {
     .slice(0, 4)
     .map((row) => ({
       id: row.id,
-      cliente: row.clientes?.nome ?? 'Cliente',
+      cliente: row.clientes?.nome?.trim() || 'Cliente não identificado',
       servico: row.servicos?.nome ?? 'Serviço',
       data: row.data_hora_inicio,
     }))

@@ -8,7 +8,7 @@ type TableProps = HTMLAttributes<HTMLTableElement> & {
 
 export function Table({ children, className, ...props }: TableProps) {
   return (
-    <div className="w-full min-w-0 overflow-x-auto p-4 sm:p-5">
+    <div className="w-full min-w-0 overflow-x-auto p-3 sm:p-5">
       <table
         className={cn(
           'block w-full min-w-0 border-separate border-spacing-y-3 text-left text-sm',
@@ -48,7 +48,7 @@ export function TableRow({ children, className, ...props }: HTMLAttributes<HTMLT
   return (
     <tr
       className={cn(
-        'grid gap-3 rounded-[1.4rem] border border-slate-200/70 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] transition duration-200 hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-[0_22px_70px_rgb(15_23_42/0.045)] sm:p-5 lg:grid-flow-col lg:auto-cols-fr lg:items-center',
+        'grid gap-2.5 rounded-2xl border border-slate-200/70 bg-white p-3 shadow-[0_10px_34px_rgb(15_23_42/0.02)] transition duration-200 hover:border-slate-300/80 hover:shadow-[0_16px_48px_rgb(15_23_42/0.035)] sm:gap-3 sm:rounded-[1.4rem] sm:p-5 sm:hover:-translate-y-0.5 sm:hover:shadow-[0_22px_70px_rgb(15_23_42/0.045)] lg:grid-flow-col lg:auto-cols-fr lg:items-center',
         className,
       )}
       {...props}
@@ -70,7 +70,7 @@ export function TableCell({ children, className, ...props }: TdHTMLAttributes<HT
   return (
     <td
       className={cn(
-        'block min-w-0 px-0 py-0 text-sm font-medium text-slate-600 first:text-base first:font-black first:text-slate-950 dark:text-slate-600',
+        'block min-w-0 px-0 py-0 text-xs font-medium text-slate-600 first:text-sm first:font-black first:text-slate-950 dark:text-slate-600 sm:text-sm sm:first:text-base',
         className,
       )}
       {...props}

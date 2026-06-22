@@ -114,6 +114,12 @@ export type ServicoOption = {
   duracao_minutos?: number | null
 }
 
+function displayCustomerName(...values: Array<null | string | undefined>) {
+  const value = values.find((item) => item?.trim())
+
+  return value?.trim() || 'Cliente não identificado'
+}
+
 export async function listAtendimentos(
   empresaId: string,
 ): Promise<AtendimentoListItem[]> {
@@ -238,11 +244,11 @@ export async function listDailyAppointments(input: {
         barbeiro: appointment.barbeiro?.nome ?? 'Barbeiro',
         barbeiro_id: appointment.barbeiro_id,
         barbershop_id: appointment.barbershop_id,
-        cliente:
-          appointment.walk_in_customer_name ??
-          appointment.cliente?.nome ??
-          appointment.client?.nome ??
-          'Cliente',
+        cliente: displayCustomerName(
+          appointment.walk_in_customer_name,
+          appointment.cliente?.nome,
+          appointment.client?.nome,
+        ),
         cliente_telefone:
           appointment.walk_in_customer_phone ??
           appointment.cliente?.telefone ??
@@ -278,7 +284,7 @@ export async function listDailyAppointments(input: {
       barbeiro: atendimento.barbeiros?.nome ?? 'Barbeiro',
       barbeiro_id: atendimento.barbeiro_id,
       barbershop_id: null,
-      cliente: atendimento.clientes?.nome ?? 'Cliente',
+      cliente: displayCustomerName(atendimento.clientes?.nome),
       duration_minutes: atendimento.servicos?.duracao_minutos ?? 30,
       id: atendimento.id,
       ends_at:
@@ -992,11 +998,11 @@ export async function listAtendimentoRecords(
 
       return {
         barbeiro: appointment.barbeiro?.nome ?? 'Barbeiro',
-        cliente:
-          appointment.walk_in_customer_name ??
-          appointment.cliente?.nome ??
-          appointment.client?.nome ??
-          'Cliente',
+        cliente: displayCustomerName(
+          appointment.walk_in_customer_name,
+          appointment.cliente?.nome,
+          appointment.client?.nome,
+        ),
         cliente_tipo: appointment.is_walk_in
           ? ('avulso' as const)
           : ('cadastrado' as const),
@@ -1014,7 +1020,7 @@ export async function listAtendimentoRecords(
       .filter((atendimento) => !linkedAtendimentoIds.has(atendimento.id))
       .map((atendimento) => ({
         barbeiro: atendimento.barbeiros?.nome ?? 'Barbeiro',
-        cliente: atendimento.clientes?.nome ?? 'Cliente',
+        cliente: displayCustomerName(atendimento.clientes?.nome),
         cliente_tipo: 'cadastrado' as const,
         id: atendimento.id,
         servico: atendimento.servicos?.nome ?? 'Serviço',

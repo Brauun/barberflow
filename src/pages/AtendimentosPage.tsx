@@ -980,21 +980,21 @@ export function AtendimentosPage() {
               <Loader2 className="animate-spin text-brand-500" size={28} />
             </div>
           ) : !dailyAppointmentsQuery.data?.length ? (
-            <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-6 text-center text-sm font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-center text-sm font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300 sm:rounded-[1.35rem] sm:p-6">
               Nenhum atendimento agendado para esta data.
             </div>
           ) : (
             <div className="space-y-3">
               {dailyAppointmentsQuery.data.map((appointment) => (
                 <div
-                  className="grid min-w-0 gap-4 rounded-[1.1rem] border border-slate-200 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-[1.35rem] lg:grid-cols-[5rem_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                  className="grid min-w-0 gap-2.5 rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-[1.35rem] md:gap-4 md:p-4 lg:grid-cols-[5rem_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
                   key={`${appointment.source}-${appointment.id}`}
                 >
                   <div>
                     <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400">
                       Horário
                     </p>
-                    <p className="mt-1 text-xl font-black text-brand-600">
+                    <p className="mt-1 text-lg font-black text-brand-600 md:text-xl">
                       {new Date(appointment.starts_at).toLocaleTimeString('pt-BR', {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -1003,14 +1003,14 @@ export function AtendimentosPage() {
                   </div>
                   <div>
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <p className="font-black text-slate-950 dark:text-white">
+                      <p className="text-sm font-black text-slate-950 dark:text-white md:text-base">
                         {appointment.cliente}
                       </p>
                       {appointment.is_walk_in && (
                         <Badge variant="info">Avulso</Badge>
                       )}
                     </div>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 md:text-sm">
                       {appointment.servico}
                     </p>
                     {appointment.cliente_telefone && (
@@ -1020,15 +1020,15 @@ export function AtendimentosPage() {
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-950 dark:text-white">
+                    <p className="text-xs font-semibold text-slate-950 dark:text-white md:text-sm">
                       {appointment.barbeiro}
                     </p>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 md:text-sm">
                       {appointment.duration_minutes}min
                     </p>
                   </div>
                   <div>
-                    <p className="font-black text-brand-600">
+                    <p className="text-sm font-black text-brand-600 md:text-base">
                       {currencyFormatter.format(appointment.valor)}
                     </p>
                     <Badge variant={getStatusVariant(appointment.status)}>
@@ -1203,7 +1203,7 @@ export function AtendimentosPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           {!waitlistAccess.isLoading && !waitlistAccess.canUse ? (
-            <div className="rounded-[1.35rem] border border-brand-100 bg-brand-50/70 p-6 text-sm font-semibold text-slate-700 dark:border-brand-400/20 dark:bg-brand-400/10 dark:text-brand-100">
+            <div className="rounded-xl border border-brand-100 bg-brand-50/70 p-4 text-sm font-semibold text-slate-700 dark:border-brand-400/20 dark:bg-brand-400/10 dark:text-brand-100 sm:rounded-[1.35rem] sm:p-6">
               A lista de espera não está disponível no seu plano atual. Faça
               upgrade em Assinatura para liberar este recurso.
             </div>
@@ -1214,33 +1214,33 @@ export function AtendimentosPage() {
               <Loader2 className="animate-spin text-brand-500" size={24} />
             </div>
           ) : !waitlistQuery.data?.length ? (
-            <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-6 text-center text-sm font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-center text-sm font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300 sm:rounded-[1.35rem] sm:p-6">
               Nenhum cliente na lista de espera.
             </div>
           ) : (
             waitlistQuery.data.map((entry) => (
               <div
-                className="grid min-w-0 gap-4 rounded-[1.1rem] border border-slate-200 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-[1.35rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                className="grid min-w-0 gap-2.5 rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-[1.35rem] md:gap-4 md:p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
                 key={entry.id}
               >
                 <div>
-                  <p className="font-black text-slate-950 dark:text-white">
-                    {entry.client?.nome ?? 'Cliente'}
+                  <p className="text-sm font-black text-slate-950 dark:text-white md:text-base">
+                    {entry.client?.nome?.trim() || 'Cliente não identificado'}
                   </p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 md:text-sm">
                     {entry.client?.telefone ?? 'Telefone não informado'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-950 dark:text-white">
+                  <p className="text-xs font-semibold text-slate-950 dark:text-white md:text-sm">
                     {entry.service?.nome ?? 'Serviço'}
                   </p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 md:text-sm">
                     {entry.barber?.nome ?? 'Qualquer profissional'}
                   </p>
                 </div>
                 <div>
-                  <p className="font-black text-brand-600">
+                  <p className="text-sm font-black text-brand-600 md:text-base">
                     {new Date(`${entry.desired_date}T00:00:00`).toLocaleDateString(
                       'pt-BR',
                     )}
@@ -1344,7 +1344,7 @@ export function AtendimentosPage() {
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-4 md:space-y-5">
           <div className="flex flex-wrap gap-2">
             {recordQuickFilters.map((filter) => {
               const isActive = recordQuickFilter === filter.value
@@ -1352,7 +1352,7 @@ export function AtendimentosPage() {
               return (
                 <button
                   className={[
-                    'min-h-11 rounded-full border px-4 text-sm font-black transition duration-200',
+                    'min-h-10 rounded-full border px-3 text-xs font-black transition duration-200 md:min-h-11 md:px-4 md:text-sm',
                     isActive
                       ? 'border-brand-300 bg-brand-500 text-slate-950 shadow-[0_12px_28px_rgb(18_198_243/0.22)]'
                       : 'border-slate-200 bg-white text-slate-600 hover:-translate-y-0.5 hover:border-brand-200 hover:bg-brand-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-brand-700 dark:hover:bg-brand-950/40',
@@ -1368,7 +1368,7 @@ export function AtendimentosPage() {
           </div>
 
           {recordQuickFilter === 'custom' && (
-            <div className="grid gap-3 rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/50 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-950/50 sm:grid-cols-2 md:gap-3 md:rounded-[1.35rem] md:p-4 xl:grid-cols-3">
               <DateFilterField
                 label="Data inicial"
                 onChange={setRecordStartDate}
@@ -1434,13 +1434,13 @@ export function AtendimentosPage() {
                 ['Comissão', currencyFormatter.format(atendimentosQuery.data.summary.comissao)],
               ].map(([label, value]) => (
                 <div
-                  className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950/60"
+                  className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/60 md:rounded-2xl md:p-4"
                   key={label}
                 >
                   <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
                     {label}
                   </p>
-                  <p className="mt-2 text-lg font-black text-slate-950 dark:text-white">
+                  <p className="mt-1.5 text-base font-black text-slate-950 dark:text-white md:mt-2 md:text-lg">
                     {value}
                   </p>
                 </div>
@@ -1459,7 +1459,7 @@ export function AtendimentosPage() {
               <Loader2 className="animate-spin text-brand-500" size={28} />
             </div>
           ) : !atendimentosQuery.data?.items.length ? (
-            <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-6 text-center text-sm font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-center text-sm font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300 sm:rounded-[1.35rem] sm:p-6">
               Nenhum atendimento encontrado para o filtro selecionado.
             </div>
           ) : (
@@ -1467,12 +1467,12 @@ export function AtendimentosPage() {
               <div className="space-y-3">
                 {atendimentosQuery.data.items.map((atendimento) => (
                   <div
-                    className="grid min-w-0 gap-4 rounded-[1.1rem] border border-slate-200 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-[1.35rem] xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                    className="grid min-w-0 gap-2.5 rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-[1.35rem] md:gap-4 md:p-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
                     key={`${atendimento.source}-${atendimento.id}`}
                   >
                     <div>
                       <div className="flex min-w-0 flex-wrap items-center gap-2">
-                        <p className="font-black text-slate-950 dark:text-white">
+                        <p className="text-sm font-black text-slate-950 dark:text-white md:text-base">
                           {atendimento.cliente}
                         </p>
                         <Badge variant="info">
@@ -1481,19 +1481,19 @@ export function AtendimentosPage() {
                             : 'Cadastrado'}
                         </Badge>
                       </div>
-                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 md:text-sm">
                         {dateTimeFormatter.format(new Date(atendimento.starts_at))}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-950 dark:text-white">
+                      <p className="text-xs font-semibold text-slate-950 dark:text-white md:text-sm">
                         {atendimento.barbeiro}
                       </p>
-                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 md:text-sm">
                         {atendimento.servico}
                       </p>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-sm xl:block">
+                    <div className="grid grid-cols-3 gap-2 text-xs md:text-sm xl:block">
                       <div>
                         <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
                           Valor
