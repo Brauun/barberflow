@@ -1,6 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Bell, CalendarPlus, Eye, Loader2, Plus, RefreshCw, X } from 'lucide-react'
+import {
+  Bell,
+  CalendarPlus,
+  Eye,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
+  Plus,
+  RefreshCw,
+  X,
+} from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useSearchParams } from 'react-router-dom'
@@ -14,19 +24,13 @@ import {
   Input,
   Modal,
   Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
 } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useFeatureAccess } from '../hooks/useSubscription'
 import {
   listAtendimentoBarbeiros,
   listAtendimentoClientes,
-  listAtendimentos,
+  listAtendimentoRecords,
   listAtendimentoServicos,
   listAdminWaitlist,
   listDailyAppointments,
@@ -46,6 +50,7 @@ import {
   type AtendimentoFormInput,
 } from '../types/atendimentos'
 import { listClientBenefits } from '../services/benefitsService'
+import { exportHtmlReport } from '../utils/mobileExport'
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
@@ -59,6 +64,42 @@ const dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
 
 function todayInputValue() {
   return new Date().toISOString().slice(0, 10)
+}
+
+function daysAgoInputValue(days: number) {
+  const date = new Date()
+  date.setDate(date.getDate() - days)
+
+  return date.toISOString().slice(0, 10)
+}
+
+function monthStartInputValue() {
+  const date = new Date()
+  date.setDate(1)
+
+  return date.toISOString().slice(0, 10)
+}
+
+function getRecordQuickRange(filter: RecordQuickFilter) {
+  const today = todayInputValue()
+
+  if (filter === 'hoje') {
+    return { end: today, start: today }
+  }
+
+  if (filter === '15d') {
+    return { end: today, start: daysAgoInputValue(14) }
+  }
+
+  if (filter === '30d') {
+    return { end: today, start: daysAgoInputValue(29) }
+  }
+
+  if (filter === 'mes') {
+    return { end: today, start: monthStartInputValue() }
+  }
+
+  return { end: today, start: daysAgoInputValue(6) }
 }
 
 function currentTimeInputValue() {
@@ -77,6 +118,29 @@ function formatDateInputLabel(value: string) {
   }
 
   return `${day}/${month}/${year}`
+}
+
+function fileSafeDate(value: string) {
+  return value.replaceAll('/', '-')
+}
+
+function escapeCsv(value: string | number) {
+  const text = String(value ?? '')
+
+  if (/[;"\n\r]/.test(text)) {
+    return `"${text.replaceAll('"', '""')}"`
+  }
+
+  return text
+}
+
+function escapeHtml(value: string | number) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
 }
 
 type DateFilterFieldProps = {
@@ -157,6 +221,26 @@ const dailyStatusOptions = [
   { label: 'Não compareceu', value: 'nao_compareceu' },
 ]
 
+const recordStatusOptions = dailyStatusOptions.filter(
+  (option) =>
+    !['confirmado', 'em_atendimento', 'aguardando_finalizacao'].includes(
+      option.value,
+    ),
+)
+
+type RecordQuickFilter = 'hoje' | '7d' | '15d' | '30d' | 'mes' | 'custom'
+
+const recordQuickFilters: Array<{ label: string; value: RecordQuickFilter }> = [
+  { label: 'Hoje', value: 'hoje' },
+  { label: 'Últimos 7 dias', value: '7d' },
+  { label: 'Últimos 15 dias', value: '15d' },
+  { label: 'Últimos 30 dias', value: '30d' },
+  { label: 'Este mês', value: 'mes' },
+  { label: 'Personalizado', value: 'custom' },
+]
+
+const recordPageSize = 20
+
 function getStatusLabel(status: string) {
   return (
     dailyStatusOptions.find((option) => option.value === status)?.label ??
@@ -190,6 +274,24 @@ export function AtendimentosPage() {
     useState<DailyAppointment | null>(null)
   const [rescheduleDate, setRescheduleDate] = useState(todayInputValue())
   const [rescheduleTime, setRescheduleTime] = useState(currentTimeInputValue())
+  const defaultRecordRange = getRecordQuickRange('7d')
+  const [recordQuickFilter, setRecordQuickFilter] =
+    useState<RecordQuickFilter>('7d')
+  const [recordStartDate, setRecordStartDate] = useState(defaultRecordRange.start)
+  const [recordEndDate, setRecordEndDate] = useState(defaultRecordRange.end)
+  const [recordBarberId, setRecordBarberId] = useState('')
+  const [recordClientId, setRecordClientId] = useState('')
+  const [recordServiceId, setRecordServiceId] = useState('')
+  const [recordStatus, setRecordStatus] = useState('')
+  const [recordPage, setRecordPage] = useState(0)
+  const [appliedRecordFilters, setAppliedRecordFilters] = useState({
+    barbeiroId: '',
+    clienteId: '',
+    dataFim: defaultRecordRange.end,
+    dataInicio: defaultRecordRange.start,
+    servicoId: '',
+    status: '',
+  })
   const handledDeepLinkRef = useRef<string | null>(null)
 
   const {
@@ -241,8 +343,19 @@ export function AtendimentosPage() {
 
   const atendimentosQuery = useQuery({
     enabled: Boolean(empresaId),
-    queryFn: () => listAtendimentos(empresaId as string),
-    queryKey: ['atendimentos', empresaId],
+    queryFn: () =>
+      listAtendimentoRecords(empresaId as string, {
+        ...appliedRecordFilters,
+        page: recordPage,
+        pageSize: recordPageSize,
+      }),
+    queryKey: [
+      'atendimentos',
+      empresaId,
+      appliedRecordFilters,
+      recordPage,
+      recordPageSize,
+    ],
   })
 
   const clientesQuery = useQuery({
@@ -539,6 +652,211 @@ export function AtendimentosPage() {
           : 'Não foi possível registrar o atendimento.',
       )
     }
+  }
+
+  function setQuickRecordFilter(filter: RecordQuickFilter) {
+    setRecordQuickFilter(filter)
+
+    if (filter === 'custom') {
+      return
+    }
+
+    const range = getRecordQuickRange(filter)
+    setRecordStartDate(range.start)
+    setRecordEndDate(range.end)
+    setRecordPage(0)
+    setAppliedRecordFilters({
+      barbeiroId: '',
+      clienteId: '',
+      dataFim: range.end,
+      dataInicio: range.start,
+      servicoId: '',
+      status: '',
+    })
+  }
+
+  function applyRecordFilters() {
+    setRecordPage(0)
+    setAppliedRecordFilters({
+      barbeiroId: recordBarberId,
+      clienteId: recordClientId,
+      dataFim: recordEndDate,
+      dataInicio: recordStartDate,
+      servicoId: recordServiceId,
+      status: recordStatus,
+    })
+  }
+
+  function resetRecordFilters() {
+    const range = getRecordQuickRange('7d')
+    setRecordQuickFilter('7d')
+    setRecordStartDate(range.start)
+    setRecordEndDate(range.end)
+    setRecordBarberId('')
+    setRecordClientId('')
+    setRecordServiceId('')
+    setRecordStatus('')
+    setRecordPage(0)
+    setAppliedRecordFilters({
+      barbeiroId: '',
+      clienteId: '',
+      dataFim: range.end,
+      dataInicio: range.start,
+      servicoId: '',
+      status: '',
+    })
+  }
+
+  async function getExportRecords() {
+    if (!empresaId) {
+      return null
+    }
+
+    return listAtendimentoRecords(empresaId, {
+      ...appliedRecordFilters,
+      page: 0,
+      pageSize: 5000,
+    })
+  }
+
+  async function exportAtendimentosCsv() {
+    const result = await getExportRecords()
+
+    if (!result) {
+      return
+    }
+
+    const rows = [
+      [
+        'Data',
+        'Horário',
+        'Cliente',
+        'Tipo cliente',
+        'Barbeiro',
+        'Serviço',
+        'Status',
+        'Valor',
+        'Desconto',
+        'Valor final',
+      ],
+      ...result.items.map((record) => {
+        const date = new Date(record.starts_at)
+
+        return [
+          date.toLocaleDateString('pt-BR'),
+          date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          record.cliente,
+          record.cliente_tipo === 'avulso' ? 'Avulso' : 'Cadastrado',
+          record.barbeiro,
+          record.servico,
+          getStatusLabel(record.status),
+          currencyFormatter.format(record.valor),
+          currencyFormatter.format(record.valor_desconto),
+          currencyFormatter.format(record.valor_final),
+        ]
+      }),
+    ]
+    const csv = rows.map((row) => row.map(escapeCsv).join(';')).join('\n')
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `BW-Barber-Atendimentos-${fileSafeDate(appliedRecordFilters.dataInicio)}-a-${fileSafeDate(appliedRecordFilters.dataFim)}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function exportAtendimentosPdf() {
+    const result = await getExportRecords()
+
+    if (!result) {
+      return
+    }
+
+    const rows = result.items
+      .map((record) => {
+        const date = new Date(record.starts_at)
+
+        return `
+          <tr>
+            <td>${escapeHtml(date.toLocaleDateString('pt-BR'))}</td>
+            <td>${escapeHtml(date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))}</td>
+            <td><strong>${escapeHtml(record.cliente)}</strong><br><span>${record.cliente_tipo === 'avulso' ? 'Avulso' : 'Cadastrado'}</span></td>
+            <td>${escapeHtml(record.barbeiro)}</td>
+            <td>${escapeHtml(record.servico)}</td>
+            <td>${escapeHtml(getStatusLabel(record.status))}</td>
+            <td>${escapeHtml(currencyFormatter.format(record.valor))}</td>
+            <td>${escapeHtml(currencyFormatter.format(record.valor_desconto))}</td>
+            <td>${escapeHtml(currencyFormatter.format(record.valor_final))}</td>
+          </tr>
+        `
+      })
+      .join('')
+    const html = `<!doctype html>
+      <html lang="pt-BR">
+        <head>
+          <meta charset="utf-8" />
+          <title>BW Barber - Atendimentos</title>
+          <style>
+            @page { size: A4 landscape; margin: 12mm; }
+            * { box-sizing: border-box; }
+            body { color: #0f172a; font-family: Inter, Arial, sans-serif; margin: 0; }
+            header { align-items: center; border-bottom: 1px solid #dbe7ef; display: flex; justify-content: space-between; padding-bottom: 16px; }
+            .brand { align-items: center; display: flex; gap: 12px; }
+            .logo { align-items: center; background: #071426; border-radius: 14px; color: #12c6f3; display: flex; font-weight: 900; height: 44px; justify-content: center; width: 44px; }
+            .eyebrow { color: #0891b2; font-size: 10px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; }
+            h1 { font-size: 28px; margin: 22px 0 8px; }
+            h2, h3, p { margin: 0; }
+            .muted { color: #64748b; font-size: 12px; }
+            .kpis { display: grid; gap: 10px; grid-template-columns: repeat(6, 1fr); margin: 18px 0; }
+            .kpi { border: 1px solid #dbe7ef; border-radius: 14px; padding: 12px; }
+            .kpi span { color: #64748b; display: block; font-size: 9px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+            .kpi strong { color: #071426; display: block; font-size: 16px; margin-top: 6px; }
+            table { border-collapse: collapse; width: 100%; }
+            th { background: #f1f7fb; color: #334155; font-size: 10px; letter-spacing: .08em; padding: 10px; text-align: left; text-transform: uppercase; }
+            td { border-bottom: 1px solid #e5edf3; font-size: 11px; padding: 10px; vertical-align: top; }
+            td span { color: #64748b; font-size: 10px; }
+          </style>
+        </head>
+        <body>
+          <header>
+            <div class="brand">
+              <div class="logo">BW</div>
+              <div>
+                <div class="eyebrow">BW Barber</div>
+                <h3>${escapeHtml(profile?.empresa?.nome ?? 'Barbearia')}</h3>
+              </div>
+            </div>
+            <p class="muted">Emitido em ${escapeHtml(new Date().toLocaleString('pt-BR'))}</p>
+          </header>
+          <h1>Relatório de Atendimentos</h1>
+          <p class="muted">Período: ${escapeHtml(formatDateInputLabel(appliedRecordFilters.dataInicio))} até ${escapeHtml(formatDateInputLabel(appliedRecordFilters.dataFim))}</p>
+          <section class="kpis">
+            <div class="kpi"><span>Total</span><strong>${result.summary.total}</strong></div>
+            <div class="kpi"><span>Concluídos</span><strong>${result.summary.concluidos}</strong></div>
+            <div class="kpi"><span>Cancelados</span><strong>${result.summary.cancelados}</strong></div>
+            <div class="kpi"><span>Não compareceu</span><strong>${result.summary.naoCompareceu}</strong></div>
+            <div class="kpi"><span>Receita</span><strong>${escapeHtml(currencyFormatter.format(result.summary.receita))}</strong></div>
+            <div class="kpi"><span>Comissão</span><strong>${escapeHtml(currencyFormatter.format(result.summary.comissao))}</strong></div>
+          </section>
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th><th>Hora</th><th>Cliente</th><th>Barbeiro</th><th>Serviço</th><th>Status</th><th>Valor</th><th>Desconto</th><th>Final</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows || '<tr><td colspan="9">Nenhum atendimento encontrado.</td></tr>'}
+            </tbody>
+          </table>
+        </body>
+      </html>`
+
+    exportHtmlReport({
+      filename: `BW-Barber-Atendimentos-${fileSafeDate(appliedRecordFilters.dataInicio)}-a-${fileSafeDate(appliedRecordFilters.dataFim)}.html`,
+      html,
+      previewFeatures: 'width=1100,height=900',
+    })
   }
 
   if (!empresaId) {
@@ -984,26 +1302,154 @@ export function AtendimentosPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex min-w-0 items-start gap-3 sm:items-center">
-            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
-              <CalendarPlus size={20} />
-            </span>
-            <div className="min-w-0">
-              <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
-                Atendimentos registrados
-              </h3>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                {atendimentosQuery.data?.length ?? 0} atendimento
-                {(atendimentosQuery.data?.length ?? 0) === 1 ? '' : 's'} na
-                listagem.
-              </p>
+          <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex min-w-0 items-start gap-3 sm:items-center">
+              <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+                <CalendarPlus size={20} />
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+                  Atendimentos registrados
+                </h3>
+                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  {recordQuickFilter === '7d' && !appliedRecordFilters.barbeiroId && !appliedRecordFilters.clienteId && !appliedRecordFilters.servicoId && !appliedRecordFilters.status
+                    ? 'Exibindo atendimentos dos últimos 7 dias.'
+                    : `${formatDateInputLabel(appliedRecordFilters.dataInicio)} até ${formatDateInputLabel(appliedRecordFilters.dataFim)}.`}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                className="w-full sm:w-auto"
+                disabled={!atendimentosQuery.data?.items.length}
+                leftIcon={<FileText size={16} />}
+                onClick={exportAtendimentosPdf}
+                size="sm"
+                type="button"
+              >
+                Exportar PDF
+              </Button>
+              <Button
+                className="w-full sm:w-auto"
+                disabled={!atendimentosQuery.data?.items.length}
+                leftIcon={<FileSpreadsheet size={16} />}
+                onClick={exportAtendimentosCsv}
+                size="sm"
+                type="button"
+                variant="secondary"
+              >
+                Exportar CSV
+              </Button>
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="p-0">
+        <CardContent className="space-y-5">
+          <div className="flex flex-wrap gap-2">
+            {recordQuickFilters.map((filter) => {
+              const isActive = recordQuickFilter === filter.value
+
+              return (
+                <button
+                  className={[
+                    'min-h-11 rounded-full border px-4 text-sm font-black transition duration-200',
+                    isActive
+                      ? 'border-brand-300 bg-brand-500 text-slate-950 shadow-[0_12px_28px_rgb(18_198_243/0.22)]'
+                      : 'border-slate-200 bg-white text-slate-600 hover:-translate-y-0.5 hover:border-brand-200 hover:bg-brand-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-brand-700 dark:hover:bg-brand-950/40',
+                  ].join(' ')}
+                  key={filter.value}
+                  onClick={() => setQuickRecordFilter(filter.value)}
+                  type="button"
+                >
+                  {filter.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {recordQuickFilter === 'custom' && (
+            <div className="grid gap-3 rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/50 sm:grid-cols-2 xl:grid-cols-3">
+              <DateFilterField
+                label="Data inicial"
+                onChange={setRecordStartDate}
+                value={recordStartDate}
+              />
+              <DateFilterField
+                label="Data final"
+                onChange={setRecordEndDate}
+                value={recordEndDate}
+              />
+              <Select
+                className="h-12 sm:h-11"
+                label="Barbeiro"
+                onChange={(event) => setRecordBarberId(event.target.value)}
+                options={barbeiroOptions}
+                value={recordBarberId}
+              />
+              <Select
+                className="h-12 sm:h-11"
+                label="Cliente"
+                onChange={(event) => setRecordClientId(event.target.value)}
+                options={clienteOptions}
+                value={recordClientId}
+              />
+              <Select
+                className="h-12 sm:h-11"
+                label="Serviço"
+                onChange={(event) => setRecordServiceId(event.target.value)}
+                options={servicoOptions}
+                value={recordServiceId}
+              />
+              <Select
+                className="h-12 sm:h-11"
+                label="Status"
+                onChange={(event) => setRecordStatus(event.target.value)}
+                options={recordStatusOptions}
+                value={recordStatus}
+              />
+              <div className="flex gap-2 sm:col-span-2 xl:col-span-3">
+                <Button className="flex-1" onClick={applyRecordFilters} type="button">
+                  Aplicar filtros
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={resetRecordFilters}
+                  type="button"
+                  variant="secondary"
+                >
+                  Limpar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {atendimentosQuery.data && (
+            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+              {[
+                ['Total', atendimentosQuery.data.summary.total],
+                ['Concluídos', atendimentosQuery.data.summary.concluidos],
+                ['Cancelados', atendimentosQuery.data.summary.cancelados],
+                ['Não compareceu', atendimentosQuery.data.summary.naoCompareceu],
+                ['Receita', currencyFormatter.format(atendimentosQuery.data.summary.receita)],
+                ['Comissão', currencyFormatter.format(atendimentosQuery.data.summary.comissao)],
+              ].map(([label, value]) => (
+                <div
+                  className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950/60"
+                  key={label}
+                >
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                    {label}
+                  </p>
+                  <p className="mt-2 text-lg font-black text-slate-950 dark:text-white">
+                    {value}
+                  </p>
+                </div>
+              ))}
+            </section>
+          )}
+
           {atendimentosQuery.error && (
-            <div className="p-5 text-sm text-red-600">
+            <div className="text-sm text-red-600">
               {atendimentosQuery.error.message}
             </div>
           )}
@@ -1012,55 +1458,103 @@ export function AtendimentosPage() {
             <div className="flex min-h-56 items-center justify-center">
               <Loader2 className="animate-spin text-brand-500" size={28} />
             </div>
-          ) : !atendimentosQuery.data?.length ? (
-            <div className="p-5 text-sm text-zinc-500 dark:text-zinc-400">
-              Nenhum atendimento registrado ainda.
+          ) : !atendimentosQuery.data?.items.length ? (
+            <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-6 text-center text-sm font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300">
+              Nenhum atendimento encontrado para o filtro selecionado.
             </div>
           ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell>Cliente</TableHeaderCell>
-                  <TableHeaderCell>Barbeiro</TableHeaderCell>
-                  <TableHeaderCell>Serviço</TableHeaderCell>
-                  <TableHeaderCell>Data</TableHeaderCell>
-                  <TableHeaderCell>Pagamento</TableHeaderCell>
-                  <TableHeaderCell>Valor</TableHeaderCell>
-                  <TableHeaderCell>Comissão</TableHeaderCell>
-                  <TableHeaderCell>Status</TableHeaderCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {atendimentosQuery.data.map((atendimento) => (
-                  <TableRow key={atendimento.id}>
-                    <TableCell className="font-medium text-zinc-950 dark:text-zinc-50">
-                      {atendimento.clientes?.nome ?? 'Cliente'}
-                    </TableCell>
-                    <TableCell>{atendimento.barbeiros?.nome ?? 'Barbeiro'}</TableCell>
-                    <TableCell>{atendimento.servicos?.nome ?? 'Serviço'}</TableCell>
-                    <TableCell>
-                      {dateTimeFormatter.format(
-                        new Date(atendimento.data_hora_inicio),
-                      )}
-                    </TableCell>
-                    <TableCell>{atendimento.forma_pagamento ?? '-'}</TableCell>
-                    <TableCell>
-                      {currencyFormatter.format(Number(atendimento.valor))}
-                    </TableCell>
-                    <TableCell>
-                      {currencyFormatter.format(
-                        Number(atendimento.valor) * (comissaoPercentual / 100),
-                      )}
-                    </TableCell>
-                    <TableCell>
+            <>
+              <div className="space-y-3">
+                {atendimentosQuery.data.items.map((atendimento) => (
+                  <div
+                    className="grid min-w-0 gap-4 rounded-[1.1rem] border border-slate-200 bg-white p-4 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-[1.35rem] xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                    key={`${atendimento.source}-${atendimento.id}`}
+                  >
+                    <div>
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <p className="font-black text-slate-950 dark:text-white">
+                          {atendimento.cliente}
+                        </p>
+                        <Badge variant="info">
+                          {atendimento.cliente_tipo === 'avulso'
+                            ? 'Avulso'
+                            : 'Cadastrado'}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        {dateTimeFormatter.format(new Date(atendimento.starts_at))}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950 dark:text-white">
+                        {atendimento.barbeiro}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        {atendimento.servico}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-sm xl:block">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                          Valor
+                        </p>
+                        <p className="mt-1 font-black text-brand-600">
+                          {currencyFormatter.format(atendimento.valor_final)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                          Desc.
+                        </p>
+                        <p className="mt-1 font-semibold text-slate-600 dark:text-slate-300">
+                          {currencyFormatter.format(atendimento.valor_desconto)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                          Comissão
+                        </p>
+                        <p className="mt-1 font-semibold text-slate-600 dark:text-slate-300">
+                          {currencyFormatter.format(
+                            atendimento.valor_final * (comissaoPercentual / 100),
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center xl:justify-end">
                       <Badge variant={getStatusVariant(atendimento.status)}>
-                        {atendimento.status}
+                        {getStatusLabel(atendimento.status)}
                       </Badge>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+              <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-100 pt-4 dark:border-slate-800 sm:flex-row">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Página {recordPage + 1} · {recordPageSize} registros por página
+                </p>
+                <div className="flex w-full gap-2 sm:w-auto">
+                  <Button
+                    className="flex-1 sm:flex-none"
+                    disabled={recordPage === 0}
+                    onClick={() => setRecordPage((page) => Math.max(0, page - 1))}
+                    type="button"
+                    variant="secondary"
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    className="flex-1 sm:flex-none"
+                    disabled={!atendimentosQuery.data.hasMore}
+                    onClick={() => setRecordPage((page) => page + 1)}
+                    type="button"
+                    variant="secondary"
+                  >
+                    Próxima
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

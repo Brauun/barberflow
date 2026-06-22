@@ -8,7 +8,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Input,
   Skeleton,
   Table,
   TableBody,
@@ -42,9 +41,6 @@ const reportTypes: Array<{ label: string; value: RelatorioTipo }> = [
   { label: 'Agenda', value: 'agenda' },
 ]
 
-const dateInputClass =
-  'h-12 min-w-0 max-w-full px-3 pr-3 text-[16px] leading-none sm:px-4 sm:pr-4 [color-scheme:light] dark:[color-scheme:dark]'
-
 function todayInputValue() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -58,6 +54,48 @@ function monthStartInputValue() {
 
 function formatDate(value: string) {
   return new Date(`${value}T00:00:00`).toLocaleDateString('pt-BR')
+}
+
+function formatDateInputLabel(value: string) {
+  if (!value) {
+    return 'DD/MM/AAAA'
+  }
+
+  const [year, month, day] = value.split('-')
+
+  if (!year || !month || !day) {
+    return value
+  }
+
+  return `${day}/${month}/${year}`
+}
+
+type DateFilterFieldProps = {
+  label: string
+  onChange: (value: string) => void
+  value: string
+}
+
+function DateFilterField({ label, onChange, value }: DateFilterFieldProps) {
+  return (
+    <label className="block min-w-0">
+      <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+        {label}
+      </span>
+      <div className="relative mt-2">
+        <div className="flex h-12 w-full min-w-0 items-center rounded-2xl border border-slate-200 bg-white px-4 text-[16px] font-semibold leading-none text-slate-950 shadow-sm transition duration-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50">
+          <span className="truncate">{formatDateInputLabel(value)}</span>
+        </div>
+        <input
+          aria-label={label}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          onChange={(event) => onChange(event.target.value)}
+          type="date"
+          value={value}
+        />
+      </div>
+    </label>
+  )
 }
 
 function reportTitle(tipo: RelatorioTipo) {
@@ -962,26 +1000,16 @@ export function RelatoriosPage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto_auto_auto_auto] lg:items-end">
-            <div className="min-w-0">
-              <Input
-                className={dateInputClass}
-                label="Data inicial"
-                onChange={(event) => setDataInicio(event.target.value)}
-                placeholder="DD/MM/AAAA"
-                type="date"
-                value={dataInicio}
-              />
-            </div>
-            <div className="min-w-0">
-              <Input
-                className={dateInputClass}
-                label="Data final"
-                onChange={(event) => setDataFim(event.target.value)}
-                placeholder="DD/MM/AAAA"
-                type="date"
-                value={dataFim}
-              />
-            </div>
+            <DateFilterField
+              label="Data inicial"
+              onChange={setDataInicio}
+              value={dataInicio}
+            />
+            <DateFilterField
+              label="Data final"
+              onChange={setDataFim}
+              value={dataFim}
+            />
             <Button onClick={applyFilters} type="button" variant="secondary">
               Aplicar filtros
             </Button>

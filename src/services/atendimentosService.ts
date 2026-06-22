@@ -19,6 +19,49 @@ export type AtendimentoListItem = Atendimento & {
   servicos: { nome: string } | null
 }
 
+export type AtendimentoRecordFilters = {
+  barbeiroId?: string
+  clienteId?: string
+  dataFim: string
+  dataInicio: string
+  page: number
+  pageSize: number
+  servicoId?: string
+  status?: string
+}
+
+export type AtendimentoRecord = {
+  id: string
+  source: 'appointment' | 'atendimento'
+  starts_at: string
+  cliente: string
+  cliente_tipo: 'cadastrado' | 'avulso'
+  barbeiro: string
+  servico: string
+  status: DailyAppointmentStatus
+  valor: number
+  valor_desconto: number
+  valor_final: number
+}
+
+export type AtendimentoRecordSummary = {
+  total: number
+  concluidos: number
+  cancelados: number
+  naoCompareceu: number
+  receita: number
+  comissao: number
+}
+
+export type AtendimentoRecordsResult = {
+  items: AtendimentoRecord[]
+  page: number
+  pageSize: number
+  hasMore: boolean
+  summary: AtendimentoRecordSummary
+  total: number
+}
+
 export type AtendimentoOption = {
   id: string
   nome: string
@@ -779,4 +822,254 @@ export async function registrarAtendimento(
   }
 
   return appointment
+}
+
+function dateRangeBounds(dataInicio: string, dataFim: string) {
+  const start = new Date(`${dataInicio}T00:00:00`)
+  const end = new Date(`${dataFim}T00:00:00`)
+  end.setDate(end.getDate() + 1)
+
+  return {
+    endIso: end.toISOString(),
+    startIso: start.toISOString(),
+  }
+}
+
+function isCompletedStatus(status: string) {
+  return status === 'concluido' || status === 'concluido_automatico'
+}
+
+function isNoShowStatus(status: string) {
+  return status === 'nao_compareceu' || status === 'faltou'
+}
+
+function commissionValue(record: { valor: number; valor_final: number }) {
+  return Number(record.valor_final || record.valor) * 0.6
+}
+
+export async function listAtendimentoRecords(
+  empresaId: string,
+  filters: AtendimentoRecordFilters,
+): Promise<AtendimentoRecordsResult> {
+  const { endIso, startIso } = dateRangeBounds(filters.dataInicio, filters.dataFim)
+  const rowsToFetch = (filters.page + 1) * filters.pageSize
+
+  let appointmentIdsByService: string[] | null = null
+
+  if (filters.servicoId) {
+    const { data: itemRows, error: itemError } = await supabase
+      .from('appointment_items')
+      .select('appointment_id')
+      .eq('servico_id', filters.servicoId)
+
+    if (itemError) {
+      throw new Error(itemError.message)
+    }
+
+    appointmentIdsByService = [
+      ...new Set((itemRows ?? []).map((item) => item.appointment_id)),
+    ]
+  }
+
+  let appointmentsQuery = supabase
+    .from('appointments')
+    .select(
+      'id,atendimento_id,starts_at,status,valor_original,valor_desconto,valor_final,is_walk_in,walk_in_customer_name,cliente:clientes(nome),client:profiles(nome),barbeiro:barbeiros(nome),items:appointment_items(nome,servico_id,valor_original,valor_desconto,valor_final)',
+      { count: 'exact' },
+    )
+    .eq('empresa_id', empresaId)
+    .gte('starts_at', startIso)
+    .lt('starts_at', endIso)
+    .order('starts_at', { ascending: false })
+    .range(0, Math.max(0, rowsToFetch - 1))
+
+  let atendimentosQuery = supabase
+    .from('atendimentos')
+    .select('*,clientes(nome),barbeiros(nome),servicos(nome)', { count: 'exact' })
+    .eq('empresa_id', empresaId)
+    .gte('data_hora_inicio', startIso)
+    .lt('data_hora_inicio', endIso)
+    .order('data_hora_inicio', { ascending: false })
+    .range(0, Math.max(0, rowsToFetch - 1))
+
+  if (filters.barbeiroId) {
+    appointmentsQuery = appointmentsQuery.eq('barbeiro_id', filters.barbeiroId)
+    atendimentosQuery = atendimentosQuery.eq('barbeiro_id', filters.barbeiroId)
+  }
+
+  if (filters.clienteId) {
+    appointmentsQuery = appointmentsQuery.eq('cliente_id', filters.clienteId)
+    atendimentosQuery = atendimentosQuery.eq('cliente_id', filters.clienteId)
+  }
+
+  if (filters.status) {
+    appointmentsQuery = appointmentsQuery.eq(
+      'status',
+      filters.status as DailyAppointmentStatus,
+    )
+    atendimentosQuery = atendimentosQuery.eq(
+      'status',
+      filters.status as DailyAppointmentStatus,
+    )
+  }
+
+  if (filters.servicoId) {
+    atendimentosQuery = atendimentosQuery.eq('servico_id', filters.servicoId)
+
+    if (appointmentIdsByService?.length) {
+      appointmentsQuery = appointmentsQuery.in('id', appointmentIdsByService)
+    } else {
+      appointmentsQuery = appointmentsQuery.in('id', ['00000000-0000-0000-0000-000000000000'])
+    }
+  }
+
+  const [appointmentsResponse, atendimentosResponse] = await Promise.all([
+    appointmentsQuery,
+    atendimentosQuery,
+  ])
+
+  if (appointmentsResponse.error) {
+    throw new Error(appointmentsResponse.error.message)
+  }
+
+  if (atendimentosResponse.error) {
+    throw new Error(atendimentosResponse.error.message)
+  }
+
+  const appointments = (appointmentsResponse.data ?? []) as unknown as Array<{
+    id: string
+    atendimento_id: string | null
+    starts_at: string
+    status: DailyAppointmentStatus
+    valor_original: number | null
+    valor_desconto: number | null
+    valor_final: number | null
+    is_walk_in: boolean | null
+    walk_in_customer_name: string | null
+    cliente: { nome: string } | null
+    client: { nome: string } | null
+    barbeiro: { nome: string } | null
+    items: Array<{
+      nome: string
+      valor_original: number | null
+      valor_desconto: number | null
+      valor_final: number | null
+    }>
+  }>
+
+  const atendimentos =
+    (atendimentosResponse.data ?? []) as unknown as Array<
+      Atendimento & {
+        clientes: { nome: string } | null
+        barbeiros: { nome: string } | null
+        servicos: { nome: string } | null
+      }
+    >
+
+  const linkedAtendimentoIds = new Set(
+    appointments
+      .map((appointment) => appointment.atendimento_id)
+      .filter(Boolean),
+  )
+
+  const records: AtendimentoRecord[] = [
+    ...appointments.map((appointment) => {
+      const totalOriginal =
+        appointment.items.reduce(
+          (total, item) => total + Number(item.valor_original ?? item.valor_final ?? 0),
+          0,
+        ) || Number(appointment.valor_original ?? appointment.valor_final ?? 0)
+      const totalDiscount =
+        appointment.items.reduce(
+          (total, item) => total + Number(item.valor_desconto ?? 0),
+          0,
+        ) || Number(appointment.valor_desconto ?? 0)
+      const totalFinal =
+        appointment.items.reduce(
+          (total, item) => total + Number(item.valor_final ?? 0),
+          0,
+        ) || Number(appointment.valor_final ?? totalOriginal - totalDiscount)
+
+      return {
+        barbeiro: appointment.barbeiro?.nome ?? 'Barbeiro',
+        cliente:
+          appointment.walk_in_customer_name ??
+          appointment.cliente?.nome ??
+          appointment.client?.nome ??
+          'Cliente',
+        cliente_tipo: appointment.is_walk_in
+          ? ('avulso' as const)
+          : ('cadastrado' as const),
+        id: appointment.id,
+        servico: appointment.items.map((item) => item.nome).join(' + ') || 'Serviço',
+        source: 'appointment' as const,
+        starts_at: appointment.starts_at,
+        status: appointment.status,
+        valor: totalOriginal,
+        valor_desconto: totalDiscount,
+        valor_final: totalFinal,
+      }
+    }),
+    ...atendimentos
+      .filter((atendimento) => !linkedAtendimentoIds.has(atendimento.id))
+      .map((atendimento) => ({
+        barbeiro: atendimento.barbeiros?.nome ?? 'Barbeiro',
+        cliente: atendimento.clientes?.nome ?? 'Cliente',
+        cliente_tipo: 'cadastrado' as const,
+        id: atendimento.id,
+        servico: atendimento.servicos?.nome ?? 'Serviço',
+        source: 'atendimento' as const,
+        starts_at: atendimento.data_hora_inicio,
+        status: atendimento.status as DailyAppointmentStatus,
+        valor: Number(atendimento.valor_original ?? atendimento.valor),
+        valor_desconto: Number(atendimento.valor_desconto ?? atendimento.desconto ?? 0),
+        valor_final: Number(atendimento.valor_final ?? atendimento.valor),
+      })),
+  ].sort(
+    (first, second) =>
+      new Date(second.starts_at).getTime() - new Date(first.starts_at).getTime(),
+  )
+
+  const total = Number(appointmentsResponse.count ?? 0) + Number(atendimentosResponse.count ?? 0)
+  const pageStart = filters.page * filters.pageSize
+  const items = records.slice(pageStart, pageStart + filters.pageSize)
+
+  const summary = records.reduce<AtendimentoRecordSummary>(
+    (acc, record) => {
+      acc.total += 1
+
+      if (isCompletedStatus(record.status)) {
+        acc.concluidos += 1
+        acc.receita += Number(record.valor_final)
+        acc.comissao += commissionValue(record)
+      }
+
+      if (record.status === 'cancelado') {
+        acc.cancelados += 1
+      }
+
+      if (isNoShowStatus(record.status)) {
+        acc.naoCompareceu += 1
+      }
+
+      return acc
+    },
+    {
+      cancelados: 0,
+      comissao: 0,
+      concluidos: 0,
+      naoCompareceu: 0,
+      receita: 0,
+      total: 0,
+    },
+  )
+
+  return {
+    hasMore: records.length > pageStart + filters.pageSize || total > pageStart + filters.pageSize,
+    items,
+    page: filters.page,
+    pageSize: filters.pageSize,
+    summary,
+    total,
+  }
 }
