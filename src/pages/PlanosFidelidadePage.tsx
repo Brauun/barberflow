@@ -38,7 +38,6 @@ import {
   updateBenefitProgram,
   type BenefitProgramWithDetails,
 } from '../services/benefitsService'
-import { listClientes } from '../services/clientesService'
 import { listServicos } from '../services/servicosService'
 import {
   benefitProgramSchema,
@@ -76,9 +75,9 @@ function emptyFormValues(): BenefitProgramFormInput {
     servico_recompensa_id: '',
     service_scope: 'todos_servicos',
     status: 'ativo',
-    tipo: 'beneficio_manual',
-    tipo_regra: 'manual',
-    tipo_recompensa: 'manual',
+    tipo: 'plano_mensal',
+    tipo_regra: 'periodo',
+    tipo_recompensa: 'credito_conta',
     validade_dias: 30,
     valor: 0,
   }
@@ -94,6 +93,20 @@ function jsonRecord(value: Json): Record<string, unknown> {
   }
 
   return {}
+}
+
+function normalizeProgramType(
+  tipo: string,
+): BenefitProgramFormInput['tipo'] {
+  if (
+    tipo === 'plano_mensal' ||
+    tipo === 'pacote_pre_pago' ||
+    tipo === 'cartao_fidelidade'
+  ) {
+    return tipo
+  }
+
+  return 'cartao_fidelidade'
 }
 
 function programToFormValues(
@@ -127,11 +140,68 @@ function programToFormValues(
     servico_recompensa_id: String(rewardParams.servico_recompensa_id ?? reward?.servico_id ?? ''),
     service_scope: String(jsonRecord(rule?.parametros ?? {}).service_scope ?? config.service_scope ?? 'todos_servicos'),
     status: program.status,
-    tipo: program.tipo,
+    tipo: normalizeProgramType(program.tipo),
     tipo_regra: rule?.tipo_regra ?? 'manual',
     tipo_recompensa: reward?.tipo_recompensa ?? 'manual',
     validade_dias: program.validade_dias ?? 0,
     valor: program.valor,
+  }
+}
+
+function normalizePilotProgramData(
+  data: BenefitProgramFormData,
+): BenefitProgramFormData {
+  const hasSpecificServices = data.servico_ids.length > 0
+
+  const baseData: BenefitProgramFormData = {
+    ...data,
+    acumulavel: false,
+    categorias_servico: '',
+    cliente_ids: [],
+    publico_alvo: 'todos_clientes',
+    service_scope: hasSpecificServices ? 'servicos_especificos' : 'todos_servicos',
+    status: 'ativo',
+  }
+
+  if (data.tipo === 'plano_mensal') {
+    return {
+      ...baseData,
+      meta_quantidade: data.meta_quantidade || 1,
+      renovacao_periodo: 'mensal',
+      regra_acumulo: 'Plano mensal ativado manualmente pela barbearia.',
+      regra_resgate: 'Cliente usa os benefícios dentro da validade mensal.',
+      recompensa_descricao:
+        data.recompensa_descricao || 'Benefícios disponíveis durante o mês.',
+      tipo_regra: 'periodo',
+      tipo_recompensa: 'credito_conta',
+      validade_dias: data.validade_dias || 30,
+    }
+  }
+
+  if (data.tipo === 'pacote_pre_pago') {
+    return {
+      ...baseData,
+      meta_quantidade: data.meta_quantidade || 1,
+      regra_acumulo: 'Usos liberados após ativação manual do pacote.',
+      regra_resgate: 'Cliente consome um uso a cada atendimento concluído.',
+      recompensa_descricao:
+        data.recompensa_descricao || `${data.meta_quantidade || 1} usos pré-pagos.`,
+      tipo_regra: 'quantidade_atendimentos',
+      tipo_recompensa: 'credito_conta',
+      validade_dias: data.validade_dias || 30,
+    }
+  }
+
+  return {
+    ...baseData,
+    meta_quantidade: data.meta_quantidade || 10,
+    regra_acumulo: 'A cada atendimento concluído, o cliente soma um ponto.',
+    regra_resgate: 'Ao atingir a meta, o cliente recebe a recompensa configurada.',
+    recompensa_descricao:
+      data.recompensa_descricao || 'Recompensa ao completar o cartão fidelidade.',
+    tipo_regra: 'quantidade_atendimentos',
+    tipo_recompensa: 'servico_gratis',
+    validade_dias: data.validade_dias || 180,
   }
 }
 
@@ -174,12 +244,7 @@ export function PlanosFidelidadePage() {
     queryFn: () => listServicos(empresaId as string, ''),
     queryKey: ['serviços', empresaId, 'benefits'],
   })
-
-  const clientesQuery = useQuery({
-    enabled: Boolean(empresaId),
-    queryFn: () => listClientes(empresaId as string, ''),
-    queryKey: ['clientes', empresaId, 'benefits'],
-  })
+  const clientesQuery = { data: [] as Array<{ id: string; nome: string }> }
 
   const totals = useMemo(() => {
     const programs = programsQuery.data ?? []
@@ -210,8 +275,9 @@ export function PlanosFidelidadePage() {
   })
 
   const selectedServiceIds = useWatch({ control, name: 'servico_ids' }) ?? []
-  const selectedClientIds = useWatch({ control, name: 'cliente_ids' }) ?? []
-  const publicTarget = useWatch({ control, name: 'publico_alvo' })
+  const selectedProgramType = useWatch({ control, name: 'tipo' })
+  const selectedClientIds: string[] = []
+  const publicTarget: string = 'todos_clientes'
 
   const saveMutation = useMutation({
     mutationFn: async (data: BenefitProgramFormData) => {
@@ -219,12 +285,14 @@ export function PlanosFidelidadePage() {
         throw new Error('Empresa não encontrada.')
       }
 
+      const pilotProgramData = normalizePilotProgramData(data)
+
       if (editingProgram) {
-        await updateBenefitProgram(empresaId, editingProgram.id, data)
+        await updateBenefitProgram(empresaId, editingProgram.id, pilotProgramData)
         return
       }
 
-      await createBenefitProgram(empresaId, data)
+      await createBenefitProgram(empresaId, pilotProgramData)
     },
     onSuccess: async () => {
       await Promise.all([
@@ -338,7 +406,7 @@ export function PlanosFidelidadePage() {
               </h2>
               <p className="mt-2 max-w-2xl text-sm text-slate-500 dark:text-slate-400">
                 Faça upgrade para BW Pro ou BW Elite para criar programas
-                de fidelidade, pacotes e beneficios.
+                de fidelidade, pacotes e benefícios.
               </p>
             </div>
             <Button
@@ -362,16 +430,16 @@ export function PlanosFidelidadePage() {
             Planos e Fidelidade
           </p>
           <h2 className="mt-3 text-3xl font-black tracking-normal text-zinc-950 dark:text-zinc-50">
-            Beneficios personalizaveis
+            Benefícios para o piloto
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-            Crie planos, pacotes, clubes, cashback, cupons e regras próprias
-            para cada modelo comercial da barbearia.
+            Crie um Plano Mensal, Pacote Pré-pago ou Cartão Fidelidade em poucos
+            passos, sem regras avançadas.
           </p>
         </div>
 
         <Button leftIcon={<Plus size={18} />} onClick={openCreateModal}>
-          Novo programa
+          Novo benefício
         </Button>
       </section>
 
@@ -442,17 +510,17 @@ export function PlanosFidelidadePage() {
 
                 return (
                   <article
-                    className="rounded-[1.35rem] border border-slate-200 bg-white p-5 shadow-[0_16px_52px_rgb(15_23_42/0.035)] transition hover:-translate-y-0.5 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900"
+                    className="overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_16px_52px_rgb(15_23_42/0.035)] transition hover:-translate-y-0.5 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 sm:p-5"
                     key={program.id}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex min-w-0 gap-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex min-w-0 gap-3 sm:gap-4">
                         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-300">
                           <Gift size={22} />
                         </span>
                         <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h4 className="truncate text-lg font-black text-slate-950 dark:text-slate-50">
+                          <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                            <h4 className="max-w-full break-words text-lg font-black leading-tight text-slate-950 dark:text-slate-50">
                               {program.nome}
                             </h4>
                             <Badge
@@ -469,8 +537,9 @@ export function PlanosFidelidadePage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="grid grid-cols-[1fr_auto] gap-2 sm:flex sm:items-center">
                         <Button
+                          className="w-full justify-center sm:w-auto"
                           onClick={() =>
                             statusMutation.mutate({
                               programId: program.id,
@@ -484,6 +553,7 @@ export function PlanosFidelidadePage() {
                         </Button>
                         <Button
                           aria-label="Editar programa"
+                          className="shrink-0"
                           onClick={() => openEditModal(program)}
                           size="icon-sm"
                           variant="ghost"
@@ -500,7 +570,7 @@ export function PlanosFidelidadePage() {
                     )}
 
                     <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                      <div>
+                      <div className="rounded-2xl bg-slate-50/70 p-3 dark:bg-slate-950/40 sm:bg-transparent sm:p-0 dark:sm:bg-transparent">
                         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
                           Valor
                         </p>
@@ -508,7 +578,7 @@ export function PlanosFidelidadePage() {
                           {currencyFormatter.format(program.valor)}
                         </p>
                       </div>
-                      <div>
+                      <div className="rounded-2xl bg-slate-50/70 p-3 dark:bg-slate-950/40 sm:bg-transparent sm:p-0 dark:sm:bg-transparent">
                         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
                           Regra
                         </p>
@@ -518,7 +588,7 @@ export function PlanosFidelidadePage() {
                             : 'Manual'}
                         </p>
                       </div>
-                      <div>
+                      <div className="rounded-2xl bg-slate-50/70 p-3 dark:bg-slate-950/40 sm:bg-transparent sm:p-0 dark:sm:bg-transparent">
                         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
                           Recompensa
                         </p>
@@ -536,7 +606,7 @@ export function PlanosFidelidadePage() {
                     <div className="mt-5 flex flex-wrap gap-2">
                       <Badge>{program.participantsCount} participantes</Badge>
                       <Badge>{program.usageCount} usos</Badge>
-                      {program.acumulavel && <Badge variant="warning">Acumulavel</Badge>}
+                      {program.acumulavel && <Badge variant="warning">Acumulável</Badge>}
                     </div>
                   </article>
                 )
@@ -551,8 +621,8 @@ export function PlanosFidelidadePage() {
                 Nenhum programa criado
               </p>
               <p className="mt-2 max-w-sm text-sm text-zinc-500 dark:text-zinc-400">
-                Crie o primeiro plano, pacote, cupom ou regra de fidelidade da
-                barbearia.
+                Crie o primeiro Plano Mensal, Pacote Pré-pago ou Cartão
+                Fidelidade da barbearia.
               </p>
             </div>
           )}
@@ -727,7 +797,7 @@ export function PlanosFidelidadePage() {
       <Modal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title={editingProgram ? 'Editar programa' : 'Criar novo programa'}
+        title={editingProgram ? 'Editar benefício' : 'Criar benefício'}
       >
         <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
           {formError && (
@@ -736,28 +806,87 @@ export function PlanosFidelidadePage() {
             </p>
           )}
 
+          <div className="rounded-2xl border border-brand-200 bg-brand-50 p-4 text-sm text-slate-700 shadow-sm dark:border-brand-500/30 dark:bg-slate-950/70 dark:text-slate-300">
+            <p className="font-black text-slate-950 dark:text-white">
+              Fluxo rápido para o piloto
+            </p>
+            <p className="mt-1 leading-6">
+              Escolha um tipo, preencha o essencial e publique. As regras
+              avançadas ficam padronizadas para evitar configuração complexa.
+            </p>
+          </div>
+
+          <div>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              1. Escolha o tipo
+            </span>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              {benefitProgramTypes.map((option) => {
+                const isSelected = selectedProgramType === option.value
+
+                return (
+                  <button
+                    className={[
+                      'min-h-[136px] rounded-2xl border px-4 py-4 text-left transition hover:-translate-y-0.5',
+                      isSelected
+                        ? 'border-brand-300 bg-brand-50 text-brand-700 shadow-sm dark:border-brand-400/70 dark:bg-brand-500/15 dark:text-white'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200',
+                    ].join(' ')}
+                    key={option.value}
+                    onClick={() =>
+                      setValue('tipo', option.value, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                    type="button"
+                  >
+                    <span className="block text-sm font-black">{option.label}</span>
+                    <span
+                      className={[
+                        'mt-1 block text-xs leading-5',
+                        isSelected
+                          ? 'text-slate-600 dark:text-slate-200'
+                          : 'text-slate-500 dark:text-slate-400',
+                      ].join(' ')}
+                    >
+                      {option.value === 'plano_mensal'
+                        ? 'Cobrança recorrente e benefício mensal.'
+                        : option.value === 'pacote_pre_pago'
+                          ? 'Cliente compra usos antecipados.'
+                          : 'Progresso por visitas até liberar recompensa.'}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            {errors.tipo?.message && (
+              <p className="mt-2 text-sm text-red-600">{errors.tipo.message}</p>
+            )}
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
               error={errors.nome?.message}
-              label="Nome"
-              placeholder="A cada 10 cortes, ganha 1"
+              label="2. Nome do benefício"
+              placeholder={
+                selectedProgramType === 'cartao_fidelidade'
+                  ? 'A cada 10 cortes, ganha 1'
+                  : selectedProgramType === 'pacote_pre_pago'
+                    ? 'Pacote de 5 barbas'
+                    : 'Plano mensal corte ilimitado'
+              }
               {...register('nome')}
-            />
-            <Select
-              error={errors.tipo?.message}
-              label="Tipo de beneficio"
-              options={benefitProgramTypes.map((option) => ({ ...option }))}
-              {...register('tipo')}
             />
           </div>
 
           <label className="block">
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Descricao
+              Descrição
             </span>
             <textarea
               className="mt-2 min-h-24 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-brand-300 focus:ring-4 focus:ring-brand-100/80 sm:text-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50"
-              placeholder="Explique as condicoes, limites e beneficios."
+              placeholder="Explique de forma simples o que o cliente recebe."
               {...register('descricao')}
             />
           </label>
@@ -782,12 +911,12 @@ export function PlanosFidelidadePage() {
             <Input
               error={errors.renovacao_periodo?.message}
               label="Renovação"
-              placeholder="mensal, semanal..."
+              placeholder="mensal"
               {...register('renovacao_periodo')}
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="hidden">
             <Select
               label="Tipo de regra"
               options={benefitRuleTypes.map((option) => ({ ...option }))}
@@ -802,22 +931,21 @@ export function PlanosFidelidadePage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
-              label="Meta de atendimentos"
+              label={
+                selectedProgramType === 'cartao_fidelidade'
+                  ? 'Quantidade para ganhar'
+                  : selectedProgramType === 'pacote_pre_pago'
+                    ? 'Quantidade de usos'
+                    : 'Usos por mês'
+              }
               min={0}
               step="1"
               type="number"
               {...register('meta_quantidade')}
             />
-            <Input
-              label="Meta de valor gasto"
-              min={0}
-              step="0.01"
-              type="number"
-              {...register('meta_valor')}
-            />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="hidden">
             <Select
               label="Publico"
               options={benefitTargetTypes.map((option) => ({ ...option }))}
@@ -833,6 +961,9 @@ export function PlanosFidelidadePage() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
             <p className="text-sm font-semibold text-slate-950 dark:text-slate-50">
               Serviços incluídos
+            </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Deixe vazio para valer em todos os serviços.
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {(servicosQuery.data ?? []).map((servico) => (
@@ -887,64 +1018,21 @@ export function PlanosFidelidadePage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
-              label="Valor da recompensa"
+              label="Desconto ou crédito"
               min={0}
               step="0.01"
               type="number"
               {...register('recompensa_valor')}
             />
-            <Select
-              label="Serviço grátis/recompensa"
-              options={[
-                { label: 'Nenhum', value: '' },
-                ...(servicosQuery.data ?? []).map((servico) => ({
-                  label: servico.nome,
-                  value: servico.id,
-                })),
-              ]}
-              {...register('servico_recompensa_id')}
-            />
           </div>
 
           <Input
-            label="Descricao da recompensa"
+            label="Recompensa"
             placeholder="Ex: 1 corte grátis, 15% em qualquer serviço..."
             {...register('recompensa_descricao')}
           />
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="Regra de acúmulo"
-              placeholder="Ex: acumula a cada atendimento concluído"
-              {...register('regra_acumulo')}
-            />
-            <Input
-              label="Regra de resgate"
-              placeholder="Ex: cliente pode resgatar no próximo atendimento"
-              {...register('regra_resgate')}
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Select
-              label="Acumulavel"
-              options={[
-                { label: 'Não', value: 'false' },
-                { label: 'Sim', value: 'true' },
-              ]}
-              {...register('acumulavel')}
-            />
-            <Select
-              label="Status"
-              options={[
-                { label: 'Ativo', value: 'ativo' },
-                { label: 'Inativo', value: 'inativo' },
-              ]}
-              {...register('status')}
-            />
-          </div>
-
-          <div className="sticky bottom-0 -mx-5 flex justify-end gap-3 border-t border-slate-100 bg-white px-5 pb-[env(safe-area-inset-bottom)] pt-4 dark:border-slate-800 dark:bg-slate-950">
+          <div className="-mx-5 mt-6 flex justify-end gap-3 border-t border-slate-100 bg-white px-5 pb-[env(safe-area-inset-bottom)] pt-4 dark:border-slate-800 dark:bg-zinc-900">
             <Button
               onClick={() => setIsFormOpen(false)}
               type="button"
@@ -953,7 +1041,7 @@ export function PlanosFidelidadePage() {
               Cancelar
             </Button>
             <Button disabled={isSubmitting || saveMutation.isPending} type="submit">
-              {saveMutation.isPending ? 'Salvando...' : 'Salvar programa'}
+              {saveMutation.isPending ? 'Publicando...' : 'Publicar benefício'}
             </Button>
           </div>
         </form>

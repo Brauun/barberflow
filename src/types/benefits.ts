@@ -1,15 +1,9 @@
 import { z } from 'zod'
 
 export const benefitProgramTypes = [
-  { label: 'Plano mensal', value: 'plano_mensal' },
-  { label: 'Pacote pré-pago', value: 'pacote_pre_pago' },
-  { label: 'Clube de assinatura', value: 'clube_assinatura' },
-  { label: 'Cartão fidelidade', value: 'cartao_fidelidade' },
-  { label: 'Cashback', value: 'cashback' },
-  { label: 'Desconto progressivo', value: 'desconto_progressivo' },
-  { label: 'Cortesia', value: 'cortesia' },
-  { label: 'Cupom', value: 'cupom' },
-  { label: 'Benefício manual', value: 'beneficio_manual' },
+  { label: 'Plano Mensal', value: 'plano_mensal' },
+  { label: 'Pacote Pré-pago', value: 'pacote_pre_pago' },
+  { label: 'Cartão Fidelidade', value: 'cartao_fidelidade' },
 ] as const
 
 export const benefitRuleTypes = [
@@ -31,13 +25,11 @@ export const benefitRewardTypes = [
 
 export const benefitTargetTypes = [
   { label: 'Todos os clientes', value: 'todos_clientes' },
-  { label: 'Clientes específicos', value: 'clientes_especificos' },
 ] as const
 
 export const serviceScopeTypes = [
   { label: 'Todos os serviços', value: 'todos_servicos' },
   { label: 'Serviços específicos', value: 'servicos_especificos' },
-  { label: 'Categorias de serviço', value: 'categorias_servico' },
 ] as const
 
 export const benefitProgramSchema = z.object({
@@ -49,18 +41,18 @@ export const benefitProgramSchema = z.object({
   descricao: z.string().optional(),
   meta_quantidade: z.coerce.number().min(0).optional(),
   meta_valor: z.coerce.number().min(0).optional(),
-  nome: z.string().min(2, 'Informe o nome do programa.'),
+  nome: z.string().min(2, 'Informe o nome do benefício.'),
   publico_alvo: z.string().default('todos_clientes'),
   regra_acumulo: z.string().optional(),
   regra_resgate: z.string().optional(),
-  renovacao_periodo: z.string().optional(),
   recompensa_descricao: z.string().optional(),
   recompensa_valor: z.coerce.number().min(0).default(0),
+  renovacao_periodo: z.string().optional(),
   servico_ids: z.array(z.string()).default([]),
   servico_recompensa_id: z.string().optional(),
   service_scope: z.string().default('todos_servicos'),
   status: z.enum(['ativo', 'inativo']).default('ativo'),
-  tipo: z.string().default('beneficio_manual'),
+  tipo: z.enum(['plano_mensal', 'pacote_pre_pago', 'cartao_fidelidade']),
   tipo_regra: z.string().default('manual'),
   tipo_recompensa: z.string().default('manual'),
   validade_dias: z.coerce.number().int().min(0).optional(),

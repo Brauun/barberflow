@@ -23,6 +23,7 @@ import {
   type ExecutiveReportData,
 } from '../services/relatoriosService'
 import { cn } from '../utils/cn'
+import { exportHtmlReport } from '../utils/mobileExport'
 
 type ExecutiveTab =
   | 'visao-geral'
@@ -569,22 +570,11 @@ export function RelatoriosExecutivosPage() {
       logoFallback: initialsFromName(profile?.empresa?.nome ?? 'BW Barber'),
       logoUrl: companyLogoQuery.data ?? absoluteAssetUrl('/brand/bw-barber-login-logo.png'),
     })
-    const printWindow = window.open('', '_blank', 'width=920,height=1200')
-
-    if (!printWindow) {
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `BW-Barber-Relatório-Executivo-${appliedFilters.dataInicio}-${appliedFilters.dataFim}.html`
-      link.click()
-      URL.revokeObjectURL(url)
-      return
-    }
-
-    printWindow.document.open()
-    printWindow.document.write(html)
-    printWindow.document.close()
+    exportHtmlReport({
+      filename: `BW-Barber-Relatório-Executivo-${appliedFilters.dataInicio}-${appliedFilters.dataFim}.html`,
+      html,
+      previewFeatures: 'width=920,height=1200',
+    })
   }
 
   const insights = useMemo(() => {

@@ -22,6 +22,7 @@ import { useFeatureAccess } from '../hooks/useSubscription'
 import { getRelatorioData, type ReportData } from '../services/relatoriosService'
 import type { RelatorioTipo } from '../types/relatorios'
 import { cn } from '../utils/cn'
+import { exportHtmlReport } from '../utils/mobileExport'
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
@@ -863,22 +864,11 @@ export function RelatoriosPage() {
       ),
       tipo: appliedFilters.tipo,
     })
-    const printWindow = window.open('', '_blank', 'width=900,height=1200')
-
-    if (!printWindow) {
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `BW-Barber-${fileSafeReportName(title)}-${fileSafeDate(appliedFilters.dataInicio)}.html`
-      link.click()
-      URL.revokeObjectURL(url)
-      return
-    }
-
-    printWindow.document.open()
-    printWindow.document.write(html)
-    printWindow.document.close()
+    exportHtmlReport({
+      filename: `BW-Barber-${fileSafeReportName(title)}-${fileSafeDate(appliedFilters.dataInicio)}.html`,
+      html,
+      previewFeatures: 'width=900,height=1200',
+    })
   }
 
   function exportExcel() {
