@@ -87,6 +87,26 @@ function labelFromOptions(options: readonly { label: string; value: string }[], 
   return options.find((option) => option.value === value)?.label ?? value
 }
 
+// Mesma lógica de fallback usada em normalizePilotProgramData, só que aqui
+// é usada apenas para mostrar ao usuário, em tempo real, qual vai ser a
+// frase de recompensa caso ele deixe o campo em branco.
+function defaultRecompensaText(
+  tipo: BenefitProgramFormInput['tipo'],
+  metaQuantidade: unknown,
+) {
+  const meta = Number(metaQuantidade) || 0
+
+  if (tipo === 'plano_mensal') {
+    return 'Benefícios disponíveis durante o mês.'
+  }
+
+  if (tipo === 'pacote_pre_pago') {
+    return `${meta || 1} usos pré-pagos.`
+  }
+
+  return 'Recompensa ao completar o cartão fidelidade.'
+}
+
 function jsonRecord(value: Json): Record<string, unknown> {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     return value as Record<string, unknown>
@@ -214,6 +234,9 @@ export function PlanosFidelidadePage() {
   const [editingProgram, setEditingProgram] =
     useState<BenefitProgramWithDetails | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
+  const [participantsTab, setParticipantsTab] = useState<
+    'participantes' | 'historico'
+  >('participantes')
 
   const programsQuery = useQuery({
     enabled: Boolean(empresaId),
@@ -276,6 +299,7 @@ export function PlanosFidelidadePage() {
 
   const selectedServiceIds = useWatch({ control, name: 'servico_ids' }) ?? []
   const selectedProgramType = useWatch({ control, name: 'tipo' })
+  const watchedMetaQuantidade = useWatch({ control, name: 'meta_quantidade' })
   const selectedClientIds: string[] = []
   const publicTarget: string = 'todos_clientes'
 
@@ -580,12 +604,11 @@ export function PlanosFidelidadePage() {
                       </div>
                       <div className="rounded-2xl bg-slate-50/70 p-3 dark:bg-slate-950/40 sm:bg-transparent sm:p-0 dark:sm:bg-transparent">
                         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                          Regra
+                          Como funciona
                         </p>
                         <p className="mt-1 text-sm font-semibold text-slate-950 dark:text-slate-50">
-                          {rule
-                            ? labelFromOptions(benefitRuleTypes, rule.tipo_regra)
-                            : 'Manual'}
+                          {program.regra_acumulo ??
+                            (rule ? labelFromOptions(benefitRuleTypes, rule.tipo_regra) : 'Manual')}
                         </p>
                       </div>
                       <div className="rounded-2xl bg-slate-50/70 p-3 dark:bg-slate-950/40 sm:bg-transparent sm:p-0 dark:sm:bg-transparent">
@@ -593,12 +616,10 @@ export function PlanosFidelidadePage() {
                           Recompensa
                         </p>
                         <p className="mt-1 text-sm font-semibold text-slate-950 dark:text-slate-50">
-                          {reward
-                            ? labelFromOptions(
-                                benefitRewardTypes,
-                                reward.tipo_recompensa,
-                              )
-                            : 'Manual'}
+                          {reward?.descricao ??
+                            (reward
+                              ? labelFromOptions(benefitRewardTypes, reward.tipo_recompensa)
+                              : 'Manual')}
                         </p>
                       </div>
                     </div>
@@ -606,7 +627,6 @@ export function PlanosFidelidadePage() {
                     <div className="mt-5 flex flex-wrap gap-2">
                       <Badge>{program.participantsCount} participantes</Badge>
                       <Badge>{program.usageCount} usos</Badge>
-                      {program.acumulavel && <Badge variant="warning">Acumulável</Badge>}
                     </div>
                   </article>
                 )
@@ -629,100 +649,126 @@ export function PlanosFidelidadePage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <HeartHandshake className="text-brand-600" size={20} />
-            <div>
-              <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
-                Interesses de clientes
-              </h3>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Solicitações feitas pelo app do cliente para planos e pacotes.
-              </p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {interestsQuery.data?.length ? (
-            <div className="space-y-3">
-              {interestsQuery.data.slice(0, 8).map((interest) => (
-                <div
-                  className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between"
-                  key={interest.id}
-                >
-                  <div>
-                    <p className="font-black text-slate-950 dark:text-slate-50">
-                      {interest.profile?.nome?.trim() ||
-                        interest.cliente?.nome?.trim() ||
-                        'Cliente não identificado'}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                      {interest.program?.nome ?? 'Programa'} ·{' '}
-                      {interest.status.charAt(0).toUpperCase() + interest.status.slice(1)}
-                    </p>
-                  </div>
-                  {interest.status === 'pendente' ? (
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        leftIcon={<CheckCircle2 size={16} />}
-                        onClick={() =>
-                          reviewInterestMutation.mutate({
-                            interestId: interest.id,
-                            status: 'aprovado',
-                          })
-                        }
-                        size="sm"
-                      >
-                        Aprovar
-                      </Button>
-                      <Button
-                        leftIcon={<XCircle size={16} />}
-                        onClick={() =>
-                          reviewInterestMutation.mutate({
-                            interestId: interest.id,
-                            status: 'negado',
-                          })
-                        }
-                        size="sm"
-                        variant="secondary"
-                      >
-                        Negar
-                      </Button>
-                    </div>
-                  ) : (
-                    <Badge variant={interest.status === 'negado' ? 'danger' : 'success'}>
-                      {interest.status.charAt(0).toUpperCase() + interest.status.slice(1)}
-                    </Badge>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Nenhum cliente demonstrou interesse ainda.
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      <section className="grid gap-6 xl:grid-cols-2">
+      {(interestsQuery.isLoading || (interestsQuery.data?.length ?? 0) > 0) && (
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <Users className="text-brand-600" size={20} />
+              <HeartHandshake className="text-brand-600" size={20} />
               <div>
                 <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
-                  Clientes participantes
+                  Interesses de clientes
                 </h3>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Saldos, usos, pontos e creditos por cliente.
+                  Solicitações feitas pelo app do cliente para planos e pacotes.
                 </p>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            {clientBenefitsQuery.data?.length ? (
+            {interestsQuery.data?.length ? (
+              <div className="space-y-3">
+                {interestsQuery.data.slice(0, 8).map((interest) => (
+                  <div
+                    className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between"
+                    key={interest.id}
+                  >
+                    <div>
+                      <p className="font-black text-slate-950 dark:text-slate-50">
+                        {interest.profile?.nome ?? interest.cliente?.nome ?? 'Cliente'}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        {interest.program?.nome ?? 'Programa'} ·{' '}
+                        {interest.status.charAt(0).toUpperCase() + interest.status.slice(1)}
+                      </p>
+                    </div>
+                    {interest.status === 'pendente' ? (
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          leftIcon={<CheckCircle2 size={16} />}
+                          onClick={() =>
+                            reviewInterestMutation.mutate({
+                              interestId: interest.id,
+                              status: 'aprovado',
+                            })
+                          }
+                          size="sm"
+                        >
+                          Aprovar
+                        </Button>
+                        <Button
+                          leftIcon={<XCircle size={16} />}
+                          onClick={() =>
+                            reviewInterestMutation.mutate({
+                              interestId: interest.id,
+                              status: 'negado',
+                            })
+                          }
+                          size="sm"
+                          variant="secondary"
+                        >
+                          Negar
+                        </Button>
+                      </div>
+                    ) : (
+                      <Badge variant={interest.status === 'negado' ? 'danger' : 'success'}>
+                        {interest.status.charAt(0).toUpperCase() + interest.status.slice(1)}
+                      </Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Nenhum cliente demonstrou interesse ainda.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              {participantsTab === 'participantes' ? (
+                <Users className="text-brand-600" size={20} />
+              ) : (
+                <Repeat className="text-brand-600" size={20} />
+              )}
+              <div>
+                <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+                  {participantsTab === 'participantes'
+                    ? 'Clientes participantes'
+                    : 'Histórico de uso'}
+                </h3>
+                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  {participantsTab === 'participantes'
+                    ? 'Saldos, usos, pontos e créditos por cliente.'
+                    : 'Resgates, descontos, cortesias e benefícios aplicados.'}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-900">
+              <Button
+                onClick={() => setParticipantsTab('participantes')}
+                size="sm"
+                variant={participantsTab === 'participantes' ? 'primary' : 'ghost'}
+              >
+                Participantes
+              </Button>
+              <Button
+                onClick={() => setParticipantsTab('historico')}
+                size="sm"
+                variant={participantsTab === 'historico' ? 'primary' : 'ghost'}
+              >
+                Histórico
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {participantsTab === 'participantes' ? (
+            clientBenefitsQuery.data?.length ? (
               <div className="space-y-3">
                 {clientBenefitsQuery.data.slice(0, 6).map((benefit) => (
                   <div
@@ -731,7 +777,7 @@ export function PlanosFidelidadePage() {
                   >
                     <div>
                       <p className="font-black text-slate-950 dark:text-slate-50">
-                        {benefit.cliente?.nome?.trim() || 'Cliente não identificado'}
+                        {benefit.cliente?.nome ?? 'Cliente'}
                       </p>
                       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                         {benefit.program?.nome ?? 'Programa'} · {benefit.status}
@@ -745,56 +791,37 @@ export function PlanosFidelidadePage() {
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 Nenhum cliente participante ainda.
               </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Repeat className="text-brand-600" size={20} />
-              <div>
-                <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
-                  Histórico de uso
-                </h3>
-                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Resgates, descontos, cortesias e benefícios aplicados.
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {usageLogsQuery.data?.length ? (
-              <div className="space-y-3">
-                {usageLogsQuery.data.slice(0, 6).map((log) => (
-                  <div
-                    className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
-                    key={log.id}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-black text-slate-950 dark:text-slate-50">
-                          {log.program?.nome ?? 'Programa'}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                          {log.cliente?.nome?.trim() || 'Cliente não identificado'} · {log.tipo}
-                        </p>
-                      </div>
-                      <p className="font-black text-brand-600 dark:text-brand-300">
-                        {currencyFormatter.format(Number(log.valor_desconto))}
+            )
+          ) : usageLogsQuery.data?.length ? (
+            <div className="space-y-3">
+              {usageLogsQuery.data.slice(0, 6).map((log) => (
+                <div
+                  className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
+                  key={log.id}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-black text-slate-950 dark:text-slate-50">
+                        {log.program?.nome ?? 'Programa'}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        {log.cliente?.nome ?? 'Cliente'} · {log.tipo}
                       </p>
                     </div>
+                    <p className="font-black text-brand-600 dark:text-brand-300">
+                      {currencyFormatter.format(Number(log.valor_desconto))}
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Nenhum uso registrado ainda.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </section>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Nenhum uso registrado ainda.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <Modal
         isOpen={isFormOpen}
@@ -893,7 +920,7 @@ export function PlanosFidelidadePage() {
             />
           </label>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Input
               error={errors.valor?.message}
               label="Valor cobrado"
@@ -902,22 +929,15 @@ export function PlanosFidelidadePage() {
               type="number"
               {...register('valor')}
             />
-            <Input
-              error={errors.validade_dias?.message}
-              label="Validade (dias)"
-              min={0}
-              step="1"
-              type="number"
-              {...register('validade_dias')}
-            />
-            <Input
-              error={errors.renovacao_periodo?.message}
-              label="Renovação"
-              placeholder="mensal"
-              {...register('renovacao_periodo')}
-            />
           </div>
 
+          {/*
+            Validade e renovação já têm um valor padrão inteligente calculado
+            por tipo de programa em normalizePilotProgramData (30 dias para
+            plano/pacote, 180 para cartão fidelidade, renovação mensal para
+            plano). Mantemos os campos registrados (para não perder o valor
+            no submit), só não expomos a digitação manual no fluxo simplificado.
+          */}
           <div className="hidden">
             <Select
               label="Tipo de regra"
@@ -928,6 +948,17 @@ export function PlanosFidelidadePage() {
               label="Tipo de recompensa"
               options={benefitRewardTypes.map((option) => ({ ...option }))}
               {...register('tipo_recompensa')}
+            />
+            <Input
+              label="Validade (dias)"
+              min={0}
+              step="1"
+              type="number"
+              {...register('validade_dias')}
+            />
+            <Input
+              label="Renovação"
+              {...register('renovacao_periodo')}
             />
           </div>
 
@@ -1029,8 +1060,8 @@ export function PlanosFidelidadePage() {
           </div>
 
           <Input
-            label="Recompensa"
-            placeholder="Ex: 1 corte grátis, 15% em qualquer serviço..."
+            label="Recompensa (opcional)"
+            placeholder={defaultRecompensaText(selectedProgramType, watchedMetaQuantidade)}
             {...register('recompensa_descricao')}
           />
 
