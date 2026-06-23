@@ -8,10 +8,10 @@ type TableProps = HTMLAttributes<HTMLTableElement> & {
 
 export function Table({ children, className, ...props }: TableProps) {
   return (
-    <div className="w-full min-w-0 overflow-x-auto p-2 sm:p-5">
+    <div className="w-full max-w-full min-w-0 overflow-x-hidden p-2 sm:p-5">
       <table
         className={cn(
-          'block w-full min-w-0 border-separate border-spacing-y-2 text-left text-sm sm:border-spacing-y-3',
+          'block w-full max-w-full min-w-0 border-separate border-spacing-y-2 text-left text-sm sm:border-spacing-y-3',
           className,
         )}
         {...props}
@@ -70,7 +70,7 @@ export function TableCell({ children, className, ...props }: TdHTMLAttributes<HT
   return (
     <td
       className={cn(
-        'min-w-0 shrink-0 px-0 py-0 text-xs font-medium text-slate-500 first:w-full first:text-sm first:font-bold first:text-slate-950 dark:text-slate-400 dark:first:text-white sm:block sm:truncate sm:text-sm sm:first:text-base sm:first:font-black',
+        'min-w-0 max-w-full break-words px-0 py-0 text-xs font-medium text-slate-500 first:w-full first:text-sm first:font-bold first:text-slate-950 dark:text-slate-400 dark:first:text-white sm:block sm:truncate sm:text-sm sm:first:text-base sm:first:font-black',
         className,
       )}
       {...props}

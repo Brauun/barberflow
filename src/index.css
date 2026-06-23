@@ -64,6 +64,8 @@
 
   html,
   #root {
+    width: 100%;
+    max-width: 100%;
     min-width: 320px;
     min-height: 100%;
     overflow-x: hidden;
@@ -72,6 +74,7 @@
 
   #root {
     min-height: 100dvh;
+    max-width: 100dvw;
   }
 
   body {
@@ -81,6 +84,7 @@
     min-height: 100dvh;
     margin: 0;
     overflow-x: hidden;
+    overscroll-behavior-x: none;
     background: var(--bf-background);
   }
 
@@ -118,6 +122,20 @@
   }
 
   @media (max-width: 640px) {
+    html,
+    body,
+    #root {
+      width: 100%;
+      max-width: 100dvw;
+      overflow-x: hidden;
+      overscroll-behavior-x: none;
+    }
+
+    body {
+      position: relative;
+      touch-action: pan-y;
+    }
+
     input,
     textarea,
     select {
@@ -244,9 +262,33 @@
       min-width: 0;
     }
 
+    .bw-mobile-compact {
+      contain: inline-size;
+      width: 100%;
+      max-width: 100dvw;
+      overflow-x: clip;
+      touch-action: pan-y;
+    }
+
+    @supports not (overflow: clip) {
+      .bw-mobile-compact {
+        overflow-x: hidden;
+      }
+    }
+
+    .bw-mobile-compact > * {
+      max-width: 100%;
+      min-width: 0;
+    }
+
     .bw-mobile-compact :where(p, span, h1, h2, h3, h4, h5, h6, a, button, td, th) {
       overflow-wrap: anywhere;
       word-break: normal;
+    }
+
+    .bw-mobile-compact :where(.flex, .grid) {
+      max-width: 100%;
+      min-width: 0;
     }
 
     .bw-mobile-compact :where(table) {

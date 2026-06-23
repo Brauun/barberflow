@@ -34,8 +34,10 @@ export type ReportClient = {
 }
 
 export type ReportAgendaItem = {
+  id: string
   barbeiro: string
   cliente: string
+  formaPagamento: string | null
   horario: string
   servico: string
   status: string
@@ -161,6 +163,7 @@ type BarberAppointment = {
   id?: string
   data_hora_fim?: string | null
   data_hora_inicio?: string
+  forma_pagamento?: string | null
   status?: string
   valor: number
   valor_final?: number | null
@@ -284,7 +287,7 @@ export async function getRelatorioData(
     supabase
       .from('atendimentos')
       .select(
-        'barbeiro_id,cliente_id,data_hora_inicio,data_hora_fim,status,valor,valor_final,barbeiros(nome),clientes(nome),servicos(nome,duracao_minutos,duration_minutes)',
+        'id,barbeiro_id,cliente_id,data_hora_inicio,data_hora_fim,forma_pagamento,status,valor,valor_final,barbeiros(nome),clientes(nome),servicos(nome,duracao_minutos,duration_minutes)',
       )
       .eq('empresa_id', empresaId)
       .gte('data_hora_inicio', startIso)
@@ -340,16 +343,25 @@ export async function getRelatorioData(
   const receitaProdutos = sum(
     productSales.map((sale) => Number(sale.valor_total)),
   )
+  const completedStatuses = ['concluido', 'concluido_automatico']
+  const canceledStatuses = ['cancelado', 'nao_compareceu', 'faltou']
+  const completedAppointmentsById = new Map<string, BarberAppointment>()
+
+  barberAppointments.forEach((appointment, index) => {
+    if (!completedStatuses.includes(appointment.status ?? '')) {
+      return
+    }
+
+    completedAppointmentsById.set(
+      appointment.id ?? `${appointment.data_hora_inicio ?? 'sem-data'}-${index}`,
+      appointment,
+    )
+  })
+
   const receitaServicos = sum(
-    movements
-      .filter(
-        (movement) =>
-          movement.tipo === 'entrada' &&
-          ['servico', 'servico', 'atendimento'].some((category) =>
-            movement.categoria.toLowerCase().includes(category),
-          ),
-      )
-      .map((movement) => Number(movement.valor)),
+    Array.from(completedAppointmentsById.values()).map((appointment) =>
+      Number(appointment.valor_final ?? appointment.valor),
+    ),
   )
   const despesas = sum(
     movements
@@ -410,9 +422,6 @@ export async function getRelatorioData(
   })
 
   const barbersMap = new Map<string, TopBarber>()
-  const completedStatuses = ['concluido', 'concluido_automatico']
-  const canceledStatuses = ['cancelado', 'nao_compareceu', 'faltou']
-
   barberAppointments.forEach((appointment) => {
     const nome = appointment.barbeiros?.nome ?? 'Barbeiro'
     const barberId = appointment.barbeiro_id ?? nome
@@ -487,8 +496,10 @@ export async function getRelatorioData(
     })
 
   const agendaItems = barberAppointments.map<ReportAgendaItem>((appointment) => ({
+    id: appointment.id ?? `${appointment.data_hora_inicio}-${appointment.cliente_id ?? ''}`,
     barbeiro: appointment.barbeiros?.nome ?? 'Barbeiro',
     cliente: displayCustomerName(appointment.clientes?.nome),
+    formaPagamento: appointment.forma_pagamento ?? null,
     horario: appointment.data_hora_inicio ?? '',
     servico: appointment.servicos?.nome ?? 'Serviço',
     status: appointment.status ?? 'agendado',
@@ -543,7 +554,7 @@ export async function getExecutiveRelatorioData(
     supabase
       .from('atendimentos')
       .select(
-        'id,status,data_hora_inicio,data_hora_fim,valor,valor_final,valor_desconto,barbeiros(nome),clientes(nome),servicos(duracao_minutos,duration_minutes)',
+        'id,status,data_hora_inicio,data_hora_fim,forma_pagamento,valor,valor_final,valor_desconto,barbeiros(nome),clientes(nome),servicos(duracao_minutos,duration_minutes)',
       )
       .eq('empresa_id', empresaId)
       .gte('data_hora_inicio', startIso)

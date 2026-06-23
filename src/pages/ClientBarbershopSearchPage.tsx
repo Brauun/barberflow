@@ -189,34 +189,34 @@ export function ClientBarbershopSearchPage() {
   })
 
   return (
-    <div className="space-y-8">
+    <div className="w-full max-w-full space-y-5 overflow-x-hidden pb-6 sm:space-y-8">
       <section>
         <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600">
           Encontrar Barbearias
         </p>
-        <h2 className="mt-3 text-3xl font-black text-slate-950">
+        <h2 className="mt-2 text-2xl font-black text-slate-950 dark:text-white sm:mt-3 sm:text-3xl">
           Selecionar Barbearia
         </h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-300">
           Escolha sua barbearia principal uma vez. Ela aparece primeiro nas
-          proximas buscas.
+          próximas buscas.
         </p>
       </section>
 
       <Card>
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-3 p-3 sm:space-y-5 sm:p-5">
           <SearchInput
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder="Buscar por nome, bairro ou cidade"
             value={searchTerm}
           />
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             {filters.map((item) => (
               <button
-                className={`rounded-full border px-3.5 py-2 text-sm font-semibold transition ${
+                className={`min-h-10 rounded-full border px-3 py-2 text-sm font-semibold transition ${
                   filter === item.value
                     ? 'border-brand-200 bg-brand-50 text-brand-600'
-                    : 'border-slate-200 bg-white text-slate-500 hover:border-brand-200 hover:text-slate-950'
+                    : 'border-slate-200 bg-white text-slate-500 hover:border-brand-200 hover:text-slate-950 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-brand-400/40 dark:hover:text-white'
                 }`}
                 key={item.value}
                 onClick={() => setFilter(item.value)}
@@ -229,7 +229,7 @@ export function ClientBarbershopSearchPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4">
+      <div className="grid gap-3 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:gap-4">
         {barbershops.map((barbershop) => {
           const distance = distanceInKm(position, barbershop)
           const isPrimary = barbershop.id === clientProfile?.primary_barbershop_id
@@ -237,27 +237,27 @@ export function ClientBarbershopSearchPage() {
 
           return (
             <Card key={barbershop.id}>
-              <CardContent>
-                <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                  <div className="flex items-start gap-4">
+              <CardContent className="p-3 sm:p-5">
+                <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="flex min-w-0 items-start gap-3 sm:gap-4">
                     <BarbershopLogo
-                      className="h-14 w-14 text-base"
+                      className="h-12 w-12 shrink-0 text-sm sm:h-14 sm:w-14 sm:text-base"
                       logoUrl={barbershop.logo_url}
                       name={barbershop.nome}
                     />
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-lg font-black text-slate-950">
+                        <h3 className="min-w-0 break-words text-base font-black text-slate-950 dark:text-white sm:text-lg">
                           {barbershop.nome}
                         </h3>
                         {isPrimary && <Badge variant="warning">Principal</Badge>}
                         {isFavorite && <Badge>Favorita</Badge>}
                       </div>
-                      <p className="mt-1 flex items-center gap-2 text-sm text-slate-500">
-                        <MapPin size={15} />
-                        {formatBarbershopAddress(barbershop)}
+                      <p className="mt-1 flex min-w-0 items-start gap-2 break-words text-xs leading-5 text-slate-500 dark:text-slate-300 sm:text-sm">
+                        <MapPin className="mt-0.5 shrink-0" size={14} />
+                        <span className="min-w-0">{formatBarbershopAddress(barbershop)}</span>
                       </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-2 flex flex-wrap gap-1.5 sm:mt-3 sm:gap-2">
                         <Badge>
                           <Navigation size={13} /> {formatDistance(distance)}
                         </Badge>
@@ -271,7 +271,7 @@ export function ClientBarbershopSearchPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 md:justify-end">
+                  <div className="grid w-full grid-cols-2 gap-2 md:w-auto md:grid-cols-none md:flex md:flex-wrap md:justify-end">
                     <Button
                       disabled={favoriteMutation.isPending}
                       leftIcon={
@@ -287,7 +287,7 @@ export function ClientBarbershopSearchPage() {
                       {isFavorite ? 'Favoritada' : 'Favoritar'}
                     </Button>
                     <a
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:bg-brand-50/70 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                      className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:bg-brand-50/70 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
                       href={getBarbershopRouteUrl(barbershop)}
                       rel="noreferrer"
                       target="_blank"
@@ -296,6 +296,7 @@ export function ClientBarbershopSearchPage() {
                       Ver rota
                     </a>
                     <Button
+                      className="col-span-2 w-full md:col-auto md:w-auto"
                       disabled={selectMutation.isPending}
                       leftIcon={<Search size={17} />}
                       onClick={() => selectMutation.mutate(barbershop.id)}

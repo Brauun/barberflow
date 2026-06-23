@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase'
 import {
   listBarberAppointments,
   notifyWaitlistForVacancy,
+  type BookingUnavailability,
 } from './clientService'
 import {
   applyLoyaltyProgressForAppointment,
@@ -10,6 +11,7 @@ import {
 import type { AtendimentoFormData } from '../types/atendimentos'
 import type { Database } from '../types/database'
 import { createAuditLog } from './observabilityService'
+import type { BusinessHour, SpecialBusinessHour } from './businessHoursService'
 
 export type Atendimento = Database['public']['Tables']['atendimentos']['Row']
 
@@ -112,6 +114,13 @@ export type ServicoOption = {
   preco: number
   duration_minutes: number | null
   duracao_minutos?: number | null
+}
+
+export type InternalAppointmentSlotData = {
+  appointments: Array<{ starts_at: string; ends_at: string }>
+  businessHours: BusinessHour[]
+  specialHour: SpecialBusinessHour | null
+  unavailability: BookingUnavailability[]
 }
 
 function displayCustomerName(...values: Array<null | string | undefined>) {
@@ -737,6 +746,127 @@ export async function listAtendimentoServicos(
   }
 
   return data ?? []
+}
+
+export async function listInternalAppointmentSlotData(
+  empresaId: string,
+  barbeiroId: string,
+  date: string,
+): Promise<InternalAppointmentSlotData> {
+  if (!empresaId || !barbeiroId || !date) {
+    return {
+      appointments: [],
+      businessHours: [],
+      specialHour: null,
+      unavailability: [],
+    }
+  }
+
+  const { endIso, startIso } = dateRangeBounds(date, date)
+
+  const [
+    businessHoursResponse,
+    specialHourResponse,
+    unavailabilityResponse,
+    appointmentsResponse,
+    legacyAppointmentsResponse,
+    legacyServicesResponse,
+  ] = await Promise.all([
+    supabase
+      .from('barbershop_business_hours')
+      .select('*')
+      .eq('empresa_id', empresaId)
+      .order('day_of_week', { ascending: true }),
+    supabase
+      .from('barbershop_special_hours')
+      .select('*')
+      .eq('empresa_id', empresaId)
+      .eq('date', date)
+      .maybeSingle(),
+    supabase
+      .from('barber_unavailability')
+      .select('*')
+      .eq('empresa_id', empresaId)
+      .eq('barber_id', barbeiroId)
+      .eq('date', date),
+    supabase
+      .from('appointments')
+      .select('starts_at,ends_at')
+      .eq('empresa_id', empresaId)
+      .eq('barbeiro_id', barbeiroId)
+      .not('status', 'in', '(cancelado,remarcado,nao_compareceu,faltou)')
+      .lt('starts_at', endIso)
+      .gt('ends_at', startIso),
+    supabase
+      .from('atendimentos')
+      .select('data_hora_inicio,data_hora_fim,servico_id')
+      .eq('empresa_id', empresaId)
+      .eq('barbeiro_id', barbeiroId)
+      .not('status', 'in', '(cancelado,remarcado,nao_compareceu,faltou)')
+      .gte('data_hora_inicio', startIso)
+      .lt('data_hora_inicio', endIso),
+    supabase
+      .from('servicos')
+      .select('id,duration_minutes,duracao_minutos')
+      .eq('empresa_id', empresaId),
+  ])
+
+  if (businessHoursResponse.error) {
+    throw new Error(businessHoursResponse.error.message)
+  }
+
+  if (specialHourResponse.error) {
+    throw new Error(specialHourResponse.error.message)
+  }
+
+  if (unavailabilityResponse.error) {
+    throw new Error(unavailabilityResponse.error.message)
+  }
+
+  if (appointmentsResponse.error) {
+    throw new Error(appointmentsResponse.error.message)
+  }
+
+  if (legacyAppointmentsResponse.error) {
+    throw new Error(legacyAppointmentsResponse.error.message)
+  }
+
+  if (legacyServicesResponse.error) {
+    throw new Error(legacyServicesResponse.error.message)
+  }
+
+  const serviceDurations = new Map(
+    (legacyServicesResponse.data ?? []).map((service) => [
+      service.id,
+      Number(service.duration_minutes ?? service.duracao_minutos ?? 30),
+    ]),
+  )
+
+  const legacyAppointments = (legacyAppointmentsResponse.data ?? []).map((item) => {
+    const startsAt = item.data_hora_inicio
+    const durationMinutes = serviceDurations.get(item.servico_id ?? '') ?? 30
+    const endsAt =
+      item.data_hora_fim ??
+      new Date(new Date(startsAt).getTime() + durationMinutes * 60 * 1000).toISOString()
+
+    return {
+      ends_at: endsAt,
+      starts_at: startsAt,
+    }
+  })
+
+  return {
+    appointments: [
+      ...((appointmentsResponse.data ?? []) as Array<{
+        starts_at: string
+        ends_at: string
+      }>),
+      ...legacyAppointments,
+    ],
+    businessHours: (businessHoursResponse.data ?? []) as BusinessHour[],
+    specialHour: specialHourResponse.data as SpecialBusinessHour | null,
+    unavailability: (unavailabilityResponse.data ?? []) as BookingUnavailability[],
+  }
 }
 
 export async function registrarAtendimento(

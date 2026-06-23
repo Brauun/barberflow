@@ -19,11 +19,11 @@ import { resolveAssetUrl } from '../services/assetsService'
 import { cn } from '../utils/cn'
 
 const clientNavigation = [
-  { icon: Home, label: 'Início', path: '/cliente' },
-  { icon: CalendarCheck, label: 'Agendamentos', path: '/cliente/agendamentos' },
-  { icon: Scissors, label: 'Minha Barbearia', path: '/cliente/minha-barbearia' },
-  { icon: Gift, label: 'Benefícios', path: '/cliente/beneficios' },
-  { icon: UserRound, label: 'Perfil', path: '/cliente/perfil' },
+  { icon: Home, label: 'Início', mobileLabel: 'Início', path: '/cliente' },
+  { icon: CalendarCheck, label: 'Agendamentos', mobileLabel: 'Agenda', path: '/cliente/agendamentos' },
+  { icon: Scissors, label: 'Minha Barbearia', mobileLabel: 'Barbearia', path: '/cliente/minha-barbearia' },
+  { icon: Gift, label: 'Benefícios', mobileLabel: 'Benefícios', path: '/cliente/beneficios' },
+  { icon: UserRound, label: 'Perfil', mobileLabel: 'Perfil', path: '/cliente/perfil' },
 ]
 
 export function ClientLayout() {
@@ -58,7 +58,7 @@ export function ClientLayout() {
   }
 
   return (
-    <div className="bw-mobile-compact min-h-[100dvh] overflow-x-hidden bg-surface text-slate-950 dark:text-slate-50">
+    <div className="bw-mobile-compact min-h-[100dvh] w-full max-w-full overflow-x-hidden bg-surface text-slate-950 dark:text-slate-50">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/82 pt-[env(safe-area-inset-top)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/88">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-2.5 px-3 sm:h-20 sm:gap-4 sm:px-5">
           <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-brand-600 ring-1 ring-brand-100 dark:bg-brand-400/12 dark:text-brand-100 dark:ring-brand-400/20 sm:h-11 sm:w-11">
@@ -125,7 +125,7 @@ export function ClientLayout() {
         </div>
       </header>
 
-      <main className="mx-auto grid w-full min-w-0 max-w-7xl gap-4 overflow-x-hidden px-3 py-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] sm:gap-6 sm:px-5 sm:py-8 sm:pb-[calc(env(safe-area-inset-bottom)+8rem)] xl:grid-cols-[14rem_minmax(0,1fr)]">
+      <main className="mx-auto grid w-full min-w-0 max-w-7xl gap-4 overflow-x-hidden px-3 py-4 pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:gap-6 sm:px-5 sm:py-8 sm:pb-[calc(env(safe-area-inset-bottom)+8rem)] xl:grid-cols-[14rem_minmax(0,1fr)]">
         <aside className="hidden self-start rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-[0_18px_70px_rgb(15_23_42/0.05)] dark:border-slate-800 dark:bg-slate-950 xl:block">
           <div className="mb-3 flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
             <MapPin size={14} />
@@ -162,8 +162,8 @@ export function ClientLayout() {
         </div>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 px-2.5 pb-[calc(env(safe-area-inset-bottom)+0.55rem)] md:hidden">
-        <div className="mx-auto grid h-[4.75rem] w-full max-w-[34rem] grid-cols-5 items-stretch gap-1 rounded-[1.25rem] border border-slate-200 bg-white/94 p-1 shadow-[0_14px_44px_rgb(15_23_42/0.12)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/94 dark:shadow-[0_18px_60px_rgb(0_0_0/0.35)]">
+      <nav className="fixed inset-x-0 bottom-0 z-40 px-2.5 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] md:hidden">
+        <div className="mx-auto grid h-16 max-h-16 min-h-16 w-full max-w-[34rem] grid-cols-5 items-stretch gap-1 rounded-[1.15rem] border border-slate-200 bg-white/94 p-1 shadow-[0_14px_44px_rgb(15_23_42/0.12)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/94 dark:shadow-[0_18px_60px_rgb(0_0_0/0.35)]">
           {clientNavigation.map((item) => {
             const Icon = item.icon
 
@@ -171,7 +171,7 @@ export function ClientLayout() {
               <NavLink
                 className={({ isActive }) =>
                   cn(
-                    'flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 text-center text-[0.6rem] font-semibold leading-[1.08] text-slate-500 transition min-[390px]:text-[0.64rem]',
+                    'flex h-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 text-center text-[0.62rem] font-semibold leading-none text-slate-500 transition',
                     'dark:text-slate-300',
                     isActive &&
                       'bg-brand-50 text-brand-600 dark:bg-brand-400/15 dark:text-brand-100',
@@ -181,9 +181,9 @@ export function ClientLayout() {
                 key={item.path}
                 to={item.path}
               >
-                <Icon className="shrink-0" size={17} />
-                <span className="flex min-h-[1.9rem] w-full max-w-full items-center justify-center whitespace-normal break-words leading-[1.05]">
-                  {item.label}
+                <Icon className="shrink-0" size={18} />
+                <span className="block w-full max-w-full truncate whitespace-nowrap leading-none">
+                  {item.mobileLabel}
                 </span>
               </NavLink>
             )

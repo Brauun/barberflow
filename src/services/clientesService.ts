@@ -6,6 +6,11 @@ import { onlyDigits } from '../utils/masks'
 
 export type Cliente = Database['public']['Tables']['clientes']['Row']
 
+export type ClienteSearchResult = Pick<
+  Cliente,
+  'email' | 'id' | 'nome' | 'telefone'
+>
+
 export type ClienteWithIndicators = Cliente & {
   agendamentos_count: number
   is_online_only?: boolean
@@ -202,6 +207,49 @@ export async function listClientes(
       }
     })
     .sort((first, second) => first.nome.localeCompare(second.nome, 'pt-BR'))
+}
+
+function escapeLikeSearch(value: string) {
+  return value.replaceAll('%', '\\%').replaceAll('_', '\\_')
+}
+
+export async function searchClientes(
+  empresaId: string,
+  search: string,
+  limit = 10,
+): Promise<ClienteSearchResult[]> {
+  const term = search.trim()
+
+  if (term.length < 2) {
+    return []
+  }
+
+  const escapedTerm = escapeLikeSearch(term)
+  const termDigits = onlyDigits(term)
+  const filters = [
+    `nome.ilike.%${escapedTerm}%`,
+    `email.ilike.%${escapedTerm}%`,
+    `telefone.ilike.%${escapedTerm}%`,
+  ]
+
+  if (termDigits.length >= 2) {
+    filters.push(`telefone.ilike.%${termDigits}%`)
+  }
+
+  const { data, error } = await supabase
+    .from('clientes')
+    .select('id,nome,telefone,email')
+    .eq('empresa_id', empresaId)
+    .eq('status', 'ativo')
+    .or(filters.join(','))
+    .order('nome', { ascending: true })
+    .limit(limit)
+
+  if (error) {
+    throw toAppError(error, 'Não foi possível buscar clientes.')
+  }
+
+  return data ?? []
 }
 
 export async function createCliente(empresaId: string, data: ClienteFormData) {

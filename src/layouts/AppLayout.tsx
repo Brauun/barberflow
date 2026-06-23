@@ -74,7 +74,7 @@ export function AppLayout() {
   }
 
   return (
-    <div className="bw-mobile-compact min-h-[100dvh] overflow-x-hidden bg-surface text-slate-950 dark:bg-slate-950 dark:text-slate-50">
+    <div className="bw-mobile-compact min-h-[100dvh] w-full max-w-full overflow-x-hidden bg-surface text-slate-950 dark:bg-slate-950 dark:text-slate-50">
       {isMobileMenuOpen && (
         <button
           aria-label="Fechar menu"
@@ -103,6 +103,7 @@ export function AppLayout() {
       <div
         className={cn(
           'min-h-[100dvh] min-w-0 overflow-x-hidden transition-[padding] duration-300',
+          'w-full max-w-full',
           contentPaddingClass,
         )}
       >
@@ -126,7 +127,7 @@ export function AppLayout() {
           unreadCount={unreadCount}
         />
 
-        <main className="min-w-0 overflow-x-hidden px-3 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-6 sm:py-8 sm:pb-[calc(env(safe-area-inset-bottom)+2rem)] md:px-8 lg:px-10 lg:py-9 xl:px-12">
+        <main className="w-full max-w-full min-w-0 overflow-x-hidden px-3 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-6 sm:py-8 sm:pb-[calc(env(safe-area-inset-bottom)+2rem)] md:px-8 lg:px-10 lg:py-9 xl:px-12">
           <SubscriptionBanner
             isExpired={isSubscriptionExpired}
             isTrialing={subscriptionStatus === 'TRIAL'}

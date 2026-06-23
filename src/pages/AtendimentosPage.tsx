@@ -21,6 +21,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  ClienteAutocomplete,
   Input,
   Modal,
   Select,
@@ -29,11 +30,11 @@ import { useAuth } from '../hooks/useAuth'
 import { useFeatureAccess } from '../hooks/useSubscription'
 import {
   listAtendimentoBarbeiros,
-  listAtendimentoClientes,
   listAtendimentoRecords,
   listAtendimentoServicos,
   listAdminWaitlist,
   listDailyAppointments,
+  listInternalAppointmentSlotData,
   notifyWaitlistEntry,
   processPendingAppointmentCompletions,
   registrarAtendimento,
@@ -44,12 +45,14 @@ import {
   type DailyAppointment,
   type DailyAppointmentStatus,
 } from '../services/atendimentosService'
+import type { ClienteSearchResult } from '../services/clientesService'
 import {
   atendimentoSchema,
   type AtendimentoFormData,
   type AtendimentoFormInput,
 } from '../types/atendimentos'
 import { listClientBenefits } from '../services/benefitsService'
+import { buildBookingSlots } from '../utils/bookingSlots'
 import { exportHtmlReport } from '../utils/mobileExport'
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
@@ -281,8 +284,12 @@ export function AtendimentosPage() {
   const [recordEndDate, setRecordEndDate] = useState(defaultRecordRange.end)
   const [recordBarberId, setRecordBarberId] = useState('')
   const [recordClientId, setRecordClientId] = useState('')
+  const [recordClient, setRecordClient] = useState<ClienteSearchResult | null>(
+    null,
+  )
   const [recordServiceId, setRecordServiceId] = useState('')
   const [recordStatus, setRecordStatus] = useState('')
+  const [formClient, setFormClient] = useState<ClienteSearchResult | null>(null)
   const [recordPage, setRecordPage] = useState(0)
   const [appliedRecordFilters, setAppliedRecordFilters] = useState({
     barbeiroId: '',
@@ -309,6 +316,18 @@ export function AtendimentosPage() {
   const selectedServicoId = useWatch({
     control,
     name: 'servico_id',
+  })
+  const selectedBarbeiroId = useWatch({
+    control,
+    name: 'barbeiro_id',
+  })
+  const selectedDate = useWatch({
+    control,
+    name: 'data',
+  })
+  const selectedHour = useWatch({
+    control,
+    name: 'hora',
   })
   const selectedClienteId = useWatch({
     control,
@@ -358,12 +377,6 @@ export function AtendimentosPage() {
     ],
   })
 
-  const clientesQuery = useQuery({
-    enabled: Boolean(empresaId),
-    queryFn: () => listAtendimentoClientes(empresaId as string),
-    queryKey: ['atendimentos-clientes', empresaId],
-  })
-
   const clientBenefitsQuery = useQuery({
     enabled: Boolean(empresaId),
     queryFn: () => listClientBenefits(empresaId as string),
@@ -381,6 +394,60 @@ export function AtendimentosPage() {
     queryFn: () => listAtendimentoServicos(empresaId as string),
     queryKey: ['atendimentos-serviços', empresaId],
   })
+
+  const selectedServico = useMemo(
+    () =>
+      servicosQuery.data?.find((servico) => servico.id === selectedServicoId) ??
+      null,
+    [selectedServicoId, servicosQuery.data],
+  )
+
+  const selectedServiceDuration = Number(
+    selectedServico?.duration_minutes ?? selectedServico?.duracao_minutos ?? 30,
+  )
+
+  const internalSlotsQuery = useQuery({
+    enabled: Boolean(
+      isFormOpen &&
+        empresaId &&
+        selectedBarbeiroId &&
+        selectedServicoId &&
+        selectedDate,
+    ),
+    queryFn: () =>
+      listInternalAppointmentSlotData(
+        empresaId as string,
+        selectedBarbeiroId as string,
+        selectedDate as string,
+      ),
+    queryKey: [
+      'internal-appointment-slots',
+      empresaId,
+      selectedBarbeiroId,
+      selectedServicoId,
+      selectedDate,
+    ],
+  })
+
+  const internalSlotResult = useMemo(() => {
+    if (!internalSlotsQuery.data || !selectedDate || !selectedServiceDuration) {
+      return null
+    }
+
+    return buildBookingSlots({
+      appointments: internalSlotsQuery.data.appointments,
+      businessHours: internalSlotsQuery.data.businessHours,
+      date: selectedDate,
+      durationMinutes: selectedServiceDuration,
+      specialHour: internalSlotsQuery.data.specialHour,
+      unavailability: internalSlotsQuery.data.unavailability,
+    })
+  }, [internalSlotsQuery.data, selectedDate, selectedServiceDuration])
+
+  const availableInternalSlots = useMemo(
+    () => internalSlotResult?.slots.filter((slot) => slot.available) ?? [],
+    [internalSlotResult],
+  )
 
   const dailyAppointmentsQuery = useQuery({
     enabled: Boolean(empresaId),
@@ -467,17 +534,6 @@ export function AtendimentosPage() {
     deepLinkAppointmentId,
   ])
 
-  const clienteOptions = useMemo(
-    () => [
-      { label: 'Selecione um cliente', value: '' },
-      ...(clientesQuery.data ?? []).map((cliente) => ({
-        label: cliente.nome,
-        value: cliente.id,
-      })),
-    ],
-    [clientesQuery.data],
-  )
-
   const barbeiroOptions = useMemo(
     () => [
       { label: 'Selecione um barbeiro', value: '' },
@@ -501,21 +557,54 @@ export function AtendimentosPage() {
   )
 
   useEffect(() => {
-    const selectedServico = servicosQuery.data?.find(
-      (servico) => servico.id === selectedServicoId,
-    )
-
     if (selectedServico) {
       setValue('valor', Number(selectedServico.preco), {
         shouldDirty: true,
         shouldValidate: true,
       })
     }
-  }, [selectedServicoId, servicosQuery.data, setValue])
+  }, [selectedServico, setValue])
+
+  useEffect(() => {
+    if (!isFormOpen || internalSlotsQuery.isLoading || !internalSlotResult) {
+      return
+    }
+
+    if (availableInternalSlots.length === 0) {
+      setValue('hora', '', { shouldDirty: true, shouldValidate: true })
+      return
+    }
+
+    const selectedHourIsAvailable = availableInternalSlots.some(
+      (slot) => slot.label === selectedHour,
+    )
+
+    if (!selectedHourIsAvailable) {
+      setValue('hora', availableInternalSlots[0].label, {
+        shouldDirty: true,
+        shouldValidate: true,
+      })
+    }
+  }, [
+    availableInternalSlots,
+    internalSlotResult,
+    internalSlotsQuery.isLoading,
+    isFormOpen,
+    selectedHour,
+    setValue,
+  ])
 
   useEffect(() => {
     setValue('benefit_id', '', { shouldDirty: true })
   }, [selectedClienteId, setValue])
+
+  useEffect(() => {
+    if (atendimentoTipo === 'avulso') {
+      setFormClient(null)
+      setValue('cliente_id', '', { shouldDirty: true, shouldValidate: true })
+      setValue('benefit_id', '', { shouldDirty: true })
+    }
+  }, [atendimentoTipo, setValue])
 
   const saveMutation = useMutation({
     mutationFn: async (data: AtendimentoFormData) => {
@@ -533,6 +622,7 @@ export function AtendimentosPage() {
         queryClient.invalidateQueries({ queryKey: ['barbeiros'] }),
       ])
       reset(emptyFormValues())
+      setFormClient(null)
       setFormError(null)
       setIsFormOpen(false)
     },
@@ -664,6 +754,8 @@ export function AtendimentosPage() {
     const range = getRecordQuickRange(filter)
     setRecordStartDate(range.start)
     setRecordEndDate(range.end)
+    setRecordClientId('')
+    setRecordClient(null)
     setRecordPage(0)
     setAppliedRecordFilters({
       barbeiroId: '',
@@ -694,6 +786,7 @@ export function AtendimentosPage() {
     setRecordEndDate(range.end)
     setRecordBarberId('')
     setRecordClientId('')
+    setRecordClient(null)
     setRecordServiceId('')
     setRecordStatus('')
     setRecordPage(0)
@@ -1386,11 +1479,14 @@ export function AtendimentosPage() {
                 options={barbeiroOptions}
                 value={recordBarberId}
               />
-              <Select
-                className="h-12 sm:h-11"
+              <ClienteAutocomplete
+                empresaId={empresaId}
                 label="Cliente"
-                onChange={(event) => setRecordClientId(event.target.value)}
-                options={clienteOptions}
+                onChange={(clienteId, cliente) => {
+                  setRecordClientId(clienteId)
+                  setRecordClient(cliente)
+                }}
+                selectedCliente={recordClient}
                 value={recordClientId}
               />
               <Select
@@ -1617,11 +1713,19 @@ export function AtendimentosPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              <Select
+              <ClienteAutocomplete
+                empresaId={empresaId}
                 error={errors.cliente_id?.message}
                 label="Cliente"
-                options={clienteOptions}
-                {...register('cliente_id')}
+                onChange={(clienteId, cliente) => {
+                  setFormClient(cliente)
+                  setValue('cliente_id', clienteId, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }}
+                selectedCliente={formClient}
+                value={selectedClienteId ?? ''}
               />
               {benefitOptions.length > 1 && (
                 <Select
@@ -1654,13 +1758,66 @@ export function AtendimentosPage() {
               type="date"
               {...register('data')}
             />
+          </div>
 
-            <Input
-              error={errors.hora?.message}
-              label="Hora"
-              type="time"
-              {...register('hora')}
-            />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Horário
+              </span>
+              {internalSlotsQuery.isLoading && (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Verificando agenda
+                </span>
+              )}
+            </div>
+
+            {!selectedBarbeiroId || !selectedServicoId || !selectedDate ? (
+              <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
+                Selecione barbeiro, serviço e data para ver os horários vagos.
+              </p>
+            ) : internalSlotsQuery.isError ? (
+              <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+                Não foi possível carregar os horários disponíveis.
+              </p>
+            ) : internalSlotResult?.message ? (
+              <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+                {internalSlotResult.message}
+              </p>
+            ) : availableInternalSlots.length > 0 ? (
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {availableInternalSlots.map((slot) => (
+                  <button
+                    className={`min-h-10 rounded-xl border px-3 text-sm font-semibold transition ${
+                      selectedHour === slot.label
+                        ? 'border-brand-300 bg-brand-50 text-brand-700 shadow-[0_10px_28px_rgb(26_110_245/0.12)] dark:border-brand-400 dark:bg-brand-400/15 dark:text-brand-100'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-brand-200 hover:bg-brand-50/70 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-brand-400/40'
+                    }`}
+                    key={slot.value}
+                    onClick={() =>
+                      setValue('hora', slot.label, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                    type="button"
+                  >
+                    {slot.label}
+                  </button>
+                ))}
+              </div>
+            ) : internalSlotResult ? (
+              <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
+                Não há horários vagos para esta data.
+              </p>
+            ) : null}
+
+            {errors.hora?.message && (
+              <p className="text-xs font-semibold text-red-600 dark:text-red-300">
+                {errors.hora.message}
+              </p>
+            )}
           </div>
 
           <Input
