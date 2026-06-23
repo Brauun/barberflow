@@ -7,6 +7,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import {
   Badge,
@@ -102,6 +103,7 @@ function DashboardSkeleton() {
 function MetricCard({
   delta,
   deltaUp,
+  href,
   icon: Icon,
   iconColor,
   label,
@@ -109,19 +111,29 @@ function MetricCard({
 }: {
   delta: string
   deltaUp: boolean
+  href?: string
   icon: typeof TrendingUp
   iconColor: 'blue' | 'green' | 'amber'
   label: string
   value: string
 }) {
+  const navigate = useNavigate()
   const iconBg = {
     amber: 'bg-amber-500/10 text-amber-400',
     blue: 'bg-brand-500/10 text-brand-400',
     green: 'bg-emerald-500/10 text-emerald-400',
   }[iconColor]
 
+  const Tag = href ? 'button' : 'div'
+
   return (
-    <div className="rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:rounded-2xl sm:p-5">
+    <Tag
+      className={cn(
+        'rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:rounded-2xl sm:p-5 text-left w-full',
+        href && 'cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-[0_8px_24px_rgb(15_23_42/0.08)] dark:hover:border-brand-500/30 active:scale-[0.98]',
+      )}
+      onClick={href ? () => navigate(href) : undefined}
+    >
       <div className="flex items-start justify-between gap-2 sm:gap-3">
         <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">{label}</p>
         <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 sm:rounded-xl', iconBg)}>
@@ -135,7 +147,7 @@ function MetricCard({
         {deltaUp ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
         {delta}
       </p>
-    </div>
+    </Tag>
   )
 }
 
@@ -426,6 +438,7 @@ export function DashboardPage() {
         <MetricCard
           delta={revenueDelta.text}
           deltaUp={revenueDelta.up}
+          href="/fluxo-caixa"
           icon={TrendingUp}
           iconColor="blue"
           label="Receita hoje"
@@ -434,6 +447,7 @@ export function DashboardPage() {
         <MetricCard
           delta={appointmentsDelta.text}
           deltaUp={appointmentsDelta.up}
+          href="/atendimentos"
           icon={Scissors}
           iconColor="green"
           label="Atendimentos"
@@ -442,6 +456,7 @@ export function DashboardPage() {
         <MetricCard
           delta={ticketDelta.text}
           deltaUp={ticketDelta.up}
+          href="/relatorios"
           icon={CreditCard}
           iconColor="amber"
           label="Ticket médio"
