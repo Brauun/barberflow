@@ -162,7 +162,7 @@ export function AppLayout() {
                 <NavLink
                   className={({ isActive }) =>
                     cn(
-                      'flex h-[3.1rem] min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-center text-[0.62rem] font-semibold leading-none text-slate-500 transition dark:text-slate-300',
+                      'flex h-[3.1rem] min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-center text-[0.62rem] font-semibold leading-tight text-slate-500 transition dark:text-slate-300',
                       isActive &&
                         'text-brand-600 dark:text-brand-300',
                     )
@@ -171,7 +171,7 @@ export function AppLayout() {
                   to={item.path}
                 >
                   <Icon className="shrink-0" size={20} />
-                  <span className="block w-full max-w-full truncate whitespace-nowrap leading-none">
+                  <span className="block w-full max-w-full truncate whitespace-nowrap leading-tight">
                     {item.label}
                   </span>
                 </NavLink>
