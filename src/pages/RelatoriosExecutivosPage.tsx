@@ -1,389 +1,517 @@
-import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Download, FileSpreadsheet } from 'lucide-react'
+import { useMemo, useState } from 'react'
 
-// ─── tipos ────────────────────────────────────────────────────────────────────
+import { Button } from '../components/ui'
+import { useAuth } from '../hooks/useAuth'
+import {
+  getExecutiveRelatorioData,
+  type ExecutiveReportData,
+} from '../services/relatoriosService'
+import { exportHtmlReport } from '../utils/mobileExport'
 
 type Periodo = 'hoje' | '7dias' | '30dias' | 'mensal' | 'anual' | 'personalizado'
+type Tab = 'visao-geral' | 'equipe' | 'clientes' | 'agenda' | 'inteligencia'
 
-interface KpiItem {
-  label: string
-  value: string
-  sub: string
-  trend: 'up' | 'down' | 'neutral'
-}
-
-interface InsightItem {
-  type: 'success' | 'info' | 'warning' | 'danger'
-  icon: string
-  text: string
-  detail: string
-}
-
-interface BarberStat {
-  initials: string
-  name: string
-  atendimentos: number
-  comissao: number
-  faturamento: number
-  faturamentoMax: number
-  top?: boolean
-}
-
-interface DailyBar {
-  label: string
-  pct: number
-}
-
-interface HourPeak {
-  hour: string
-  count: number
-  max: number
-}
-
-// ─── dados mock ───────────────────────────────────────────────────────────────
-
-const PERIODO_LABELS: Record<Periodo, string> = {
-  hoje: 'Hoje',
+const periodoLabels: Record<Periodo, string> = {
   '7dias': '7 dias',
   '30dias': '30 dias',
-  mensal: 'Mensal',
   anual: 'Anual',
+  hoje: 'Hoje',
+  mensal: 'Mensal',
   personalizado: 'Personalizado',
 }
 
-const KPI_ITEMS: KpiItem[] = [
-  { label: 'Receita período', value: 'R$ 975',   sub: '+100% vs anterior', trend: 'up' },
-  { label: 'Lucro líquido',   value: 'R$ 588',   sub: 'margem 60,3%',      trend: 'up' },
-  { label: 'Comissões',       value: 'R$ 387',   sub: '60% dos serviços',  trend: 'neutral' },
-  { label: 'Ticket médio',    value: 'R$ 49,62', sub: '-3% vs anterior',   trend: 'down' },
-  { label: 'Clientes ativos', value: '3',        sub: 'no período',        trend: 'neutral' },
-  { label: 'Atendimentos',    value: '13',       sub: '+2 vs anterior',    trend: 'up' },
-]
-
-const INSIGHTS: InsightItem[] = [
-  { type: 'success', icon: 'ti-trending-up', text: 'Receita 100% acima do período anterior.', detail: 'Melhor mês desde o início.' },
-  { type: 'info',    icon: 'ti-user',        text: 'Braian Braun gerou 54,4% do faturamento.', detail: 'R$ 530 de R$ 975 totais.' },
-  { type: 'warning', icon: 'ti-package',     text: 'Cerveja Heineken lidera produtos com 4 vendas.', detail: 'Estoque: revisar antes da próxima semana.' },
-  { type: 'danger',  icon: 'ti-clock',       text: 'Ticket médio caiu 3% — revisar mix de serviços.', detail: 'Meta sugerida: R$ 52,00.' },
-]
-
-const BARBERS: BarberStat[] = [
-  { initials: 'BB', name: 'Braian Braun', atendimentos: 8, comissao: 318, faturamento: 530, faturamentoMax: 530, top: true },
-  { initials: 'TW', name: 'Thomas Wolf',  atendimentos: 5, comissao: 69,  faturamento: 115, faturamentoMax: 530 },
-]
-
-const DAILY_BARS: DailyBar[] = [
-  { label: '31/05', pct: 20 },
-  { label: '03/06', pct: 35 },
-  { label: '07/06', pct: 50 },
-  { label: '11/06', pct: 40 },
-  { label: '14/06', pct: 65 },
-  { label: '18/06', pct: 100 },
-  { label: '22/06', pct: 55 },
-]
-
-const HOUR_PEAKS: HourPeak[] = [
-  { hour: '09h', count: 3,  max: 10 },
-  { hour: '10h', count: 5,  max: 10 },
-  { hour: '14h', count: 10, max: 10 },
-  { hour: '16h', count: 7,  max: 10 },
-  { hour: '18h', count: 4,  max: 10 },
-]
-
-const META_ATUAL = 975
-const META_TOTAL = 1200
-const PREVISAO   = 1290
-const DIAS_SEM_RECEITA = 3
-
-// ─── helpers ──────────────────────────────────────────────────────────────────
-
-function TrendBadge({ trend, sub }: { trend: KpiItem['trend']; sub: string }) {
-  if (trend === 'up')
-    return (
-      <span className="flex items-center gap-1 text-[13px] text-emerald-400 mt-1">
-        <i className="ti ti-arrow-up-right text-[12px]" aria-hidden="true" />
-        {sub}
-      </span>
-    )
-  if (trend === 'down')
-    return (
-      <span className="flex items-center gap-1 text-[13px] text-red-400 mt-1">
-        <i className="ti ti-arrow-down-right text-[12px]" aria-hidden="true" />
-        {sub}
-      </span>
-    )
-  return <span className="text-[13px] text-white/40 mt-1 block">{sub}</span>
+const tabLabels: Record<Tab, string> = {
+  agenda: 'Agenda',
+  clientes: 'Clientes',
+  equipe: 'Equipe',
+  inteligencia: 'Inteligência',
+  'visao-geral': 'Visão Geral',
 }
 
-const INSIGHT_ICON_STYLE: Record<InsightItem['type'], string> = {
-  success: 'bg-emerald-500/20 text-emerald-400',
-  info:    'bg-blue-500/20 text-blue-400',
-  warning: 'bg-amber-500/20 text-amber-400',
-  danger:  'bg-red-500/20 text-red-400',
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+  currency: 'BRL',
+  style: 'currency',
+})
+
+const percentFormatter = new Intl.NumberFormat('pt-BR', {
+  maximumFractionDigits: 1,
+  minimumFractionDigits: 1,
+  style: 'percent',
+})
+
+function todayInputValue() {
+  return new Date().toISOString().slice(0, 10)
 }
 
-// ─── componente ───────────────────────────────────────────────────────────────
+function toInputValue(date: Date) {
+  return date.toISOString().slice(0, 10)
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date)
+  next.setDate(next.getDate() + days)
+  return next
+}
+
+function monthStartInputValue() {
+  const today = new Date()
+  return toInputValue(new Date(today.getFullYear(), today.getMonth(), 1))
+}
+
+function yearStartInputValue() {
+  const today = new Date()
+  return toInputValue(new Date(today.getFullYear(), 0, 1))
+}
+
+function rangeForPeriodo(periodo: Periodo) {
+  const today = new Date()
+  const todayInput = todayInputValue()
+
+  if (periodo === 'hoje') {
+    return { dataFim: todayInput, dataInicio: todayInput }
+  }
+
+  if (periodo === '7dias') {
+    return { dataFim: todayInput, dataInicio: toInputValue(addDays(today, -6)) }
+  }
+
+  if (periodo === '30dias') {
+    return { dataFim: todayInput, dataInicio: toInputValue(addDays(today, -29)) }
+  }
+
+  if (periodo === 'anual') {
+    return { dataFim: todayInput, dataInicio: yearStartInputValue() }
+  }
+
+  return { dataFim: todayInput, dataInicio: monthStartInputValue() }
+}
+
+function formatDate(value: string) {
+  return new Date(`${value}T00:00:00`).toLocaleDateString('pt-BR')
+}
+
+function formatPercent(value: number) {
+  return percentFormatter.format((Number(value) || 0) / 100)
+}
+
+function normalizeFilePart(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+function escapeCsv(value: string | number | null | undefined) {
+  const text = String(value ?? '')
+  return `"${text.replace(/"/g, '""')}"`
+}
+
+function downloadCsv(filename: string, rows: Array<Array<string | number | null | undefined>>) {
+  const csv = rows.map((row) => row.map(escapeCsv).join(';')).join('\n')
+  const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+function buildExecutiveRows(data: ExecutiveReportData, tab: Tab) {
+  if (tab === 'equipe') {
+    return [
+      ['Barbeiro', 'Atendimentos', 'Faturamento', 'Comissão', 'Ticket médio', 'Cancelamentos'],
+      ...data.equipe.map((item) => [
+        item.nome,
+        item.atendimentos,
+        item.faturamento,
+        item.comissao,
+        item.ticketMedio,
+        item.cancelamentos,
+      ]),
+    ]
+  }
+
+  if (tab === 'clientes') {
+    return [
+      ['Cliente', 'Visitas', 'Gasto total', 'Última visita'],
+      ...data.clientes.topClientes.map((item) => [
+        item.nome,
+        item.visitas,
+        item.gastoTotal,
+        item.ultimaVisita ? new Date(item.ultimaVisita).toLocaleDateString('pt-BR') : '',
+      ]),
+    ]
+  }
+
+  if (tab === 'agenda') {
+    return [
+      ['Status', 'Total'],
+      ['Agendado', data.agenda.status.agendado],
+      ['Confirmado', data.agenda.status.confirmado],
+      ['Concluído', data.agenda.status.concluido],
+      ['Cancelado', data.agenda.status.cancelado],
+      ['Remarcado', data.agenda.status.remarcado],
+      ['Em atendimento', data.agenda.status.emAtendimento],
+      ['Ocupação', `${data.agenda.ocupacaoPercentual}%`],
+      ['Ociosidade', `${data.agenda.ociosidadePercentual}%`],
+    ]
+  }
+
+  if (tab === 'inteligencia') {
+    return [
+      ['Indicador', 'Valor'],
+      ['Receita prevista 30 dias', data.previsao.receita30Dias],
+      ['Lucro previsto 30 dias', data.previsao.lucro30Dias],
+      ['Receita prevista 90 dias', data.previsao.receita90Dias],
+      ['Receita prevista 12 meses', data.previsao.receita12Meses],
+      ['Produtos com baixo estoque', data.produtos.baixoEstoque],
+    ]
+  }
+
+  return [
+    ['Indicador', 'Valor'],
+    ['Score da operação', `${data.score.value}/100`],
+    ['Receita período', data.summary.receitaServicos + data.summary.receitaProdutos],
+    ['Lucro líquido', data.summary.lucroLiquido],
+    ['Margem', `${data.margemPercentual}%`],
+    ['Comissões', data.summary.comissoes],
+    ['Clientes ativos', data.clientes.ativos],
+    ['Atendimentos', data.agenda.status.concluido],
+  ]
+}
+
+function buildExecutiveHtml(input: {
+  data: ExecutiveReportData
+  dataFim: string
+  dataInicio: string
+  tab: Tab
+}) {
+  const entradas = input.data.summary.receitaServicos + input.data.summary.receitaProdutos
+  const rows = buildExecutiveRows(input.data, input.tab)
+
+  return `<!doctype html>
+  <html lang="pt-BR">
+    <head>
+      <meta charset="utf-8" />
+      <title>Relatório Executivo BW Barber</title>
+      <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #f5f8fb; color: #071426; font-family: Inter, Arial, sans-serif; }
+        main { padding: 30px; }
+        header { display: grid; grid-template-columns: 1fr 220px; gap: 18px; border-radius: 26px; background: #071426; color: white; padding: 28px; margin-bottom: 18px; }
+        .eyebrow { color: #12c6f3; font-size: 11px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; }
+        h1 { margin: 8px 0 6px; font-size: 31px; }
+        .period { color: #b8c7dc; font-size: 13px; }
+        .score { border: 1px solid rgba(18,198,243,.35); border-radius: 20px; padding: 18px; background: rgba(255,255,255,.05); }
+        .score strong { display: block; font-size: 42px; }
+        .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+        .kpi { background: white; border: 1px solid #dce6f2; border-radius: 16px; padding: 14px; }
+        .kpi span { display: block; color: #64748b; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+        .kpi strong { display: block; margin-top: 7px; font-size: 18px; }
+        section { background: white; border: 1px solid #dce6f2; border-radius: 18px; padding: 18px; }
+        h2 { margin: 0 0 12px; font-size: 18px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border-bottom: 1px solid #e2e8f0; padding: 11px 12px; text-align: left; font-size: 12px; }
+        th { color: #0f5f76; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+        tr:last-child td { border-bottom: 0; }
+        @media print { body { background: white; } main { padding: 18mm; } }
+      </style>
+    </head>
+    <body>
+      <main>
+        <header>
+          <div>
+            <div class="eyebrow">BW Barber · Relatório Executivo</div>
+            <h1>Panorama do Negócio</h1>
+            <div class="period">${formatDate(input.dataInicio)} até ${formatDate(input.dataFim)}</div>
+          </div>
+          <div class="score">
+            <span class="eyebrow">Score</span>
+            <strong>${input.data.score.value}/100</strong>
+            <span>${input.data.score.label}</span>
+          </div>
+        </header>
+        <div class="kpis">
+          <div class="kpi"><span>Receita</span><strong>${currencyFormatter.format(entradas)}</strong></div>
+          <div class="kpi"><span>Lucro</span><strong>${currencyFormatter.format(input.data.summary.lucroLiquido)}</strong></div>
+          <div class="kpi"><span>Margem</span><strong>${formatPercent(input.data.margemPercentual)}</strong></div>
+          <div class="kpi"><span>Comissões</span><strong>${currencyFormatter.format(input.data.summary.comissoes)}</strong></div>
+        </div>
+        <section>
+          <h2>${tabLabels[input.tab]}</h2>
+          <table>
+            <thead><tr>${rows[0].map((cell) => `<th>${cell}</th>`).join('')}</tr></thead>
+            <tbody>${rows.slice(1).map((row) => `<tr>${row.map((cell) => `<td>${cell ?? ''}</td>`).join('')}</tr>`).join('')}</tbody>
+          </table>
+        </section>
+      </main>
+      <script>window.addEventListener('load',function(){setTimeout(function(){window.focus();window.print();},250);});</script>
+    </body>
+  </html>`
+}
 
 export default function RelatorioExecutivosPage() {
+  const { profile } = useAuth()
+  const empresaId = profile?.empresa_id
   const [periodo, setPeriodo] = useState<Periodo>('mensal')
-  const metaPct = Math.round((META_ATUAL / META_TOTAL) * 100)
+  const [activeTab, setActiveTab] = useState<Tab>('visao-geral')
+  const [pendingInicio, setPendingInicio] = useState(monthStartInputValue())
+  const [pendingFim, setPendingFim] = useState(todayInputValue())
+  const [appliedFilters, setAppliedFilters] = useState({
+    dataFim: todayInputValue(),
+    dataInicio: monthStartInputValue(),
+  })
+
+  const reportQuery = useQuery({
+    enabled: Boolean(empresaId),
+    queryFn: () =>
+      getExecutiveRelatorioData(
+        empresaId ?? '',
+        appliedFilters.dataInicio,
+        appliedFilters.dataFim,
+      ),
+    queryKey: [
+      'relatorios-executivos',
+      empresaId,
+      appliedFilters.dataInicio,
+      appliedFilters.dataFim,
+    ],
+  })
+
+  const data = reportQuery.data
+  const entradas = data ? data.summary.receitaServicos + data.summary.receitaProdutos : 0
+  const fileBaseName = useMemo(
+    () =>
+      `BW-Barber-Relatorio-Executivo-${normalizeFilePart(tabLabels[activeTab])}-${appliedFilters.dataInicio}-a-${appliedFilters.dataFim}`,
+    [activeTab, appliedFilters.dataFim, appliedFilters.dataInicio],
+  )
+
+  function setQuickPeriodo(nextPeriodo: Periodo) {
+    setPeriodo(nextPeriodo)
+
+    if (nextPeriodo === 'personalizado') return
+
+    const range = rangeForPeriodo(nextPeriodo)
+    setPendingInicio(range.dataInicio)
+    setPendingFim(range.dataFim)
+    setAppliedFilters(range)
+  }
+
+  function applyFilters() {
+    if (pendingInicio > pendingFim) {
+      window.alert('A data inicial não pode ser maior que a data final.')
+      return
+    }
+
+    setPeriodo('personalizado')
+    setAppliedFilters({ dataFim: pendingFim, dataInicio: pendingInicio })
+  }
+
+  function exportPdf() {
+    if (!data) return
+
+    exportHtmlReport({
+      filename: `${fileBaseName}.html`,
+      html: buildExecutiveHtml({
+        data,
+        dataFim: appliedFilters.dataFim,
+        dataInicio: appliedFilters.dataInicio,
+        tab: activeTab,
+      }),
+      previewFeatures: 'width=1024,height=1200',
+    })
+  }
+
+  function exportCsv() {
+    if (!data) return
+
+    downloadCsv(`${fileBaseName}.csv`, buildExecutiveRows(data, activeTab))
+  }
 
   return (
-    <div className="min-h-screen bg-[#0f1117] text-white p-4 md:p-6">
-      <div className="max-w-6xl mx-auto space-y-5">
-
-        {/* Header */}
-        <div className="flex items-start justify-between">
+    <div className="min-h-screen bg-[#0f1117] p-4 text-white md:p-6">
+      <div className="mx-auto max-w-6xl space-y-5">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-[11px] font-semibold tracking-widest text-blue-400 uppercase mb-1">
-              Relatórios executivos
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-blue-400">
+              Relatórios Executivos
             </p>
-            <h1 className="text-[28px] font-bold text-white leading-tight">Panorama do negócio</h1>
-            <p className="text-[13px] text-white/50 mt-1 max-w-sm leading-relaxed">
-              Análise gerencial para decidir preço, equipe, agenda, estoque e previsão de receita.
+            <h1 className="text-[28px] font-bold leading-tight text-white">
+              Panorama do Negócio
+            </h1>
+            <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-white/55">
+              Análise gerencial por período, equipe, clientes, agenda e inteligência.
             </p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 transition-colors text-white text-[13px] font-semibold shrink-0">
-            <i className="ti ti-download" aria-hidden="true" />
-            Exportar PDF premium
-          </button>
-        </div>
-
-        {/* Abas de período */}
-        <div className="flex flex-wrap gap-2">
-          {(Object.keys(PERIODO_LABELS) as Periodo[]).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriodo(p)}
-              className={[
-                'px-4 py-1.5 rounded-full text-[13px] font-medium border transition-colors cursor-pointer',
-                periodo === p
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-transparent text-white/60 border-white/15 hover:border-white/30',
-              ].join(' ')}
-            >
-              {PERIODO_LABELS[p]}
-            </button>
-          ))}
-        </div>
-
-        {/* Badges */}
-        <div className="flex flex-wrap gap-2">
-          <span className="text-[12px] px-3 py-1 rounded-full font-medium border border-blue-500/40 text-blue-300 bg-blue-500/10">
-            01/06/2026 até 23/06/2026
-          </span>
-          <span className="text-[12px] px-3 py-1 rounded-full font-medium border border-emerald-500/40 text-emerald-300 bg-emerald-500/10">
-            BW Pro e superior
-          </span>
-          <span className="text-[12px] px-3 py-1 rounded-full font-medium border border-white/10 text-white/40 bg-white/5">
-            PDF executivo
-          </span>
-        </div>
-
-        {/* Hero — Score + KPIs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-          {/* Score */}
-          <div className="bg-[#161b27] border border-white/8 rounded-xl p-5 flex flex-col justify-between min-h-[200px]">
-            <p className="text-[11px] font-semibold tracking-widest text-white/40 uppercase">
-              Score da operação
-            </p>
-            <div className="mt-3">
-              <span className="text-[56px] font-bold text-white leading-none">77</span>
-              <span className="text-[22px] text-white/40"> /100</span>
-            </div>
-            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden my-4">
-              <div className="h-full rounded-full bg-blue-500" style={{ width: '77%' }} />
-            </div>
-            <div>
-              <p className="text-[15px] font-bold text-white">Operação saudável</p>
-              <p className="text-[12px] text-white/40 mt-1 leading-relaxed">
-                Baseado em receita, margem, ocupação, cancelamentos e ritmo do período.
-              </p>
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <Button disabled={!data} leftIcon={<Download size={16} />} onClick={exportPdf}>
+              Exportar PDF premium
+            </Button>
+            <Button disabled={!data} leftIcon={<FileSpreadsheet size={16} />} onClick={exportCsv}>
+              Exportar Excel
+            </Button>
           </div>
+        </div>
 
-          {/* KPI grid */}
-          <div className="grid grid-cols-2 gap-3">
-            {KPI_ITEMS.map((k) => (
-              <div
-                key={k.label}
-                className="bg-[#161b27] border border-white/8 rounded-xl p-4 flex flex-col"
+        <section className="rounded-2xl border border-white/10 bg-[#161b27] p-4">
+          <div className="flex flex-wrap gap-2">
+            {(Object.keys(periodoLabels) as Periodo[]).map((item) => (
+              <button
+                className={[
+                  'min-h-10 rounded-full border px-4 text-[13px] font-bold transition-colors',
+                  periodo === item
+                    ? 'border-cyan-300 bg-cyan-500 text-slate-950'
+                    : 'border-white/15 bg-transparent text-white/65 hover:border-white/30',
+                ].join(' ')}
+                key={item}
+                onClick={() => setQuickPeriodo(item)}
+                type="button"
               >
-                <p className="text-[12px] text-white/50">{k.label}</p>
-                <p className="text-[24px] font-bold text-white mt-1 leading-tight">{k.value}</p>
-                <TrendBadge trend={k.trend} sub={k.sub} />
-              </div>
+                {periodoLabels[item]}
+              </button>
             ))}
           </div>
-        </div>
 
-        {/* Alerta previsão */}
-        <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-3">
-          <i className="ti ti-alert-triangle text-amber-400 text-[18px] shrink-0" aria-hidden="true" />
-          <p className="text-[13px] text-amber-200">
-            <span className="font-semibold">Previsão de fechamento:</span> R$ {PREVISAO.toLocaleString('pt-BR')} até 30/06 se o ritmo atual se mantiver — R$ {(PREVISAO - META_TOTAL).toLocaleString('pt-BR')} acima da meta mensal.
-          </p>
-        </div>
-
-        {/* Fluxo de receita + Insights */}
-        <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr] gap-3">
-
-          {/* Gráfico de barras */}
-          <div className="bg-[#161b27] border border-white/8 rounded-xl p-5">
-            <div className="flex justify-between items-baseline mb-4">
-              <p className="text-[14px] font-semibold text-white">Fluxo de receita</p>
-              <p className="text-[12px] text-white/40">junho 2026</p>
-            </div>
-            <div
-              className="flex items-end gap-2"
-              style={{ height: 110 }}
-              role="img"
-              aria-label="Gráfico de faturamento diário de junho 2026"
-            >
-              {DAILY_BARS.map((b) => (
-                <div key={b.label} className="flex-1 flex flex-col items-center gap-1.5">
-                  <div className="w-full flex justify-center items-end" style={{ height: 82 }}>
-                    <div
-                      className="w-full rounded-t-[3px]"
-                      style={{
-                        height: `${b.pct}%`,
-                        background: b.pct === 100 ? '#3b82f6' : 'rgba(59,130,246,0.45)',
-                      }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-white/35 whitespace-nowrap">{b.label}</span>
-                </div>
-              ))}
-            </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
+            <label className="space-y-2 text-sm font-semibold text-white/75">
+              Data inicial
+              <input
+                className="h-11 w-full rounded-xl border border-white/10 bg-[#101827] px-4 text-base text-white outline-none focus:border-cyan-300 md:text-sm"
+                onChange={(event) => setPendingInicio(event.target.value)}
+                type="date"
+                value={pendingInicio}
+              />
+            </label>
+            <label className="space-y-2 text-sm font-semibold text-white/75">
+              Data final
+              <input
+                className="h-11 w-full rounded-xl border border-white/10 bg-[#101827] px-4 text-base text-white outline-none focus:border-cyan-300 md:text-sm"
+                onChange={(event) => setPendingFim(event.target.value)}
+                type="date"
+                value={pendingFim}
+              />
+            </label>
+            <Button onClick={applyFilters} variant="secondary">
+              Aplicar período
+            </Button>
           </div>
 
-          {/* Insights */}
-          <div className="bg-[#161b27] border border-white/8 rounded-xl p-5">
-            <p className="text-[14px] font-semibold text-white mb-4">Insights automáticos</p>
-            <div className="flex flex-col gap-3">
-              {INSIGHTS.map((ins) => (
-                <div key={ins.text} className="flex items-start gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${INSIGHT_ICON_STYLE[ins.type]}`}>
-                    <i className={`ti ${ins.icon} text-[15px]`} aria-hidden="true" />
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-semibold text-white leading-snug">{ins.text}</p>
-                    <p className="text-[11px] text-white/40 mt-0.5">{ins.detail}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-300">
+              {formatDate(appliedFilters.dataInicio)} até {formatDate(appliedFilters.dataFim)}
+            </span>
+            <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-300">
+              BW Pro e superior
+            </span>
+            <span className="rounded-full bg-white/8 px-3 py-1 text-xs font-bold text-white/60">
+              PDF executivo
+            </span>
           </div>
-        </div>
+        </section>
 
-        {/* Barbeiros + Horários de pico */}
-        <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr] gap-3">
+        {reportQuery.error && (
+          <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-200">
+            Não foi possível carregar o relatório executivo: {reportQuery.error.message}
+          </div>
+        )}
 
-          {/* Barbeiros */}
-          <div className="bg-[#161b27] border border-white/8 rounded-xl p-5">
-            <div className="flex justify-between items-baseline mb-4">
-              <p className="text-[14px] font-semibold text-white">Desempenho por barbeiro</p>
-              <p className="text-[12px] text-white/40">faturamento e atendimentos</p>
-            </div>
-            <div className="flex flex-col divide-y divide-white/8">
-              {BARBERS.map((b) => (
-                <div key={b.name} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0"
-                    style={{
-                      background: b.top ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.07)',
-                      color: b.top ? '#60a5fa' : 'rgba(255,255,255,0.4)',
-                    }}
+        {reportQuery.isLoading ? (
+          <div className="rounded-xl border border-white/10 bg-[#161b27] p-5 text-sm text-white/60">
+            Carregando relatório executivo...
+          </div>
+        ) : data ? (
+          <>
+            <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="flex min-h-[180px] flex-col justify-between rounded-xl border border-white/8 bg-[#161b27] p-5">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
+                  Score da operação
+                </p>
+                <div>
+                  <span className="text-[48px] font-bold leading-none text-white">
+                    {data.score.value}
+                  </span>
+                  <span className="text-[20px] text-white/40"> /100</span>
+                </div>
+                <div>
+                  <p className="text-[15px] font-bold text-white">{data.score.label}</p>
+                  <p className="mt-1 text-[12px] leading-relaxed text-white/45">
+                    Baseado em receita, margem, ocupação, cancelamentos e ritmo do período.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  ['Receita período', currencyFormatter.format(entradas)],
+                  ['Lucro líquido', currencyFormatter.format(data.summary.lucroLiquido)],
+                  ['Margem', formatPercent(data.margemPercentual)],
+                  ['Ticket médio', currencyFormatter.format(data.topBarbers[0]?.ticketMedio ?? 0)],
+                  ['Clientes ativos', data.clientes.ativos],
+                  ['Atendimentos', data.agenda.status.concluido],
+                ].map(([label, value]) => (
+                  <div className="rounded-xl border border-white/8 bg-[#161b27] p-4" key={label}>
+                    <p className="text-[12px] text-white/50">{label}</p>
+                    <p className="mt-1 text-[22px] font-bold leading-tight text-white">{value}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-xl border border-white/10 bg-[#161b27] p-4">
+              <div className="flex flex-wrap gap-2">
+                {(Object.keys(tabLabels) as Tab[]).map((item) => (
+                  <button
+                    className={[
+                      'rounded-full border px-4 py-2 text-[13px] font-bold transition-colors',
+                      activeTab === item
+                        ? 'border-cyan-300 bg-cyan-500 text-slate-950'
+                        : 'border-white/15 bg-transparent text-white/65 hover:border-white/30',
+                    ].join(' ')}
+                    key={item}
+                    onClick={() => setActiveTab(item)}
+                    type="button"
                   >
-                    {b.initials}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-white">{b.name}</p>
-                    <p className="text-[11px] text-white/40 mt-0.5">
-                      {b.atendimentos} atendimentos · comissão R$ {b.comissao}
-                    </p>
-                    <div className="h-1 bg-white/10 rounded-full overflow-hidden mt-2">
-                      <div
-                        className="h-full rounded-full bg-blue-500"
-                        style={{
-                          width: `${(b.faturamento / b.faturamentoMax) * 100}%`,
-                          opacity: b.top ? 1 : 0.5,
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <p className="text-[14px] font-bold text-white shrink-0">R$ {b.faturamento}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+                    {tabLabels[item]}
+                  </button>
+                ))}
+              </div>
 
-          {/* Horários de pico */}
-          <div className="bg-[#161b27] border border-white/8 rounded-xl p-5">
-            <div className="flex justify-between items-baseline mb-4">
-              <p className="text-[14px] font-semibold text-white">Horários de pico</p>
-              <p className="text-[12px] text-white/40">por hora</p>
-            </div>
-            <div className="flex flex-col gap-2.5">
-              {HOUR_PEAKS.map((h) => (
-                <div key={h.hour} className="flex items-center gap-3">
-                  <span className="text-[12px] text-white/40 w-9 shrink-0">{h.hour}</span>
-                  <div className="flex-1 h-5 bg-white/8 rounded overflow-hidden">
-                    <div
-                      className="h-full rounded"
-                      style={{
-                        width: `${(h.count / h.max) * 100}%`,
-                        background: h.count === h.max ? '#3b82f6' : 'rgba(59,130,246,0.45)',
-                      }}
-                    />
-                  </div>
-                  <span className="text-[12px] text-white/40 w-5 text-right shrink-0">{h.count}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 pt-3 border-t border-white/8 text-[12px] text-white/40 flex items-center gap-1.5">
-              <i className="ti ti-bulb text-amber-400 text-[14px]" aria-hidden="true" />
-              Pico às 14h — considere reforço de agenda.
-            </div>
-          </div>
-        </div>
-
-        {/* Meta + Previsão + Dias sem receita */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-
-          <div className="bg-[#161b27] border border-white/8 rounded-xl p-4">
-            <p className="text-[12px] text-white/50 mb-1">Meta do mês</p>
-            <p className="text-[22px] font-bold text-white">
-              R$ {META_ATUAL.toLocaleString('pt-BR')}
-              <span className="text-[14px] font-normal text-white/35 ml-1">
-                / R$ {META_TOTAL.toLocaleString('pt-BR')}
-              </span>
-            </p>
-            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden my-2.5">
-              <div className="h-full rounded-full bg-blue-500" style={{ width: `${metaPct}%` }} />
-            </div>
-            <p className="text-[12px] text-white/40">
-              {metaPct}% atingido · faltam R$ {(META_TOTAL - META_ATUAL).toLocaleString('pt-BR')}
-            </p>
-          </div>
-
-          <div className="bg-[#161b27] border border-white/8 rounded-xl p-4">
-            <p className="text-[12px] text-white/50 mb-1">Previsão de fechamento</p>
-            <p className="text-[22px] font-bold text-emerald-400">
-              R$ {PREVISAO.toLocaleString('pt-BR')}
-            </p>
-            <p className="text-[12px] text-white/40 mt-2">
-              +R$ {(PREVISAO - META_TOTAL).toLocaleString('pt-BR')} acima da meta se ritmo mantido
-            </p>
-          </div>
-
-          <div className="bg-[#161b27] border border-white/8 rounded-xl p-4">
-            <p className="text-[12px] text-white/50 mb-1">Dias sem receita</p>
-            <p className="text-[22px] font-bold text-white">{DIAS_SEM_RECEITA}</p>
-            <p className="text-[12px] text-white/40 mt-2">dias sem atendimento em junho</p>
-          </div>
-
-        </div>
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full min-w-[640px] text-left text-sm">
+                  <thead className="bg-white/5 text-xs uppercase tracking-[0.08em] text-white/45">
+                    <tr>
+                      {buildExecutiveRows(data, activeTab)[0].map((cell) => (
+                        <th className="px-4 py-3" key={cell}>
+                          {cell}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/8">
+                    {buildExecutiveRows(data, activeTab).slice(1).map((row, index) => (
+                      <tr key={`${activeTab}-${index}`}>
+                        {row.map((cell, cellIndex) => (
+                          <td className="px-4 py-3 text-white/75" key={`${index}-${cellIndex}`}>
+                            {typeof cell === 'number' && cellIndex > 1
+                              ? currencyFormatter.format(cell)
+                              : cell}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </>
+        ) : null}
       </div>
     </div>
   )
