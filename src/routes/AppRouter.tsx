@@ -137,11 +137,7 @@ const RelatoriosPage = lazy(lazyWithRetry(() =>
   import('../pages/RelatoriosPage'),
 ))
 const RelatoriosExecutivosPage = lazy(lazyWithRetry(() =>
-  import('../pages/RelatoriosExecutivosPage').then(
-    ({ RelatoriosExecutivosPage }) => ({
-      default: RelatoriosExecutivosPage,
-    }),
-  ),
+  import('../pages/RelatoriosExecutivosPage'),
 ))
 const ServicosPage = lazy(lazyWithRetry(() =>
   import('../pages/ServicosPage').then(({ ServicosPage }) => ({
