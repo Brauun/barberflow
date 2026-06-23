@@ -198,8 +198,8 @@ export function ClientesPage() {
   }
 
   return (
-    <div className="w-full max-w-full min-w-0 space-y-5 overflow-x-hidden md:space-y-8">
-      <section className="flex min-w-0 flex-wrap items-end justify-between gap-3 md:gap-5">
+    <div className="w-full max-w-full min-w-0 space-y-4 overflow-x-hidden md:space-y-8">
+      <section className="flex min-w-0 flex-wrap items-end justify-between gap-2.5 md:gap-5">
         <div className="min-w-0">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">
             Clientes
@@ -213,19 +213,19 @@ export function ClientesPage() {
           </p>
         </div>
 
-        <Button className="max-w-full" leftIcon={<Plus size={18} />} onClick={openCreateModal}>
+        <Button className="h-10 max-w-full text-sm md:h-auto md:text-base" leftIcon={<Plus size={18} />} onClick={openCreateModal}>
           Novo cliente
         </Button>
       </section>
 
       <Card>
-        <CardHeader>
-          <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <CardHeader className="p-3 md:p-6 lg:p-7">
+          <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
               <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
                 {listTitle}
               </h3>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="mt-0.5 text-xs text-zinc-500 md:mt-1 md:text-sm dark:text-zinc-400">
                 {listDescription}
               </p>
             </div>
@@ -248,7 +248,7 @@ export function ClientesPage() {
           )}
 
           {isLoadingClientes ? (
-            <div className="space-y-3 p-3 md:p-6">
+            <div className="space-y-2 p-3 md:space-y-3 md:p-6">
               <Skeleton className="h-12" />
               <Skeleton className="h-12" />
               <Skeleton className="h-12" />
@@ -260,14 +260,14 @@ export function ClientesPage() {
               title="Nenhum cliente encontrado"
             />
           ) : (
-            <div className="w-full max-w-full min-w-0 space-y-3 p-3 sm:p-5">
+            <div className="w-full max-w-full min-w-0 space-y-2.5 p-3 sm:space-y-3 sm:p-5">
               {clientes.map((cliente) => (
                 <RecordCard key={cliente.id}>
-                  <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                  <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex min-w-0 items-start gap-2.5 sm:gap-4">
                       <RecordAvatar>{getInitials(cliente.nome)}</RecordAvatar>
                       <div className="min-w-0">
-                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
                           <h4 className="min-w-0 truncate text-sm font-black text-slate-950 md:text-base">
                             {cliente.nome}
                           </h4>
@@ -330,7 +330,7 @@ export function ClientesPage() {
                         }
                         value={cliente.visitas_count}
                       />
-                      <div className="col-span-2 flex min-w-0 flex-wrap gap-2 sm:col-span-1 sm:justify-end">
+                      <div className="col-span-2 flex min-w-0 flex-wrap gap-1.5 sm:col-span-1 sm:justify-end sm:gap-2">
                         {!cliente.is_online_only && (
                           <>
                             <Button

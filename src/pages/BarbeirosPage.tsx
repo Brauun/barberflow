@@ -658,9 +658,9 @@ export function BarbeirosPage() {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <section className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+    <div className="space-y-4 overflow-x-hidden md:space-y-6">
+      <section className="flex min-w-0 flex-wrap items-end justify-between gap-2.5 md:gap-4">
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase text-brand-600 dark:text-brand-400 md:text-sm">
             Barbeiros
           </p>
@@ -673,9 +673,10 @@ export function BarbeirosPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex min-w-0 flex-wrap gap-2 md:gap-3">
           {canInviteEmployees && (
             <Button
+              className="h-10 max-w-full text-sm md:h-auto md:text-base"
               leftIcon={<Plus size={18} />}
               onClick={openInviteModal}
             >
@@ -687,7 +688,7 @@ export function BarbeirosPage() {
 
       {inviteError && !isInviteFormOpen && (
         <Card>
-          <CardContent>
+          <CardContent className="p-3 md:p-6 lg:p-7">
             <p className="text-sm font-semibold text-red-600">{inviteError}</p>
           </CardContent>
         </Card>
@@ -695,7 +696,7 @@ export function BarbeirosPage() {
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
         <Card>
-          <CardContent>
+          <CardContent className="p-3 md:p-6 lg:p-7">
             <p className="text-xs text-zinc-500 dark:text-zinc-400 md:text-sm">
               Quantidade de atendimentos
             </p>
@@ -705,7 +706,7 @@ export function BarbeirosPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardContent>
+          <CardContent className="p-3 md:p-6 lg:p-7">
             <p className="text-xs text-zinc-500 dark:text-zinc-400 md:text-sm">
               Valor faturado
             </p>
@@ -715,7 +716,7 @@ export function BarbeirosPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardContent>
+          <CardContent className="p-3 md:p-6 lg:p-7">
             <p className="text-xs text-zinc-500 dark:text-zinc-400 md:text-sm">
               Comissão acumulada
             </p>
@@ -727,19 +728,19 @@ export function BarbeirosPage() {
       </section>
 
       <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+        <CardHeader className="p-3 md:p-6 lg:p-7">
+          <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
               <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
                 Funcionários ativos
               </h3>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="mt-0.5 text-xs text-zinc-500 md:mt-1 md:text-sm dark:text-zinc-400">
                 {barbeiros.length} funcionário{barbeiros.length === 1 ? '' : 's'}{' '}
                 vinculado{barbeiros.length === 1 ? '' : 's'}.
               </p>
             </div>
 
-            <div className="relative w-full lg:max-w-sm">
+            <div className="relative w-full min-w-0 lg:max-w-sm">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
                 size={16}
@@ -910,20 +911,20 @@ export function BarbeirosPage() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="p-3 md:p-6 lg:p-7">
           <div>
             <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
               Funcionários e convites
             </h3>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="mt-0.5 text-xs leading-5 text-zinc-500 md:mt-1 md:text-sm dark:text-zinc-400">
               Convide funcionários para criarem a própria senha e preserve o
               histórico ao inativar.
             </p>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 p-3 md:space-y-6 md:p-6 lg:p-7">
           <div>
-            <p className="mb-3 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+            <p className="mb-2 text-sm font-semibold text-zinc-950 md:mb-3 dark:text-zinc-50">
               Vínculos ativos
             </p>
             {employeeLinksQuery.isLoading ? (
@@ -931,17 +932,17 @@ export function BarbeirosPage() {
                 <Loader2 className="h-5 w-5 animate-spin text-brand-500 md:h-6 md:w-6" />
               </div>
             ) : employeeLinksQuery.data?.length ? (
-              <div className="space-y-3">
+              <div className="space-y-2.5 md:space-y-3">
                 {employeeLinksQuery.data.map((link) => (
                   <div
-                    className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex min-w-0 flex-col gap-2.5 rounded-2xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between sm:rounded-[1.35rem] sm:p-4 dark:border-slate-800 dark:bg-slate-900"
                     key={link.id}
                   >
-                    <div>
-                      <p className="font-black text-slate-950">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-slate-950 md:text-base dark:text-white">
                         {link.employee?.nome ?? 'Funcionário'}
                       </p>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-0.5 break-words text-xs text-slate-500 md:mt-1 md:text-sm dark:text-slate-400">
                         {link.employee?.email ?? '-'} · {link.role}
                       </p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
@@ -964,7 +965,7 @@ export function BarbeirosPage() {
                         </Badge>
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
                       <Badge variant={link.status === 'ativo' ? 'success' : 'default'}>
                         {link.status}
                       </Badge>
@@ -990,11 +991,11 @@ export function BarbeirosPage() {
           </div>
 
           <div>
-            <p className="mb-3 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+            <p className="mb-2 text-sm font-semibold text-zinc-950 md:mb-3 dark:text-zinc-50">
               Convites
             </p>
             {employeeInvitationsQuery.data?.length ? (
-              <div className="space-y-3">
+              <div className="space-y-2.5 md:space-y-3">
                 {employeeInvitationsQuery.data.map((invitation) => {
                   const status = getInvitationStatus(invitation)
                   const inviteLink = getInviteLink(invitation)
@@ -1004,18 +1005,18 @@ export function BarbeirosPage() {
 
                   return (
                   <div
-                    className="flex flex-col gap-4 rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900"
+                    className="flex min-w-0 flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3 sm:rounded-[1.35rem] sm:p-4 dark:border-slate-800 dark:bg-slate-900"
                     key={invitation.id}
                   >
-                    <div>
-                      <p className="font-black text-slate-950">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-slate-950 md:text-base dark:text-white">
                         {invitation.nome}
                       </p>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-0.5 break-words text-xs text-slate-500 md:mt-1 md:text-sm dark:text-slate-400">
                         {invitation.email} · {invitation.role}
                       </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
                       <Badge
                         variant={
                           status === 'aceito'
@@ -1041,7 +1042,7 @@ export function BarbeirosPage() {
                     </div>
 
                     {canUseLink && (
-                      <div className="rounded-2xl border border-brand-100 bg-white p-3 text-sm text-slate-600 dark:border-brand-400/20 dark:bg-slate-950 dark:text-slate-300">
+                      <div className="rounded-2xl border border-brand-100 bg-white p-2.5 text-xs text-slate-600 md:p-3 md:text-sm dark:border-brand-400/20 dark:bg-slate-950 dark:text-slate-300">
                         <p className="flex items-center gap-2 font-semibold text-slate-950 dark:text-white">
                           <MessageCircle size={16} />
                           Mensagem para WhatsApp
@@ -1054,7 +1055,7 @@ export function BarbeirosPage() {
                     )}
 
                     {canInviteEmployees && (
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-1.5 md:gap-2">
                         {canUseLink && (
                           <>
                             <Button
@@ -1106,19 +1107,20 @@ export function BarbeirosPage() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+        <CardHeader className="p-3 md:p-6 lg:p-7">
+          <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
               <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
                 Indisponibilidades
               </h3>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="mt-0.5 text-xs leading-5 text-zinc-500 md:mt-1 md:text-sm dark:text-zinc-400">
                 Bloqueie dias inteiros ou intervalos especificos dos barbeiros.
               </p>
             </div>
 
             {canManageUnavailability && (
               <Button
+                className="h-10 max-w-full text-sm md:h-auto md:text-base"
                 leftIcon={<CalendarOff size={18} />}
                 onClick={openCreateUnavailabilityModal}
                 variant="secondary"
