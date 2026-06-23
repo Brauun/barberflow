@@ -13,6 +13,7 @@ export function AppLayout() {
     isLoading,
     userType,
     canAccessCurrentAppRoute,
+    defaultAppPath,
 
     // Subscription
     isSubscriptionExpired,
@@ -63,7 +64,7 @@ export function AppLayout() {
   }
 
   if (!isLoading && !canAccessCurrentAppRoute) {
-    return <Navigate replace to="/app/dashboard" />
+    return <Navigate replace to={defaultAppPath} />
   }
 
   if (

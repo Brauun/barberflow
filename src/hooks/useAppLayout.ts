@@ -215,6 +215,14 @@ export function useAppLayout() {
     [allVisibleNavigationItems, visibleSettingsItems],
   )
 
+  const defaultAppPath = useMemo(
+    () =>
+      allVisibleNavigationItems[0]?.path ??
+      visibleSettingsItems[0]?.path ??
+      '/app/perfil',
+    [allVisibleNavigationItems, visibleSettingsItems],
+  )
+
   const canAccessCurrentAppRoute = useMemo(() => {
     if (!location.pathname.startsWith('/app')) return true
     if (location.pathname === '/app' || location.pathname.startsWith('/app/perfil')) return true
@@ -363,6 +371,7 @@ export function useAppLayout() {
     profile,
     userType,
     canAccessCurrentAppRoute,
+    defaultAppPath,
 
     // Subscription
     isSubscriptionExpired,
