@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import type { Database } from '../types/database'
 
 type FinanceMovement = {
   categoria: string
@@ -28,6 +29,26 @@ type CompletedAppointmentValue = {
   valor: number | null
   valor_final: number | null
 }
+
+type BarberDashboardAtendimento = {
+  id: string
+  data_hora_inicio: string
+  valor: number
+  valor_final: number | null
+  status: string
+  clientes: { nome: string } | null
+  servicos: { nome: string } | null
+}
+
+type BarberDashboardCommission = {
+  atendimento_id: string
+  valor_comissao: number
+}
+
+type DashboardBarber = Pick<
+  Database['public']['Tables']['barbeiros']['Row'],
+  'id' | 'nome' | 'percentual_comissao'
+>
 
 type DueBill = {
   id: string
@@ -71,6 +92,24 @@ export type DashboardData = {
   yesterdayRevenue: number
   yesterdayTicketRevenue: number
   dueBills: DueBill[]
+}
+
+export type BarberDashboardTopClient = {
+  nome: string
+  atendimentos: number
+  faturamento: number
+}
+
+export type BarberDashboardData = {
+  barbeiro: DashboardBarber
+  totalAtendimentos: number
+  atendimentosConcluidos: number
+  faturamentoBruto: number
+  comissao: number
+  valorLiquido: number
+  ticketMedio: number
+  latestAppointments: BarberDashboardAtendimento[]
+  topClients: BarberDashboardTopClient[]
 }
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
@@ -154,6 +193,14 @@ function sumCompletedAppointmentRevenue(appointments: CompletedAppointmentValue[
       total + Number(appointment.valor_final ?? appointment.valor ?? 0),
     0,
   )
+}
+
+function appointmentFinalValue(appointment: Pick<CompletedAppointmentValue, 'valor' | 'valor_final'>) {
+  return Number(appointment.valor_final ?? appointment.valor ?? 0)
+}
+
+function formatDateInput(date: Date) {
+  return toDateInputValue(date)
 }
 
 function getMonthlyFinance(movements: FinanceMovement[]) {
@@ -443,5 +490,129 @@ export async function getDashboardData(empresaId: string): Promise<DashboardData
       },
     ],
     monthlyFinance: getMonthlyFinance(movements),
+  }
+}
+
+export function getDefaultBarberDashboardPeriod() {
+  const end = startOfDay(new Date())
+  const start = addDays(end, -29)
+
+  return {
+    endDate: formatDateInput(end),
+    startDate: formatDateInput(start),
+  }
+}
+
+export async function getBarberDashboardData(input: {
+  empresaId: string
+  endDate: string
+  usuarioId: string
+  startDate: string
+}): Promise<BarberDashboardData> {
+  const start = startOfDay(new Date(`${input.startDate}T00:00:00`))
+  const end = addDays(startOfDay(new Date(`${input.endDate}T00:00:00`)), 1)
+
+  const { data: barber, error: barberError } = await supabase
+    .from('barbeiros')
+    .select('id,nome,percentual_comissao')
+    .eq('empresa_id', input.empresaId)
+    .eq('usuario_id', input.usuarioId)
+    .eq('status', 'ativo')
+    .maybeSingle()
+
+  if (barberError) {
+    throw new Error(barberError.message)
+  }
+
+  if (!barber) {
+    throw new Error('Seu usuário ainda não está vinculado a um barbeiro ativo.')
+  }
+
+  const [appointmentsResponse, commissionsResponse] = await Promise.all([
+    supabase
+      .from('atendimentos')
+      .select('id,data_hora_inicio,valor,valor_final,status,clientes(nome),servicos(nome)')
+      .eq('empresa_id', input.empresaId)
+      .eq('barbeiro_id', barber.id)
+      .gte('data_hora_inicio', start.toISOString())
+      .lt('data_hora_inicio', end.toISOString())
+      .order('data_hora_inicio', { ascending: false })
+      .limit(80),
+    supabase
+      .from('comissoes')
+      .select('atendimento_id,valor_comissao')
+      .eq('empresa_id', input.empresaId)
+      .eq('barbeiro_id', barber.id)
+      .neq('status', 'cancelada'),
+  ])
+
+  const failedResponse = [appointmentsResponse, commissionsResponse].find(
+    (response) => response.error,
+  )
+
+  if (failedResponse?.error) {
+    throw new Error(failedResponse.error.message)
+  }
+
+  const appointments =
+    (appointmentsResponse.data ?? []) as unknown as BarberDashboardAtendimento[]
+  const commissions = (commissionsResponse.data ?? []) as BarberDashboardCommission[]
+  const validAppointments = appointments.filter((appointment) =>
+    ['concluido', 'concluido_automatico'].includes(appointment.status),
+  )
+  const commissionsByAppointment = new Map(
+    commissions.map((commission) => [
+      commission.atendimento_id,
+      Number(commission.valor_comissao),
+    ]),
+  )
+  const faturamentoBruto = validAppointments.reduce(
+    (total, appointment) => total + appointmentFinalValue(appointment),
+    0,
+  )
+  const comissao = validAppointments.reduce((total, appointment) => {
+    const storedCommission = commissionsByAppointment.get(appointment.id)
+
+    if (typeof storedCommission === 'number') {
+      return total + storedCommission
+    }
+
+    return (
+      total +
+      appointmentFinalValue(appointment) *
+        (Number(barber.percentual_comissao ?? 0) / 100)
+    )
+  }, 0)
+  const clientsMap = new Map<string, BarberDashboardTopClient>()
+
+  validAppointments.forEach((appointment) => {
+    const nome = appointment.clientes?.nome?.trim() || 'Cliente não identificado'
+    const current = clientsMap.get(nome) ?? {
+      atendimentos: 0,
+      faturamento: 0,
+      nome,
+    }
+
+    current.atendimentos += 1
+    current.faturamento += appointmentFinalValue(appointment)
+    clientsMap.set(nome, current)
+  })
+
+  return {
+    barbeiro: barber,
+    atendimentosConcluidos: validAppointments.length,
+    comissao,
+    faturamentoBruto,
+    latestAppointments: appointments.slice(0, 8),
+    ticketMedio:
+      validAppointments.length > 0 ? faturamentoBruto / validAppointments.length : 0,
+    topClients: Array.from(clientsMap.values())
+      .sort(
+        (a, b) =>
+          b.atendimentos - a.atendimentos || b.faturamento - a.faturamento,
+      )
+      .slice(0, 5),
+    totalAtendimentos: appointments.length,
+    valorLiquido: faturamentoBruto - comissao,
   }
 }

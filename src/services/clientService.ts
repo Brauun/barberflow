@@ -7,6 +7,9 @@ export type Barbershop = Database['public']['Tables']['barbershops']['Row']
 export type ClientProfile = Database['public']['Tables']['profiles']['Row']
 export type ClientFavoriteBarbershop =
   Database['public']['Tables']['client_favorite_barbershops']['Row']
+type BarbershopWithEmpresaLogo = Barbershop & {
+  empresa?: { logo_url: string | null; nome: string | null } | null
+}
 export type ClientAppointment = Database['public']['Tables']['appointments']['Row'] & {
   barbershop?: { nome: string; endereco: string | null } | null
   barbeiro?: { nome: string } | null
@@ -42,6 +45,20 @@ function appointmentDateLabel(value: string) {
   return new Date(value).toLocaleDateString('pt-BR')
 }
 
+function normalizeBarbershopLogo(barbershop: BarbershopWithEmpresaLogo | null) {
+  if (!barbershop) {
+    return null
+  }
+
+  const { empresa, ...rest } = barbershop
+
+  return {
+    ...rest,
+    logo_url: rest.logo_url || empresa?.logo_url || null,
+    nome: rest.nome || empresa?.nome || rest.nome,
+  } as Barbershop
+}
+
 async function tryCreateInternalNotification(
   input: Parameters<typeof createInternalNotification>[0],
 ) {
@@ -64,7 +81,7 @@ async function tryCreateInternalNotification(
 export async function listBarbershops(search: string) {
   let query = supabase
     .from('barbershops')
-    .select('*')
+    .select('*,empresa:empresas(logo_url,nome)')
     .eq('status', 'ativa')
     .order('rating', { ascending: false })
 
@@ -82,7 +99,9 @@ export async function listBarbershops(search: string) {
     throw new Error(error.message)
   }
 
-  return (data ?? []) as Barbershop[]
+  return ((data ?? []) as unknown as BarbershopWithEmpresaLogo[])
+    .map(normalizeBarbershopLogo)
+    .filter((barbershop): barbershop is Barbershop => Boolean(barbershop))
 }
 
 export function formatBarbershopAddress(barbershop: Partial<Barbershop> | null) {
@@ -136,7 +155,7 @@ export async function listFavoriteBarbershopIds(clientProfileId: string) {
 export async function listFavoriteBarbershops(clientProfileId: string) {
   const { data, error } = await supabase
     .from('client_favorite_barbershops')
-    .select('*,barbershop:barbershops(*)')
+    .select('*,barbershop:barbershops(*,empresa:empresas(logo_url,nome))')
     .eq('client_id', clientProfileId)
     .order('created_at', { ascending: false })
 
@@ -147,9 +166,9 @@ export async function listFavoriteBarbershops(clientProfileId: string) {
   const rows = Array.isArray(data) ? data : []
 
   return (rows as unknown as Array<
-    ClientFavoriteBarbershop & { barbershop: Barbershop | null }
+    ClientFavoriteBarbershop & { barbershop: BarbershopWithEmpresaLogo | null }
   >)
-    .map((favorite) => favorite.barbershop)
+    .map((favorite) => normalizeBarbershopLogo(favorite.barbershop))
     .filter((barbershop): barbershop is Barbershop => Boolean(barbershop))
 }
 
@@ -249,7 +268,7 @@ export async function getPrimaryBarbershop(profile: ClientProfile) {
 
   const { data, error } = await supabase
     .from('barbershops')
-    .select('*')
+    .select('*,empresa:empresas(logo_url,nome)')
     .eq('id', profile.primary_barbershop_id)
     .maybeSingle()
 
@@ -257,7 +276,7 @@ export async function getPrimaryBarbershop(profile: ClientProfile) {
     throw new Error(error.message)
   }
 
-  return data as Barbershop | null
+  return normalizeBarbershopLogo(data as unknown as BarbershopWithEmpresaLogo | null)
 }
 
 export async function listClientAppointments(profileId: string) {

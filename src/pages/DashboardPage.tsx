@@ -10,8 +10,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import {
   Badge,
+  Button,
   Card,
   CardContent,
+  Input,
   Skeleton,
   Table,
   TableBody,
@@ -22,7 +24,9 @@ import {
 } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import {
+  getBarberDashboardData,
   getDashboardData,
+  getDefaultBarberDashboardPeriod,
   type MonthlyFinancePoint,
 } from '../services/dashboardService'
 import { cn } from '../utils/cn'
@@ -80,6 +84,23 @@ function getStatusVariant(status: string) {
   if (['pendente', 'agendado', 'vencida'].includes(status)) return 'warning'
   if (['cancelado', 'faltou'].includes(status)) return 'danger'
   return 'default'
+}
+
+function formatStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    agendado: 'Agendado',
+    aguardando_finalizacao: 'Aguardando finalização',
+    cancelado: 'Cancelado',
+    concluido: 'Concluído',
+    concluido_automatico: 'Concluído automático',
+    confirmado: 'Confirmado',
+    em_atendimento: 'Em atendimento',
+    faltou: 'Faltou',
+    nao_compareceu: 'Não compareceu',
+    remarcado: 'Remarcado',
+  }
+
+  return labels[status] ?? status
 }
 
 function DashboardSkeleton() {
@@ -312,12 +333,258 @@ function RevenueChart({ data }: { data: MonthlyFinancePoint[] }) {
   )
 }
 
+function BarberDashboard({
+  empresaId,
+  usuarioId,
+  userName,
+}: {
+  empresaId: string
+  usuarioId: string
+  userName: string
+}) {
+  const defaultPeriod = useMemo(() => getDefaultBarberDashboardPeriod(), [])
+  const [draftPeriod, setDraftPeriod] = useState(defaultPeriod)
+  const [appliedPeriod, setAppliedPeriod] = useState(defaultPeriod)
+
+  const { data, error, isLoading } = useQuery({
+    enabled: Boolean(empresaId && usuarioId),
+    queryFn: () =>
+      getBarberDashboardData({
+        empresaId,
+        endDate: appliedPeriod.endDate,
+        startDate: appliedPeriod.startDate,
+        usuarioId,
+      }),
+    queryKey: ['dashboard', 'barbeiro', empresaId, usuarioId, appliedPeriod],
+    staleTime: 1000 * 60 * 3,
+  })
+
+  function applyPeriod() {
+    setAppliedPeriod(draftPeriod)
+  }
+
+  if (isLoading) return <DashboardSkeleton />
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent>
+          <p className="text-sm font-medium text-red-600">
+            Não foi possível carregar o Dashboard do barbeiro.
+          </p>
+          <p className="mt-2 text-sm text-slate-600">{error.message}</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!data) return null
+
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.32em] text-brand-500">
+            Dashboard do barbeiro
+          </p>
+          <h2 className="mt-2 text-xl font-black tracking-normal text-slate-950 dark:text-white sm:text-3xl">
+            {getGreeting()}, {String(userName).split(' ')[0]}
+          </h2>
+          <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+            Acompanhe seus atendimentos, comissão e clientes no período.
+          </p>
+        </div>
+
+        <div className="grid w-full gap-2 rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:w-auto sm:grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_auto] sm:items-end">
+          <Input
+            label="Data inicial"
+            max={draftPeriod.endDate}
+            type="date"
+            value={draftPeriod.startDate}
+            onChange={(event) =>
+              setDraftPeriod((period) => ({
+                ...period,
+                startDate: event.target.value,
+              }))
+            }
+          />
+          <Input
+            label="Data final"
+            min={draftPeriod.startDate}
+            type="date"
+            value={draftPeriod.endDate}
+            onChange={(event) =>
+              setDraftPeriod((period) => ({
+                ...period,
+                endDate: event.target.value,
+              }))
+            }
+          />
+          <Button className="h-10" onClick={applyPeriod}>
+            Aplicar
+          </Button>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <MetricCard
+          delta="período filtrado"
+          deltaUp
+          icon={Scissors}
+          iconColor="green"
+          label="Atendimentos"
+          value={String(data.atendimentosConcluidos)}
+        />
+        <MetricCard
+          delta="bruto concluído"
+          deltaUp
+          icon={TrendingUp}
+          iconColor="blue"
+          label="Faturado"
+          value={formatCurrency(data.faturamentoBruto)}
+        />
+        <MetricCard
+          delta="deduzida comissão"
+          deltaUp
+          icon={CreditCard}
+          iconColor="amber"
+          label="Líquido"
+          value={formatCurrency(data.valorLiquido)}
+        />
+        <MetricCard
+          delta={`${Number(data.barbeiro.percentual_comissao)}% comissão`}
+          deltaUp
+          icon={ArrowUpRight}
+          iconColor="blue"
+          label="Comissão"
+          value={formatCurrency(data.comissao)}
+        />
+      </section>
+
+      <section className="grid gap-3 sm:gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:rounded-2xl sm:p-5">
+          <div className="mb-3 sm:mb-5">
+            <h3 className="text-sm font-semibold text-slate-950 dark:text-white sm:text-base">
+              Últimos atendimentos
+            </h3>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              Histórico do período selecionado
+            </p>
+          </div>
+
+          {data.latestAppointments.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Nenhum atendimento encontrado no período.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {data.latestAppointments.map((appointment) => (
+                <div
+                  className="grid gap-2 rounded-xl border border-slate-100 p-3 dark:border-slate-800 sm:grid-cols-[1fr_auto] sm:items-center"
+                  key={appointment.id}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-slate-950 dark:text-white">
+                      {appointment.clientes?.nome?.trim() || 'Cliente não identificado'}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {appointment.servicos?.nome ?? 'Serviço'} ·{' '}
+                      {dateTimeFormatter.format(new Date(appointment.data_hora_inicio))}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 sm:justify-end">
+                    <span className="text-sm font-black text-brand-500">
+                      {formatCurrency(Number(appointment.valor_final ?? appointment.valor ?? 0))}
+                    </span>
+                    <Badge variant={getStatusVariant(appointment.status)}>
+                      {formatStatusLabel(appointment.status)}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:rounded-2xl sm:p-5">
+          <div className="mb-3 sm:mb-5">
+            <h3 className="text-sm font-semibold text-slate-950 dark:text-white sm:text-base">
+              Clientes mais atendidos
+            </h3>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              Ranking por atendimentos concluídos
+            </p>
+          </div>
+
+          {data.topClients.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Ainda não há clientes concluídos no período.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {data.topClients.map((client, index) => (
+                <div className="flex items-center justify-between gap-3" key={client.nome}>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-xs font-black text-brand-600 dark:bg-brand-500/10 dark:text-brand-300">
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-slate-950 dark:text-white">
+                        {client.nome}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {client.atendimentos} atendimento
+                        {client.atendimentos === 1 ? '' : 's'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-sm font-black text-brand-500">
+                    {formatCurrency(client.faturamento)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+        <div className="rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Ticket médio
+          </p>
+          <p className="mt-2 text-xl font-black text-slate-950 dark:text-white sm:text-2xl">
+            {formatCurrency(data.ticketMedio)}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Registros no período
+          </p>
+          <p className="mt-2 text-xl font-black text-slate-950 dark:text-white sm:text-2xl">
+            {data.totalAtendimentos}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Barbeiro conectado
+          </p>
+          <p className="mt-2 truncate text-xl font-black text-slate-950 dark:text-white sm:text-2xl">
+            {data.barbeiro.nome}
+          </p>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 export function DashboardPage() {
   const { profile, user } = useAuth()
   const empresaId = profile?.empresa_id
+  const isBarbeiro = profile?.papel === 'barbeiro'
 
   const { data, error, isLoading } = useQuery({
-    enabled: Boolean(empresaId),
+    enabled: Boolean(empresaId) && !isBarbeiro,
     queryFn: () => getDashboardData(empresaId as string),
     queryKey: ['dashboard', empresaId],
     staleTime: 1000 * 60 * 5, // 5 minutos - evita refetch a cada foco de aba
@@ -336,6 +603,18 @@ export function DashboardPage() {
   }
 
   if (isLoading) return <DashboardSkeleton />
+
+  if (isBarbeiro && profile) {
+    const userName = profile.nome ?? user?.user_metadata.nome ?? 'Usuário'
+
+    return (
+      <BarberDashboard
+        empresaId={empresaId}
+        userName={userName}
+        usuarioId={profile.id}
+      />
+    )
+  }
 
   if (error) {
     return (

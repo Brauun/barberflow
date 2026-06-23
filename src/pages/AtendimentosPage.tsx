@@ -1750,7 +1750,9 @@ export function AtendimentosPage() {
                 value="cadastrado"
                 {...register('atendimento_tipo')}
               />
-              <span className="min-w-0 whitespace-nowrap">Cliente cadastrado</span>
+              <span className="min-w-0 truncate text-slate-800 dark:text-slate-100">
+                Cliente cadastrado
+              </span>
             </label>
             <label className="flex min-w-0 cursor-pointer flex-nowrap items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:has-[:checked]:border-brand-400 dark:has-[:checked]:bg-brand-400/10">
               <input
@@ -1759,7 +1761,9 @@ export function AtendimentosPage() {
                 value="avulso"
                 {...register('atendimento_tipo')}
               />
-              <span className="min-w-0 whitespace-nowrap">Cliente avulso</span>
+              <span className="min-w-0 truncate text-slate-800 dark:text-slate-100">
+                Cliente avulso
+              </span>
             </label>
           </div>
 

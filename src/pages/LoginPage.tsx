@@ -142,9 +142,9 @@ export function LoginPage() {
         </label>
 
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-          <label className="flex cursor-pointer items-center gap-2 font-medium text-[#A5B4CB]">
+          <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap font-medium text-[#A5B4CB]">
             <input
-              className="h-5 w-5 rounded border-white/10 bg-white/5 accent-[#12C6F3] sm:h-4 sm:w-4"
+              className="h-5 w-5 shrink-0 rounded border-white/10 bg-white/5 accent-[#12C6F3] sm:h-4 sm:w-4"
               type="checkbox"
             />
             Lembrar acesso

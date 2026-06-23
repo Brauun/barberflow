@@ -9,26 +9,15 @@ export function registerServiceWorker() {
     navigator.serviceWorker
       .register('/sw.js')
       .then((registration) => {
-        registration.addEventListener('updatefound', () => {
-          const nextWorker = registration.installing
-
-          if (!nextWorker) {
-            return
+        // Força checagem de atualização sempre que o app volta ao foreground.
+        // Necessário porque o WebKit/iOS não verifica isso de forma confiável
+        // em background, principalmente em modo standalone (PWA instalado).
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            registration.update().catch(() => {
+              // Silencioso: falha de rede aqui não deve travar o app.
+            })
           }
-
-          nextWorker.addEventListener('statechange', () => {
-            if (
-              nextWorker.state === 'installed' &&
-              navigator.serviceWorker.controller
-            ) {
-              logger.info({
-                action: 'service_worker_update_available',
-                area: 'pwa',
-                message: 'Nova versão do BW Barber instalada, assumindo controle.',
-              })
-              nextWorker.postMessage({ type: 'SKIP_WAITING' })
-            }
-          })
         })
       })
       .catch((error) => {

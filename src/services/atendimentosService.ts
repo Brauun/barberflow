@@ -136,12 +136,28 @@ type AppointmentProfileFallback = {
   telefone: string | null
 }
 
-async function getAppointmentProfileFallbacks(
+type AppointmentCustomerFallback = {
+  client_profile_id: string | null
+  id: string
+  nome: string
+  telefone: string | null
+}
+
+async function getAppointmentCustomerFallbacks(
+  empresaId: string,
   appointments: Array<{
+    cliente_id?: string | null
     client_profile_id?: string | null
     created_by_user_id?: string | null
   }>,
 ) {
+  const clienteIds = [
+    ...new Set(
+      appointments
+        .map((appointment) => appointment.cliente_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ]
   const profileIds = [
     ...new Set(
       appointments
@@ -157,31 +173,77 @@ async function getAppointmentProfileFallbacks(
     ),
   ]
 
-  if (!profileIds.length && !authUserIds.length) {
+  if (!clienteIds.length && !profileIds.length && !authUserIds.length) {
     return {
-      byAuthUserId: new Map<string, AppointmentProfileFallback>(),
-      byProfileId: new Map<string, AppointmentProfileFallback>(),
+      byAuthUserId: new Map<string, AppointmentCustomerFallback>(),
+      byClientId: new Map<string, AppointmentCustomerFallback>(),
+      byProfileId: new Map<string, AppointmentCustomerFallback>(),
+      profilesByAuthUserId: new Map<string, AppointmentProfileFallback>(),
+      profilesByProfileId: new Map<string, AppointmentProfileFallback>(),
     }
   }
 
-  const filters = [
-    profileIds.length ? `id.in.(${profileIds.join(',')})` : '',
-    authUserIds.length ? `auth_user_id.in.(${authUserIds.join(',')})` : '',
-  ].filter(Boolean)
-  const { data } = await supabase
-    .from('profiles')
-    .select('id,auth_user_id,nome,telefone')
-    .or(filters.join(','))
+  let profiles: AppointmentProfileFallback[] = []
 
-  const profiles = (data ?? []) as AppointmentProfileFallback[]
+  if (profileIds.length || authUserIds.length) {
+    const filters = [
+      profileIds.length ? `id.in.(${profileIds.join(',')})` : '',
+      authUserIds.length ? `auth_user_id.in.(${authUserIds.join(',')})` : '',
+    ].filter(Boolean)
+    const { data } = await supabase
+      .from('profiles')
+      .select('id,auth_user_id,nome,telefone')
+      .or(filters.join(','))
+
+    profiles = (data ?? []) as AppointmentProfileFallback[]
+  }
+
+  const profileIdsFromAuth = profiles.map((profile) => profile.id)
+  const allProfileIds = [...new Set([...profileIds, ...profileIdsFromAuth])]
+  const clienteFilters = [
+    clienteIds.length ? `id.in.(${clienteIds.join(',')})` : '',
+    allProfileIds.length ? `client_profile_id.in.(${allProfileIds.join(',')})` : '',
+  ].filter(Boolean)
+
+  let clientes: AppointmentCustomerFallback[] = []
+
+  if (clienteFilters.length) {
+    const { data } = await supabase
+      .from('clientes')
+      .select('id,client_profile_id,nome,telefone')
+      .eq('empresa_id', empresaId)
+      .or(clienteFilters.join(','))
+
+    clientes = (data ?? []) as AppointmentCustomerFallback[]
+  }
+
+  const clientsByProfileId = new Map(
+    clientes
+      .filter((cliente) => cliente.client_profile_id)
+      .map((cliente) => [cliente.client_profile_id as string, cliente]),
+  )
+  const profilesByAuthUserId = new Map(
+    profiles
+      .filter((profile) => profile.auth_user_id)
+      .map((profile) => [profile.auth_user_id as string, profile]),
+  )
 
   return {
     byAuthUserId: new Map(
-      profiles
-        .filter((profile) => profile.auth_user_id)
-        .map((profile) => [profile.auth_user_id as string, profile]),
+      Array.from(profilesByAuthUserId.entries())
+        .map(([authUserId, profile]) => {
+          const cliente = clientsByProfileId.get(profile.id)
+
+          return cliente ? ([authUserId, cliente] as const) : null
+        })
+        .filter((entry): entry is readonly [string, AppointmentCustomerFallback] =>
+          Boolean(entry),
+        ),
     ),
-    byProfileId: new Map(profiles.map((profile) => [profile.id, profile])),
+    byClientId: new Map(clientes.map((cliente) => [cliente.id, cliente])),
+    byProfileId: clientsByProfileId,
+    profilesByAuthUserId,
+    profilesByProfileId: new Map(profiles.map((profile) => [profile.id, profile])),
   }
 }
 
@@ -300,30 +362,47 @@ export async function listDailyAppointments(input: {
       .map((appointment) => appointment.atendimento_id)
       .filter(Boolean),
   )
-  const fallbackProfiles = await getAppointmentProfileFallbacks(appointments)
   const unlinkedAtendimentos = atendimentos.filter(
     (atendimento) => !linkedAtendimentoIds.has(atendimento.id),
   )
+  const fallbackCustomers = await getAppointmentCustomerFallbacks(input.empresaId, [
+    ...appointments,
+    ...unlinkedAtendimentos.map((atendimento) => ({
+      cliente_id: atendimento.cliente_id,
+    })),
+  ])
 
   return [
     ...appointments.map((appointment) => {
       const firstItem = appointment.items[0]
-      const fallbackProfile =
+      const fallbackCustomer =
+        (appointment.cliente_id
+          ? fallbackCustomers.byClientId.get(appointment.cliente_id)
+          : null) ??
         (appointment.client_profile_id
-          ? fallbackProfiles.byProfileId.get(appointment.client_profile_id)
+          ? fallbackCustomers.byProfileId.get(appointment.client_profile_id)
           : null) ??
         (appointment.created_by_user_id
-          ? fallbackProfiles.byAuthUserId.get(appointment.created_by_user_id)
+          ? fallbackCustomers.byAuthUserId.get(appointment.created_by_user_id)
+          : null)
+      const fallbackProfile =
+        (appointment.client_profile_id
+          ? fallbackCustomers.profilesByProfileId.get(appointment.client_profile_id)
+          : null) ??
+        (appointment.created_by_user_id
+          ? fallbackCustomers.profilesByAuthUserId.get(appointment.created_by_user_id)
           : null)
       const cliente = appointment.is_walk_in
         ? displayCustomerName(
             appointment.walk_in_customer_name,
             appointment.cliente?.nome,
+            fallbackCustomer?.nome,
             appointment.client?.nome,
             fallbackProfile?.nome,
           )
         : displayCustomerName(
             appointment.cliente?.nome,
+            fallbackCustomer?.nome,
             appointment.client?.nome,
             fallbackProfile?.nome,
             appointment.walk_in_customer_name,
@@ -337,6 +416,7 @@ export async function listDailyAppointments(input: {
         cliente_telefone:
           appointment.walk_in_customer_phone ??
           appointment.cliente?.telefone ??
+          fallbackCustomer?.telefone ??
           appointment.client?.telefone ??
           fallbackProfile?.telefone ??
           null,
@@ -366,28 +446,33 @@ export async function listDailyAppointments(input: {
             : Number(appointment.valor_final),
       }
     }),
-    ...unlinkedAtendimentos.map((atendimento) => ({
-      barbeiro: atendimento.barbeiros?.nome ?? 'Barbeiro',
-      barbeiro_id: atendimento.barbeiro_id,
-      barbershop_id: null,
-      cliente: displayCustomerName(atendimento.clientes?.nome),
-      duration_minutes: atendimento.servicos?.duracao_minutos ?? 30,
-      id: atendimento.id,
-      ends_at:
-        atendimento.data_hora_fim ??
-        new Date(
-          new Date(atendimento.data_hora_inicio).getTime() +
-            (atendimento.servicos?.duracao_minutos ?? 30) * 60 * 1000,
-        ).toISOString(),
-      servico: atendimento.servicos?.nome ?? 'Servico',
-      service_id: atendimento.servico_id,
-      source: 'atendimento' as const,
-      starts_at: atendimento.data_hora_inicio,
-      status: atendimento.status as DailyAppointmentStatus,
-      auto_completed: atendimento.auto_completed,
-      auto_completed_at: atendimento.auto_completed_at,
-      valor: Number(atendimento.valor_final ?? atendimento.valor),
-    })),
+    ...unlinkedAtendimentos.map((atendimento) => {
+      const fallbackCustomer = fallbackCustomers.byClientId.get(atendimento.cliente_id)
+
+      return {
+        barbeiro: atendimento.barbeiros?.nome ?? 'Barbeiro',
+        barbeiro_id: atendimento.barbeiro_id,
+        barbershop_id: null,
+        cliente: displayCustomerName(atendimento.clientes?.nome, fallbackCustomer?.nome),
+        cliente_telefone: fallbackCustomer?.telefone ?? null,
+        duration_minutes: atendimento.servicos?.duracao_minutos ?? 30,
+        id: atendimento.id,
+        ends_at:
+          atendimento.data_hora_fim ??
+          new Date(
+            new Date(atendimento.data_hora_inicio).getTime() +
+              (atendimento.servicos?.duracao_minutos ?? 30) * 60 * 1000,
+          ).toISOString(),
+        servico: atendimento.servicos?.nome ?? 'Servico',
+        service_id: atendimento.servico_id,
+        source: 'atendimento' as const,
+        starts_at: atendimento.data_hora_inicio,
+        status: atendimento.status as DailyAppointmentStatus,
+        auto_completed: atendimento.auto_completed,
+        auto_completed_at: atendimento.auto_completed_at,
+        valor: Number(atendimento.valor_final ?? atendimento.valor),
+      }
+    }),
   ].sort(
     (first, second) =>
       new Date(first.starts_at).getTime() - new Date(second.starts_at).getTime(),
@@ -1206,7 +1291,15 @@ export async function listAtendimentoRecords(
       .map((appointment) => appointment.atendimento_id)
       .filter(Boolean),
   )
-  const fallbackProfiles = await getAppointmentProfileFallbacks(appointments)
+  const unlinkedAtendimentos = atendimentos.filter(
+    (atendimento) => !linkedAtendimentoIds.has(atendimento.id),
+  )
+  const fallbackCustomers = await getAppointmentCustomerFallbacks(empresaId, [
+    ...appointments,
+    ...unlinkedAtendimentos.map((atendimento) => ({
+      cliente_id: atendimento.cliente_id,
+    })),
+  ])
 
   const records: AtendimentoRecord[] = [
     ...appointments.map((appointment) => {
@@ -1225,22 +1318,34 @@ export async function listAtendimentoRecords(
           (total, item) => total + Number(item.valor_final ?? 0),
           0,
         ) || Number(appointment.valor_final ?? totalOriginal - totalDiscount)
-      const fallbackProfile =
+      const fallbackCustomer =
+        (appointment.cliente_id
+          ? fallbackCustomers.byClientId.get(appointment.cliente_id)
+          : null) ??
         (appointment.client_profile_id
-          ? fallbackProfiles.byProfileId.get(appointment.client_profile_id)
+          ? fallbackCustomers.byProfileId.get(appointment.client_profile_id)
           : null) ??
         (appointment.created_by_user_id
-          ? fallbackProfiles.byAuthUserId.get(appointment.created_by_user_id)
+          ? fallbackCustomers.byAuthUserId.get(appointment.created_by_user_id)
+          : null)
+      const fallbackProfile =
+        (appointment.client_profile_id
+          ? fallbackCustomers.profilesByProfileId.get(appointment.client_profile_id)
+          : null) ??
+        (appointment.created_by_user_id
+          ? fallbackCustomers.profilesByAuthUserId.get(appointment.created_by_user_id)
           : null)
       const cliente = appointment.is_walk_in
         ? displayCustomerName(
             appointment.walk_in_customer_name,
             appointment.cliente?.nome,
+            fallbackCustomer?.nome,
             appointment.client?.nome,
             fallbackProfile?.nome,
           )
         : displayCustomerName(
             appointment.cliente?.nome,
+            fallbackCustomer?.nome,
             appointment.client?.nome,
             fallbackProfile?.nome,
             appointment.walk_in_customer_name,
@@ -1262,11 +1367,12 @@ export async function listAtendimentoRecords(
         valor_final: totalFinal,
       }
     }),
-    ...atendimentos
-      .filter((atendimento) => !linkedAtendimentoIds.has(atendimento.id))
-      .map((atendimento) => ({
+    ...unlinkedAtendimentos.map((atendimento) => {
+      const fallbackCustomer = fallbackCustomers.byClientId.get(atendimento.cliente_id)
+
+      return {
         barbeiro: atendimento.barbeiros?.nome ?? 'Barbeiro',
-        cliente: displayCustomerName(atendimento.clientes?.nome),
+        cliente: displayCustomerName(atendimento.clientes?.nome, fallbackCustomer?.nome),
         cliente_tipo: 'cadastrado' as const,
         id: atendimento.id,
         servico: atendimento.servicos?.nome ?? 'Serviço',
@@ -1276,7 +1382,8 @@ export async function listAtendimentoRecords(
         valor: Number(atendimento.valor_original ?? atendimento.valor),
         valor_desconto: Number(atendimento.valor_desconto ?? atendimento.desconto ?? 0),
         valor_final: Number(atendimento.valor_final ?? atendimento.valor),
-      })),
+      }
+    }),
   ].sort(
     (first, second) =>
       new Date(second.starts_at).getTime() - new Date(first.starts_at).getTime(),

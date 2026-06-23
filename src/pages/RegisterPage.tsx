@@ -96,7 +96,7 @@ export function RegisterPage() {
       <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#12C6F3]">
         Cadastro
       </p>
-      <h1 className="mt-2 text-[1.85rem] font-black leading-[1.08] tracking-normal text-white sm:mt-3 sm:text-3xl">
+      <h1 className="mt-2 whitespace-nowrap text-[1.55rem] font-black leading-[1.08] tracking-normal text-white min-[390px]:text-[1.7rem] sm:mt-3 sm:text-3xl">
         Criar conta BW Barber
       </h1>
       <p className="mt-2 text-sm leading-6 text-[#A5B4CB] sm:text-[0.95rem]">
@@ -108,23 +108,23 @@ export function RegisterPage() {
         <AuthFormMessage message={successMessage} tone="success" />
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex h-12 cursor-pointer items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-sm font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:h-14 sm:rounded-[18px]">
+          <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:h-14 sm:gap-3 sm:rounded-[18px] sm:px-4">
             <input
-              className="h-4 w-4 accent-[#12C6F3]"
+              className="h-4 w-4 shrink-0 accent-[#12C6F3]"
               type="radio"
               value="barbearia"
               {...register('accountType')}
             />
-            Sou Barbearia
+            <span className="whitespace-nowrap">Sou Barbearia</span>
           </label>
-          <label className="flex h-12 cursor-pointer items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-sm font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:h-14 sm:rounded-[18px]">
+          <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:h-14 sm:gap-3 sm:rounded-[18px] sm:px-4">
             <input
-              className="h-4 w-4 accent-[#12C6F3]"
+              className="h-4 w-4 shrink-0 accent-[#12C6F3]"
               type="radio"
               value="cliente"
               {...register('accountType')}
             />
-            Sou Cliente
+            <span className="whitespace-nowrap">Sou Cliente</span>
           </label>
         </div>
 
@@ -192,18 +192,18 @@ export function RegisterPage() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex h-12 cursor-pointer items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-sm font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white">
+              <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:gap-3 sm:px-4">
                 <input
-                  className="h-4 w-4 accent-[#12C6F3]"
+                  className="h-4 w-4 shrink-0 accent-[#12C6F3]"
                   type="radio"
                   value="pf"
                   {...register('tipo_pessoa')}
                 />
                 Pessoa Física
               </label>
-              <label className="flex h-12 cursor-pointer items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-sm font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white">
+              <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:gap-3 sm:px-4">
                 <input
-                  className="h-4 w-4 accent-[#12C6F3]"
+                  className="h-4 w-4 shrink-0 accent-[#12C6F3]"
                   type="radio"
                   value="pj"
                   {...register('tipo_pessoa')}
