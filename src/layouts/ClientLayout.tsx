@@ -162,34 +162,34 @@ export function ClientLayout() {
         </div>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 px-2.5 pb-[calc(env(safe-area-inset-bottom)+0.4rem)] md:hidden">
-        <div className="mx-auto grid h-[4.25rem] max-h-[4.25rem] min-h-[4.25rem] w-full max-w-[34rem] grid-cols-5 items-stretch gap-1 rounded-[1.15rem] border border-slate-200 bg-white/94 p-1 shadow-[0_14px_44px_rgb(15_23_42/0.12)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/94 dark:shadow-[0_18px_60px_rgb(0_0_0/0.35)]">
-          {clientNavigation.map((item) => {
-            const Icon = item.icon
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-slate-800 dark:bg-slate-950 md:hidden">
+      <div className="mx-auto grid h-[4.25rem] max-h-[4.25rem] min-h-[4.25rem] w-full max-w-[34rem] grid-cols-5 items-stretch gap-1 px-1">
+      {clientNavigation.map((item) => {
+        const Icon = item.icon
 
-            return (
-              <NavLink
-                className={({ isActive }) =>
-                  cn(
-                    'flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 text-center text-[0.62rem] font-semibold leading-none text-slate-500 transition',
-                    'dark:text-slate-300',
-                    isActive &&
-                      'bg-brand-50 text-brand-600 dark:bg-brand-400/15 dark:text-brand-100',
-                  )
-                }
-                end={item.path === '/cliente'}
-                key={item.path}
-                to={item.path}
-              >
-                <Icon className="shrink-0" size={18} />
-                <span className="block w-full max-w-full truncate whitespace-nowrap leading-none">
-                  {item.mobileLabel}
-                </span>
-              </NavLink>
-            )
-          })}
-        </div>
-      </nav>
+        return (
+          <NavLink
+            className={({ isActive }) =>
+              cn(
+                'flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 text-center text-[0.62rem] font-semibold leading-none text-slate-500 transition',
+                'dark:text-slate-300',
+                isActive &&
+                  'bg-brand-50 text-brand-600 dark:bg-brand-400/15 dark:text-brand-100',
+              )
+            }
+            end={item.path === '/cliente'}
+            key={item.path}
+            to={item.path}
+          >
+            <Icon className="shrink-0" size={18} />
+            <span className="block w-full max-w-full truncate whitespace-nowrap leading-none">
+              {item.mobileLabel}
+            </span>
+          </NavLink>
+        )
+      })}
+    </div>
+  </nav>
     </div>
   )
 }
