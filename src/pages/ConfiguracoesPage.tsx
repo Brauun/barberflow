@@ -939,175 +939,178 @@ export function ConfiguracoesPage() {
       )}
 
       <Card>
-  <CardHeader>
-    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
-          Horários de funcionamento
-        </h3>
-        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-          Dias, expediente e pausas que liberam a agenda.
-        </p>
-      </div>
-      <div className="grid w-full gap-2 sm:flex sm:w-auto">
-        <Button
-          className="w-full border-slate-200 bg-white text-slate-950 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 sm:w-auto dark:border-transparent dark:bg-slate-950 dark:text-white dark:hover:border-transparent dark:hover:bg-slate-900"
-          onClick={copyWeekdayHours}
-          type="button"
-          variant="secondary"
-        >
-          Seg → Sex
-        </Button>
-        <Button
-          className="w-full border-transparent bg-slate-950 text-white hover:border-transparent hover:bg-slate-800 sm:w-auto dark:border-transparent dark:bg-white dark:text-slate-950 dark:hover:border-transparent dark:hover:bg-slate-200"
-          disabled={businessHoursMutation.isPending}
-          onClick={() => void handleSaveBusinessHours()}
-          type="button"
-        >
-          {businessHoursMutation.isPending ? 'Salvando...' : 'Salvar'}
-        </Button>
-      </div>
-    </div>
-  </CardHeader>
-
-  <CardContent className="min-w-0 space-y-1.5">
-    {businessHoursError && (
-      <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-        {businessHoursError}
-      </p>
-    )}
-    {businessHoursMutation.isSuccess && (
-      <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-        Horários salvos com sucesso.
-      </p>
-    )}
-
-    {/* Cabeçalho das colunas — visível apenas em telas médias+ */}
-    <div className="hidden min-w-0 grid-cols-[7rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_2rem] gap-x-2 px-2 sm:grid">
-      <span />
-      <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">Abertura</span>
-      <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">Fechamento</span>
-      <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">Intervalo</span>
-      <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">Fim intervalo</span>
-      <span />
-    </div>
-
-    {weekDays.map((day) => {
-      const hour =
-        businessHours.find((item) => item.day_of_week === day.value) ??
-        defaultBusinessHours()[day.value]
-
-      return (
-        <div
-          key={day.value}
-          className={[
-            'min-w-0 rounded-2xl border px-3 py-2.5 transition-colors',
-            hour.is_open
-              ? 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60'
-              : 'border-slate-100 bg-slate-50/60 dark:border-slate-800/60 dark:bg-slate-900/30',
-          ].join(' ')}
-        >
-          {/* Layout mobile: empilhado */}
-          <div className="flex items-center justify-between sm:hidden">
+        <CardHeader>
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-bold text-slate-950 dark:text-slate-50">
-                {day.label}
+              <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+                Horários de funcionamento
+              </h3>
+              <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                Dias, expediente e pausas que liberam a agenda.
               </p>
-              {hour.is_open && (
-                <p className="mt-0.5 text-[0.7rem] tabular-nums text-slate-500">
-                  {hour.open_time} – {hour.close_time}
-                  {hour.break_start && (
-                    <span className="ml-1 text-slate-400">
-                      · {hour.break_start}–{hour.break_end}
-                    </span>
-                  )}
-                </p>
-              )}
             </div>
-            <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-              <input
-                checked={hour.is_open}
-                className="h-3.5 w-3.5 accent-brand-500"
-                onChange={(e) =>
-                  updateBusinessHour(day.value, { is_open: e.target.checked })
-                }
-                type="checkbox"
-              />
-              {hour.is_open ? 'Aberto' : 'Fechado'}
-            </label>
+            <div className="flex gap-2">
+              <Button
+                className="flex-1 border-slate-200 bg-white text-slate-950 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 sm:flex-none dark:border-transparent dark:bg-slate-950 dark:text-white dark:hover:border-transparent dark:hover:bg-slate-900"
+                onClick={copyWeekdayHours}
+                type="button"
+                variant="secondary"
+              >
+                Seg → Sex
+              </Button>
+              <Button
+                className="flex-1 border-transparent bg-slate-950 text-white hover:border-transparent hover:bg-slate-800 sm:flex-none dark:border-transparent dark:bg-white dark:text-slate-950 dark:hover:border-transparent dark:hover:bg-slate-200"
+                disabled={businessHoursMutation.isPending}
+                onClick={() => void handleSaveBusinessHours()}
+                type="button"
+              >
+                {businessHoursMutation.isPending ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </div>
           </div>
+        </CardHeader>
 
-          {/* Expandido no mobile quando aberto */}
-          {hour.is_open && (
-            <div className="mt-2 grid grid-cols-2 gap-2 sm:hidden">
-              <CompactTimeInput
-                label="Abertura"
-                disabled={!hour.is_open}
-                value={hour.open_time ?? ''}
-                onChange={(v) => updateBusinessHour(day.value, { open_time: v })}
-              />
-              <CompactTimeInput
-                label="Fechamento"
-                disabled={!hour.is_open}
-                value={hour.close_time ?? ''}
-                onChange={(v) => updateBusinessHour(day.value, { close_time: v })}
-              />
-              <CompactTimeInput
-                label="Intervalo"
-                disabled={!hour.is_open}
-                value={hour.break_start ?? ''}
-                onChange={(v) => updateBusinessHour(day.value, { break_start: v })}
-              />
-              <CompactTimeInput
-                label="Fim intervalo"
-                disabled={!hour.is_open}
-                value={hour.break_end ?? ''}
-                onChange={(v) => updateBusinessHour(day.value, { break_end: v })}
-              />
-            </div>
+        <CardContent className="min-w-0 space-y-1.5">
+          {businessHoursError && (
+            <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {businessHoursError}
+            </p>
+          )}
+          {businessHoursMutation.isSuccess && (
+            <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+              Horários salvos com sucesso.
+            </p>
           )}
 
-          {/* Layout desktop: linha única */}
-          <div className="hidden min-w-0 grid-cols-[7rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_2rem] items-center gap-x-2 sm:grid">
-            <p className="text-sm font-bold text-slate-950 dark:text-slate-50">
-              {day.label}
-            </p>
-            <CompactTimeInput
-              disabled={!hour.is_open}
-              value={hour.open_time ?? ''}
-              onChange={(v) => updateBusinessHour(day.value, { open_time: v })}
-            />
-            <CompactTimeInput
-              disabled={!hour.is_open}
-              value={hour.close_time ?? ''}
-              onChange={(v) => updateBusinessHour(day.value, { close_time: v })}
-            />
-            <CompactTimeInput
-              disabled={!hour.is_open}
-              value={hour.break_start ?? ''}
-              onChange={(v) => updateBusinessHour(day.value, { break_start: v })}
-            />
-            <CompactTimeInput
-              disabled={!hour.is_open}
-              value={hour.break_end ?? ''}
-              onChange={(v) => updateBusinessHour(day.value, { break_end: v })}
-            />
-            <label className="flex items-center justify-center">
-              <input
-                checked={hour.is_open}
-                className="h-3.5 w-3.5 accent-brand-500"
-                onChange={(e) =>
-                  updateBusinessHour(day.value, { is_open: e.target.checked })
-                }
-                type="checkbox"
-              />
-            </label>
+          {/* Cabeçalho das colunas — visível apenas em telas médias+ */}
+          <div className="hidden min-w-0 grid-cols-[7rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_2rem] gap-x-2 px-2 sm:grid">
+            <span />
+            <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">Abertura</span>
+            <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">Fechamento</span>
+            <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">Intervalo</span>
+            <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">Fim intervalo</span>
+            <span />
           </div>
-        </div>
-      )
-    })}
-  </CardContent>
-</Card>
+
+          {weekDays.map((day) => {
+            const hour =
+              businessHours.find((item) => item.day_of_week === day.value) ??
+              defaultBusinessHours()[day.value]
+
+            return (
+              <div
+                key={day.value}
+                className={[
+                  'min-w-0 rounded-xl border transition-colors',
+                  hour.is_open
+                    ? 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60'
+                    : 'border-slate-100 bg-slate-50/60 dark:border-slate-800/60 dark:bg-slate-900/30',
+                ].join(' ')}
+              >
+                {/* Linha do dia — sempre visível */}
+                <div className="flex items-center gap-3 px-3 py-2.5">
+                  <p className={[
+                    'w-24 shrink-0 text-sm font-bold',
+                    hour.is_open ? 'text-slate-950 dark:text-slate-50' : 'text-slate-400 dark:text-slate-500',
+                  ].join(' ')}>
+                    {day.label}
+                  </p>
+
+                  {/* Resumo dos horários — mobile only, quando aberto */}
+                  {hour.is_open && (
+                    <p className="flex-1 truncate text-[0.7rem] tabular-nums text-slate-500 sm:hidden">
+                      {hour.open_time}–{hour.close_time}
+                      {hour.break_start ? ` · ${hour.break_start}–${hour.break_end}` : ''}
+                    </p>
+                  )}
+
+                  {/* Spacer no desktop */}
+                  <div className="hidden flex-1 sm:block" />
+
+                  {/* Toggle aberto/fechado */}
+                  <label className="ml-auto flex cursor-pointer items-center gap-2 select-none">
+                    <span className={[
+                      'text-xs font-semibold',
+                      hour.is_open ? 'text-brand-500' : 'text-slate-400',
+                    ].join(' ')}>
+                      {hour.is_open ? 'Aberto' : 'Fechado'}
+                    </span>
+                    <div className={[
+                      'relative h-5 w-9 rounded-full transition-colors',
+                      hour.is_open ? 'bg-brand-500' : 'bg-slate-200 dark:bg-slate-700',
+                    ].join(' ')}>
+                      <div className={[
+                        'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform',
+                        hour.is_open ? 'translate-x-4' : 'translate-x-0.5',
+                      ].join(' ')} />
+                      <input
+                        checked={hour.is_open}
+                        className="sr-only"
+                        onChange={(e) =>
+                          updateBusinessHour(day.value, { is_open: e.target.checked })
+                        }
+                        type="checkbox"
+                      />
+                    </div>
+                  </label>
+                </div>
+
+                {/* Inputs — mobile: grid 2 colunas compacto | desktop: linha única */}
+                {hour.is_open && (
+                  <div className="border-t border-slate-100 px-3 pb-3 pt-2.5 dark:border-slate-800">
+                    {/* Mobile */}
+                    <div className="grid grid-cols-2 gap-2 sm:hidden">
+                      <CompactTimeInput
+                        label="Abertura"
+                        value={hour.open_time ?? ''}
+                        onChange={(v) => updateBusinessHour(day.value, { open_time: v })}
+                      />
+                      <CompactTimeInput
+                        label="Fechamento"
+                        value={hour.close_time ?? ''}
+                        onChange={(v) => updateBusinessHour(day.value, { close_time: v })}
+                      />
+                      <CompactTimeInput
+                        label="Intervalo"
+                        value={hour.break_start ?? ''}
+                        onChange={(v) => updateBusinessHour(day.value, { break_start: v })}
+                      />
+                      <CompactTimeInput
+                        label="Fim intervalo"
+                        value={hour.break_end ?? ''}
+                        onChange={(v) => updateBusinessHour(day.value, { break_end: v })}
+                      />
+                    </div>
+                    {/* Desktop */}
+                    <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-x-2 sm:grid">
+                      <CompactTimeInput
+                        label="Abertura"
+                        value={hour.open_time ?? ''}
+                        onChange={(v) => updateBusinessHour(day.value, { open_time: v })}
+                      />
+                      <CompactTimeInput
+                        label="Fechamento"
+                        value={hour.close_time ?? ''}
+                        onChange={(v) => updateBusinessHour(day.value, { close_time: v })}
+                      />
+                      <CompactTimeInput
+                        label="Intervalo"
+                        value={hour.break_start ?? ''}
+                        onChange={(v) => updateBusinessHour(day.value, { break_start: v })}
+                      />
+                      <CompactTimeInput
+                        label="Fim intervalo"
+                        value={hour.break_end ?? ''}
+                        onChange={(v) => updateBusinessHour(day.value, { break_end: v })}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
