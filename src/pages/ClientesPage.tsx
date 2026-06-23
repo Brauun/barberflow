@@ -192,7 +192,7 @@ export function ClientesPage() {
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">
             Clientes
           </p>
-          <h2 className="mt-2 text-2xl font-black tracking-normal text-zinc-950 dark:text-zinc-50 md:mt-3 md:text-3xl">
+          <h2 className="mt-2 text-xl font-black tracking-normal text-zinc-950 md:mt-3 md:text-3xl dark:text-zinc-50">
             Base de clientes
           </h2>
           <p className="mt-1.5 max-w-2xl text-sm leading-5 text-zinc-600 dark:text-zinc-400 md:mt-2 md:leading-6">
@@ -428,7 +428,7 @@ export function ClientesPage() {
       >
         {historicoQuery.isLoading ? (
           <div className="flex min-h-40 items-center justify-center">
-            <Loader2 className="animate-spin text-brand-500" size={24} />
+            <Loader2 className="h-5 w-5 animate-spin text-brand-500 md:h-6 md:w-6" />
           </div>
         ) : historicoQuery.data?.length ? (
           <div className="space-y-3">

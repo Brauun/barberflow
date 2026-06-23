@@ -176,13 +176,13 @@ export function FluxoCaixaPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 md:space-y-8">
       <section className="flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">
             Fluxo de Caixa
           </p>
-          <h2 className="mt-3 text-3xl font-black tracking-normal text-zinc-950 dark:text-zinc-50">
+          <h2 className="mt-2 text-xl font-black tracking-normal text-zinc-950 md:mt-3 md:text-3xl dark:text-zinc-50">
             Entradas e saídas
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
@@ -209,7 +209,7 @@ export function FluxoCaixaPage() {
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Total de entradas
             </p>
-            <p className="mt-2 text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
+            <p className="mt-1.5 text-xl font-semibold text-emerald-600 md:mt-2 md:text-2xl dark:text-emerald-400">
               {currencyFormatter.format(totals.entradas)}
             </p>
           </CardContent>
@@ -219,7 +219,7 @@ export function FluxoCaixaPage() {
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Total de saídas
             </p>
-            <p className="mt-2 text-2xl font-semibold text-red-600 dark:text-red-400">
+            <p className="mt-1.5 text-xl font-semibold text-red-600 md:mt-2 md:text-2xl dark:text-red-400">
               {currencyFormatter.format(totals.saidas)}
             </p>
           </CardContent>
@@ -229,7 +229,7 @@ export function FluxoCaixaPage() {
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Saldo atual
             </p>
-            <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
+            <p className="mt-1.5 text-xl font-semibold text-zinc-950 md:mt-2 md:text-2xl dark:text-zinc-50">
               {currencyFormatter.format(totals.saldo)}
             </p>
           </CardContent>
@@ -239,7 +239,7 @@ export function FluxoCaixaPage() {
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Lucro líquido
             </p>
-            <p className="mt-2 text-2xl font-semibold text-brand-600 dark:text-brand-400">
+            <p className="mt-1.5 text-xl font-semibold text-brand-600 md:mt-2 md:text-2xl dark:text-brand-400">
               {currencyFormatter.format(totals.lucroLiquido)}
             </p>
           </CardContent>
@@ -278,19 +278,19 @@ export function FluxoCaixaPage() {
 
         <CardContent className="p-0">
           {movimentacoesError && (
-            <div className="p-5 text-sm text-red-600">
+            <div className="p-3 text-sm text-red-600 md:p-5">
               {movimentacoesError.message}
             </div>
           )}
 
           {isLoading ? (
-            <div className="space-y-3 p-6">
+            <div className="space-y-3 p-4 md:p-6">
               <Skeleton className="h-12" />
               <Skeleton className="h-12" />
               <Skeleton className="h-12" />
             </div>
           ) : movimentacoes.length === 0 ? (
-            <div className="p-5 text-sm text-zinc-500 dark:text-zinc-400">
+            <div className="p-3 text-sm text-zinc-500 md:p-5 dark:text-zinc-400">
               Nenhuma movimentação encontrada para o período.
             </div>
           ) : (

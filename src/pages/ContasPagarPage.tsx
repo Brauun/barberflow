@@ -209,13 +209,13 @@ export function ContasPagarPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 md:space-y-6">
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase text-brand-600 dark:text-brand-400">
+          <p className="text-xs font-semibold uppercase text-brand-600 md:text-sm dark:text-brand-400">
             Contas a Pagar
           </p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-normal text-zinc-950 dark:text-zinc-50">
+          <h2 className="mt-1.5 text-xl font-semibold tracking-normal text-zinc-950 md:mt-2 md:text-2xl dark:text-zinc-50">
             Obrigações financeiras
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
@@ -233,7 +233,7 @@ export function ContasPagarPage() {
         <Card className="border-brand-200 bg-brand-50 dark:border-brand-500/30 dark:bg-brand-500/10">
           <CardContent>
             <div className="flex items-start gap-3">
-              <AlertTriangle className="text-brand-600 dark:text-brand-400" size={22} />
+              <AlertTriangle className="h-5 w-5 text-brand-600 md:h-[22px] md:w-[22px] dark:text-brand-400" />
               <div>
                 <p className="font-semibold text-zinc-950 dark:text-zinc-50">
                   {proximasVencimento.length} conta
@@ -281,15 +281,15 @@ export function ContasPagarPage() {
 
         <CardContent className="p-0">
           {contasError && (
-            <div className="p-5 text-sm text-red-600">{contasError.message}</div>
+            <div className="p-3 text-sm text-red-600 md:p-5">{contasError.message}</div>
           )}
 
           {isLoading ? (
             <div className="flex min-h-56 items-center justify-center">
-              <Loader2 className="animate-spin text-brand-500" size={28} />
+              <Loader2 className="h-5 w-5 animate-spin text-brand-500 md:h-7 md:w-7" />
             </div>
           ) : contas.length === 0 ? (
-            <div className="p-5 text-sm text-zinc-500 dark:text-zinc-400">
+            <div className="p-3 text-sm text-zinc-500 md:p-5 dark:text-zinc-400">
               Nenhuma conta encontrada para o filtro selecionado.
             </div>
           ) : (

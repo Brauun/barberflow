@@ -411,7 +411,7 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="text-2xl font-black tracking-normal text-slate-950 dark:text-white sm:text-3xl">
+        <h2 className="text-xl font-black tracking-normal text-slate-950 sm:text-3xl dark:text-white">
           {getGreeting()}, {String(userName).split(' ')[0]}
         </h2>
         <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">

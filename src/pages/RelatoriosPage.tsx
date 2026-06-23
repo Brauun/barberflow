@@ -960,7 +960,7 @@ export function RelatoriosPage() {
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">
             Relatórios
           </p>
-          <h2 className="mt-2 text-2xl font-black tracking-normal text-slate-950 dark:text-white md:mt-3 md:text-3xl">
+          <h2 className="mt-2 text-xl font-black tracking-normal text-slate-950 md:mt-3 md:text-3xl dark:text-white">
             Análises do BW Barber
           </h2>
           <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-600 dark:text-slate-400 md:mt-2 md:leading-6">

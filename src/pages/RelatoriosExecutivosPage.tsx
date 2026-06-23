@@ -417,7 +417,7 @@ function KpiCard({
         <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
         <p
           className={cn(
-            'mt-2 text-2xl font-black text-slate-950 dark:text-white',
+            'mt-1.5 text-xl font-black text-slate-950 md:mt-2 md:text-2xl dark:text-white',
             tone === 'good' && 'text-emerald-600 dark:text-emerald-300',
             tone === 'warn' && 'text-amber-600 dark:text-amber-300',
           )}
@@ -453,12 +453,12 @@ function UpgradeState() {
 
   return (
     <Card className="overflow-hidden border-brand-100 bg-gradient-to-br from-slate-950 to-slate-900 text-white dark:border-brand-400/20">
-      <CardContent className="grid gap-8 p-8 lg:grid-cols-[1fr_0.65fr] lg:p-10">
+      <CardContent className="grid gap-5 p-4 md:gap-8 md:p-8 lg:grid-cols-[1fr_0.65fr] lg:p-10">
         <div>
           <p className="text-[0.68rem] font-bold uppercase tracking-[0.22em] text-brand-300">
             BW Pro
           </p>
-          <h2 className="mt-4 max-w-2xl text-3xl font-black leading-tight text-white sm:text-4xl">
+          <h2 className="mt-3 max-w-2xl text-2xl font-black leading-tight text-white sm:text-4xl md:mt-4">
             Torne sua gestáo mais inteligente com os Relatórios Executivos BW Pro.
           </h2>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
@@ -473,7 +473,7 @@ function UpgradeState() {
             Conhecer BW Pro
           </Button>
         </div>
-        <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
+        <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4 md:p-5">
           {['Score 0-100', 'Insights automáticos', 'PDF premium', 'Previs?es'].map(
             (item) => (
               <div
@@ -629,13 +629,13 @@ export function RelatoriosExecutivosPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 md:space-y-8">
       <section className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">
             Relatórios Executivos
           </p>
-          <h2 className="mt-3 text-3xl font-black tracking-normal text-slate-950 dark:text-white">
+          <h2 className="mt-2 text-xl font-black tracking-normal text-slate-950 md:mt-3 md:text-3xl dark:text-white">
             Panorama do Negócio
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
@@ -726,18 +726,18 @@ export function RelatoriosExecutivosPage() {
         <>
           <section className="grid gap-5 xl:grid-cols-[0.85fr_1.15fr]">
             <Card className="overflow-hidden bg-slate-950 text-white dark:bg-slate-900">
-              <CardContent className="relative p-7">
+              <CardContent className="relative p-4 md:p-7">
                 <div className="absolute right-[-3rem] top-[-3rem] h-40 w-40 rounded-full border border-brand-400/20" />
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.22em] text-brand-300">
                   Score da operação
                 </p>
                 <div className="mt-5 flex items-end gap-4">
-                  <span className="text-6xl font-black tracking-tight">
+                  <span className="text-3xl font-black tracking-tight md:text-6xl">
                     {data.score.value}
                   </span>
                   <span className="pb-2 text-lg font-black text-slate-400">/100</span>
                 </div>
-                <p className="mt-3 text-xl font-black text-white">{data.score.label}</p>
+                <p className="mt-2 text-base font-black text-white md:mt-3 md:text-xl">{data.score.label}</p>
                 <p className="mt-2 max-w-md text-sm leading-6 text-slate-300">
                   Baseado em receita, margem, ocupação, cancelamentos e ritmo do
                   período.
@@ -969,7 +969,7 @@ export function RelatoriosExecutivosPage() {
                         <p className="text-sm font-bold text-slate-500 dark:text-slate-300">
                           {item.dia} as {item.hora}
                         </p>
-                        <p className="mt-2 text-2xl font-black text-slate-950 dark:text-white">
+                        <p className="mt-1.5 text-xl font-black text-slate-950 md:mt-2 md:text-2xl dark:text-white">
                           {item.total} horário(s)
                         </p>
                       </div>
@@ -1052,8 +1052,8 @@ export function RelatoriosExecutivosPage() {
               </Card>
               <Card>
                 <CardContent>
-                  <Target className="text-brand-500" size={28} />
-                  <h3 className="mt-4 text-xl font-black text-slate-950 dark:text-white">
+                  <Target className="h-5 w-5 text-brand-500 md:h-7 md:w-7" />
+                  <h3 className="mt-3 text-base font-black text-slate-950 md:mt-4 md:text-xl dark:text-white">
                     Se continuar nesse ritmo
                   </h3>
                   <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">

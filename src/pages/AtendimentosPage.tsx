@@ -879,7 +879,7 @@ export function AtendimentosPage() {
           <p className="text-sm font-semibold uppercase text-brand-600 dark:text-brand-400">
             Atendimentos
           </p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-normal text-zinc-950 dark:text-zinc-50">
+          <h2 className="mt-1.5 text-xl font-semibold tracking-normal text-zinc-950 sm:mt-2 md:text-2xl dark:text-zinc-50">
             Registro de atendimentos
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
@@ -907,7 +907,7 @@ export function AtendimentosPage() {
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Comissão barbeiro
             </p>
-            <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
+            <p className="mt-1.5 text-xl font-semibold text-zinc-950 sm:mt-2 md:text-2xl dark:text-zinc-50">
               {comissaoPercentual}%
             </p>
           </CardContent>
@@ -917,7 +917,7 @@ export function AtendimentosPage() {
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Parte da empresa
             </p>
-            <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
+            <p className="mt-1.5 text-xl font-semibold text-zinc-950 sm:mt-2 md:text-2xl dark:text-zinc-50">
               {empresaPercentual}%
             </p>
           </CardContent>
@@ -927,7 +927,7 @@ export function AtendimentosPage() {
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Concluídos hoje
             </p>
-            <p className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
+            <p className="mt-1.5 text-xl font-semibold text-zinc-950 sm:mt-2 md:text-2xl dark:text-zinc-50">
               {completedToday}
             </p>
           </CardContent>
@@ -977,7 +977,7 @@ export function AtendimentosPage() {
 
           {dailyAppointmentsQuery.isLoading ? (
             <div className="flex min-h-40 items-center justify-center">
-              <Loader2 className="animate-spin text-brand-500" size={28} />
+              <Loader2 className="h-5 w-5 animate-spin text-brand-500 md:h-7 md:w-7" />
             </div>
           ) : !dailyAppointmentsQuery.data?.length ? (
             <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-center text-sm font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300 sm:rounded-[1.35rem] sm:p-6">
@@ -1211,7 +1211,7 @@ export function AtendimentosPage() {
             <p className="text-sm text-red-600">{waitlistQuery.error.message}</p>
           ) : waitlistQuery.isLoading ? (
             <div className="flex min-h-28 items-center justify-center">
-              <Loader2 className="animate-spin text-brand-500" size={24} />
+              <Loader2 className="h-5 w-5 animate-spin text-brand-500 md:h-6 md:w-6" />
             </div>
           ) : !waitlistQuery.data?.length ? (
             <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-center text-sm font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300 sm:rounded-[1.35rem] sm:p-6">
@@ -1456,7 +1456,7 @@ export function AtendimentosPage() {
 
           {atendimentosQuery.isLoading ? (
             <div className="flex min-h-56 items-center justify-center">
-              <Loader2 className="animate-spin text-brand-500" size={28} />
+              <Loader2 className="h-5 w-5 animate-spin text-brand-500 md:h-7 md:w-7" />
             </div>
           ) : !atendimentosQuery.data?.items.length ? (
             <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-center text-sm font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300 sm:rounded-[1.35rem] sm:p-6">

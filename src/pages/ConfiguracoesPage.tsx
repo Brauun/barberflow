@@ -1434,7 +1434,7 @@ export function ConfiguracoesPage() {
                         src={companyLogoPreview}
                       />
                     ) : (
-                      <Building2 size={26} />
+                      <Building2 className="h-5 w-5 md:h-[26px] md:w-[26px]" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -1591,7 +1591,7 @@ export function ConfiguracoesPage() {
                           src={avatarPreview}
                         />
                       ) : (
-                        <UserRound size={26} />
+                        <UserRound className="h-5 w-5 md:h-[26px] md:w-[26px]" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">

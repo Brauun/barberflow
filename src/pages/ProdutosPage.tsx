@@ -352,7 +352,7 @@ export function ProdutosPage() {
 
           {isLoadingProdutos ? (
             <div className="flex min-h-40 items-center justify-center md:min-h-56">
-              <Loader2 className="animate-spin text-brand-500" size={28} />
+              <Loader2 className="h-5 w-5 animate-spin text-brand-500 md:h-7 md:w-7" />
             </div>
           ) : produtos.length === 0 ? (
             <div className="flex min-h-40 flex-col items-center justify-center px-4 text-center md:min-h-56 md:px-5">

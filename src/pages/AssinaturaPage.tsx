@@ -228,13 +228,13 @@ export function AssinaturaPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 md:space-y-8">
       <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600">
             Assinatura
           </p>
-          <h2 className="mt-3 text-3xl font-black text-slate-950 dark:text-white">
+          <h2 className="mt-2 text-xl font-black text-slate-950 md:mt-3 md:text-3xl dark:text-white">
             Planos do BW Barber
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400">
@@ -282,7 +282,7 @@ export function AssinaturaPage() {
           <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
               <p className="text-sm text-slate-500">Plano atual</p>
-              <h3 className="mt-2 text-2xl font-black text-slate-950 dark:text-white">
+              <h3 className="mt-1.5 text-xl font-black text-slate-950 md:mt-2 md:text-2xl dark:text-white">
                 {planDisplayName(currentPlan)}
               </h3>
               <p className="mt-2 text-sm text-slate-500">
@@ -344,7 +344,7 @@ export function AssinaturaPage() {
                   </span>
                   {isCurrent ? <Badge>Atual</Badge> : isLocked ? <Badge>Em breve</Badge> : null}
                 </div>
-                <h3 className="mt-5 text-2xl font-black text-slate-950 dark:text-white">
+                <h3 className="mt-3 text-xl font-black text-slate-950 md:mt-5 md:text-2xl dark:text-white">
                   {planDisplayName(plan)}
                 </h3>
                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -352,7 +352,7 @@ export function AssinaturaPage() {
                 </p>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-black text-slate-950 dark:text-white">
+                <p className="text-2xl font-black text-slate-950 md:text-3xl dark:text-white">
                   {currencyFormatter.format(Number(plan.monthly_price))}
                   <span className="text-sm font-semibold text-slate-500">/Mes</span>
                 </p>

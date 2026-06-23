@@ -756,14 +756,14 @@ export function BarbeirosPage() {
 
         <CardContent className="p-0">
           {barbeirosError && (
-            <div className="p-5 text-sm text-red-600">
+            <div className="p-3 text-sm text-red-600 md:p-5">
               {barbeirosError.message}
             </div>
           )}
 
           {isLoadingBarbeiros ? (
             <div className="flex min-h-56 items-center justify-center">
-              <Loader2 className="animate-spin text-brand-500" size={28} />
+              <Loader2 className="h-5 w-5 animate-spin text-brand-500 md:h-7 md:w-7" />
             </div>
           ) : barbeiros.length === 0 ? (
             <div className="flex min-h-56 flex-col items-center justify-center px-5 text-center">
@@ -928,7 +928,7 @@ export function BarbeirosPage() {
             </p>
             {employeeLinksQuery.isLoading ? (
               <div className="flex min-h-24 items-center justify-center">
-                <Loader2 className="animate-spin text-brand-500" size={24} />
+                <Loader2 className="h-5 w-5 animate-spin text-brand-500 md:h-6 md:w-6" />
               </div>
             ) : employeeLinksQuery.data?.length ? (
               <div className="space-y-3">
@@ -1131,14 +1131,14 @@ export function BarbeirosPage() {
 
         <CardContent className="p-0">
           {unavailabilityQueryError && (
-            <div className="p-5 text-sm text-red-600">
+            <div className="p-3 text-sm text-red-600 md:p-5">
               {unavailabilityQueryError.message}
             </div>
           )}
 
           {isLoadingUnavailability ? (
             <div className="flex min-h-40 items-center justify-center">
-              <Loader2 className="animate-spin text-brand-500" size={26} />
+              <Loader2 className="h-5 w-5 animate-spin text-brand-500 md:h-[26px] md:w-[26px]" />
             </div>
           ) : unavailability.length === 0 ? (
             <div className="flex min-h-40 flex-col items-center justify-center px-5 text-center">
