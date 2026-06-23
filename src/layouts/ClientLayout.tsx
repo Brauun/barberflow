@@ -171,20 +171,35 @@ export function ClientLayout() {
           <NavLink
             className={({ isActive }) =>
               cn(
-                'flex h-[3.1rem] min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-center text-[0.62rem] font-semibold leading-tight text-slate-500 transition',
+                'group flex h-[3.1rem] min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-center text-[0.62rem] font-semibold leading-tight text-slate-500 transition',
                 'dark:text-slate-300',
                 isActive &&
-                  'text-brand-600 dark:text-brand-300',
+                  'text-[#12C6F3] dark:text-[#12C6F3]',
               )
             }
             end={item.path === '/cliente'}
             key={item.path}
             to={item.path}
           >
-            <Icon className="shrink-0" size={20} />
-            <span className="block w-full max-w-full truncate whitespace-nowrap leading-tight">
-              {item.mobileLabel}
-            </span>
+            {({ isActive }) => (
+              <>
+                <Icon
+                  className={cn(
+                    'shrink-0 transition',
+                    isActive && 'text-[#12C6F3]',
+                  )}
+                  size={20}
+                />
+                <span
+                  className={cn(
+                    'block w-full max-w-full truncate whitespace-nowrap leading-tight transition',
+                    isActive && 'text-[#12C6F3]',
+                  )}
+                >
+                  {item.mobileLabel}
+                </span>
+              </>
+            )}
           </NavLink>
         )
       })}
