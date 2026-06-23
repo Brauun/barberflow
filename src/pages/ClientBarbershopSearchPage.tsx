@@ -189,7 +189,7 @@ export function ClientBarbershopSearchPage() {
   })
 
   return (
-    <div className="w-full max-w-full space-y-5 overflow-x-hidden pb-6 sm:space-y-8">
+    <div className="w-full max-w-full space-y-5 overflow-x-hidden pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:space-y-8 md:pb-6">
       <section>
         <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600">
           Encontrar Barbearias
@@ -229,7 +229,7 @@ export function ClientBarbershopSearchPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-3 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:gap-4">
+      <div className="grid gap-3 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:gap-4 md:pb-0">
         {barbershops.map((barbershop) => {
           const distance = distanceInKm(position, barbershop)
           const isPrimary = barbershop.id === clientProfile?.primary_barbershop_id
@@ -273,6 +273,7 @@ export function ClientBarbershopSearchPage() {
 
                   <div className="grid w-full grid-cols-2 gap-2 md:w-auto md:grid-cols-none md:flex md:flex-wrap md:justify-end">
                     <Button
+                      className="h-10 w-full min-w-0 text-sm md:w-auto"
                       disabled={favoriteMutation.isPending}
                       leftIcon={
                         <Heart
@@ -287,7 +288,7 @@ export function ClientBarbershopSearchPage() {
                       {isFavorite ? 'Favoritada' : 'Favoritar'}
                     </Button>
                     <a
-                      className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:bg-brand-50/70 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                      className="inline-flex h-10 w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:bg-brand-50/70 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 md:w-auto"
                       href={getBarbershopRouteUrl(barbershop)}
                       rel="noreferrer"
                       target="_blank"
@@ -296,7 +297,7 @@ export function ClientBarbershopSearchPage() {
                       Ver rota
                     </a>
                     <Button
-                      className="col-span-2 w-full md:col-auto md:w-auto"
+                      className="col-span-2 h-11 w-full min-w-0 text-sm md:col-auto md:w-auto"
                       disabled={selectMutation.isPending}
                       leftIcon={<Search size={17} />}
                       onClick={() => selectMutation.mutate(barbershop.id)}
