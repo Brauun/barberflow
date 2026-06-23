@@ -181,7 +181,7 @@ function RevenueChart({ data }: { data: MonthlyFinancePoint[] }) {
           <TrendingUp size={20} />
         </div>
         <p className="mt-3 text-sm font-semibold text-slate-950 dark:text-white">
-          Ainda nÃ£o existem receitas concluidas.
+          Ainda não existem receitas concluídas.
         </p>
         <p className="mt-1 max-w-xs text-xs text-slate-500 dark:text-slate-400">
           Conclua atendimentos para visualizar o fluxo de receita.
@@ -320,7 +320,7 @@ export function DashboardPage() {
     enabled: Boolean(empresaId),
     queryFn: () => getDashboardData(empresaId as string),
     queryKey: ['dashboard', empresaId],
-    staleTime: 1000 * 60 * 5, // 5 minutos â€” evita refetch a cada foco de aba
+    staleTime: 1000 * 60 * 5, // 5 minutos - evita refetch a cada foco de aba
   })
 
   if (!empresaId) {
@@ -328,7 +328,7 @@ export function DashboardPage() {
       <Card>
         <CardContent>
           <p className="text-sm text-slate-600">
-            Complete o vÃ­nculo do usuÃ¡rio com uma empresa para visualizar o Dashboard.
+            Complete o vínculo do usuário com uma empresa para visualizar o Dashboard.
           </p>
         </CardContent>
       </Card>
@@ -341,7 +341,7 @@ export function DashboardPage() {
     return (
       <Card>
         <CardContent>
-          <p className="text-sm font-medium text-red-600">NÃ£o foi possÃ­vel carregar o Dashboard.</p>
+          <p className="text-sm font-medium text-red-600">Não foi possível carregar o Dashboard.</p>
           <p className="mt-2 text-sm text-slate-600">{error.message}</p>
         </CardContent>
       </Card>
@@ -350,10 +350,10 @@ export function DashboardPage() {
 
   if (!data) return null
 
-  const userName = profile?.nome ?? user?.user_metadata.nome ?? 'UsuÃ¡rio'
+  const userName = profile?.nome ?? user?.user_metadata.nome ?? 'Usuário'
   const todayRevenue = data.metrics[0]
   const appointments = {
-    helper: 'Atendimentos concluÃ­dos hoje',
+    helper: 'Atendimentos concluídos hoje',
     label: 'Atendimentos Hoje',
     value: String(data.todayAppointments),
   }
@@ -395,7 +395,7 @@ export function DashboardPage() {
     data.popularServicesToday.reduce<
       Record<string, { count: number; name: string; total: number }>
     >((acc, appointment) => {
-      const name = appointment.servicos?.nome ?? 'ServiÃ§o'
+      const name = appointment.servicos?.nome ?? 'Serviço'
       const current = acc[name] ?? { count: 0, name, total: 0 }
       current.count += 1
       current.total += Number(appointment.valor)
@@ -415,7 +415,7 @@ export function DashboardPage() {
           {getGreeting()}, {String(userName).split(' ')[0]}
         </h2>
         <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-          Hoje vocÃª teve{' '}
+          Hoje você teve{' '}
           <span className="font-semibold text-slate-950 dark:text-white">{appointments?.value}</span>{' '}
           atendimentos e faturou{' '}
           <span className="font-semibold text-brand-500">{todayRevenue?.value}</span>
@@ -444,7 +444,7 @@ export function DashboardPage() {
           deltaUp={ticketDelta.up}
           icon={CreditCard}
           iconColor="amber"
-          label="Ticket mÃ©dio"
+          label="Ticket médio"
           value={formatCurrency(revenueTicketHoje)}
         />
       </section>
@@ -465,11 +465,11 @@ export function DashboardPage() {
 
         <div className="rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:rounded-2xl sm:p-5">
           <div className="mb-3 sm:mb-5">
-            <h3 className="text-sm font-semibold text-slate-950 dark:text-white sm:text-base">ServiÃ§os Populares</h3>
+            <h3 className="text-sm font-semibold text-slate-950 dark:text-white sm:text-base">Serviços Populares</h3>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Hoje</p>
           </div>
           {popularServices.length === 0 ? (
-            <p className="text-sm text-slate-500">Nenhum serviÃ§o registrado ainda.</p>
+            <p className="text-sm text-slate-500">Nenhum serviço registrado ainda.</p>
           ) : (
             <div className="space-y-3 sm:space-y-5">
               {popularServices.map((service) => (
@@ -510,7 +510,7 @@ export function DashboardPage() {
             <TableHead>
               <TableRow>
                 <TableHeaderCell>Cliente</TableHeaderCell>
-                <TableHeaderCell>ServiÃ§o</TableHeaderCell>
+                <TableHeaderCell>Serviço</TableHeaderCell>
                 <TableHeaderCell>Barbeiro</TableHeaderCell>
                 <TableHeaderCell>Data</TableHeaderCell>
                 <TableHeaderCell>Valor</TableHeaderCell>
@@ -521,9 +521,9 @@ export function DashboardPage() {
               {data.latestAppointments.map((appointment) => (
                 <TableRow key={appointment.id}>
                   <TableCell className="font-semibold text-slate-950 dark:text-white">
-                    {appointment.clientes?.nome?.trim() || 'Cliente nÃ£o identificado'}
+                    {appointment.clientes?.nome?.trim() || 'Cliente não identificado'}
                   </TableCell>
-                  <TableCell>{appointment.servicos?.nome ?? 'ServiÃ§o'}</TableCell>
+                  <TableCell>{appointment.servicos?.nome ?? 'Serviço'}</TableCell>
                   <TableCell>{appointment.barbeiros?.nome ?? 'Barbeiro'}</TableCell>
                   <TableCell>
                     {dateTimeFormatter.format(new Date(appointment.data_hora_inicio))}
