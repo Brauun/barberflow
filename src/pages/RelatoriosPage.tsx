@@ -1,1187 +1,322 @@
-import { useQuery } from '@tanstack/react-query'
-import { FileSpreadsheet, FileText, RotateCcw } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
-} from '../components/ui'
-import { useAuth } from '../hooks/useAuth'
-import { useFeatureAccess } from '../hooks/useSubscription'
-import { getRelatorioData, type ReportData } from '../services/relatoriosService'
-import type { RelatorioTipo } from '../types/relatorios'
-import { cn } from '../utils/cn'
-import { exportHtmlReport } from '../utils/mobileExport'
+// ─── tipos ────────────────────────────────────────────────────────────────────
 
-const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-  currency: 'BRL',
-  style: 'currency',
-})
+type Periodo = 'hoje' | 'semana' | 'mes' | 'ano'
 
-const numberFormatter = new Intl.NumberFormat('pt-BR')
+interface KpiCard {
+  label: string
+  value: string
+  delta: string
+  deltaType: 'up' | 'down' | 'neutral'
+}
 
-const reportTypes: Array<{ label: string; value: RelatorioTipo }> = [
-  { label: 'Diário', value: 'diario' },
-  { label: 'Mensal', value: 'mensal' },
-  { label: 'Anual', value: 'anual' },
-  { label: 'Financeiro', value: 'financeiro' },
-  { label: 'Barbeiros', value: 'barbeiro' },
-  { label: 'Produtos', value: 'produtos' },
-  { label: 'Clientes', value: 'clientes' },
-  { label: 'Agenda', value: 'agenda' },
+interface BarberRow {
+  initials: string
+  name: string
+  atendimentos: number
+  faturamento: number
+  faturamentoMax: number
+  top?: boolean
+}
+
+interface ProdutoRow {
+  name: string
+  unidades: number
+  total: number
+}
+
+interface DailyBar {
+  day: number
+  pct: number
+  highlight?: boolean
+}
+
+// ─── dados mock ───────────────────────────────────────────────────────────────
+
+const KPI_CARDS: KpiCard[] = [
+  { label: 'Receita serviços', value: 'R$ 645', delta: '+12% vs mês ant.', deltaType: 'up' },
+  { label: 'Receita produtos', value: 'R$ 330', delta: '+8% vs mês ant.', deltaType: 'up' },
+  { label: 'Despesas', value: 'R$ 0', delta: 'Sem despesas no período', deltaType: 'neutral' },
+  { label: 'Lucro líquido', value: 'R$ 588', delta: 'margem 61%', deltaType: 'up' },
+  { label: 'Comissões', value: 'R$ 387', delta: '60% dos serviços', deltaType: 'neutral' },
+  { label: 'Ticket médio', value: 'R$ 49,62', delta: '-3% vs mês ant.', deltaType: 'down' },
 ]
 
-function todayInputValue() {
-  return new Date().toISOString().slice(0, 10)
+const DAILY_BARS: DailyBar[] = [
+  { day: 1,  pct: 30 },
+  { day: 5,  pct: 55 },
+  { day: 8,  pct: 40 },
+  { day: 12, pct: 80, highlight: true },
+  { day: 15, pct: 60 },
+  { day: 18, pct: 45 },
+  { day: 20, pct: 100, highlight: true },
+  { day: 22, pct: 50 },
+]
+
+const BARBERS: BarberRow[] = [
+  { initials: 'BB', name: 'Braian Braun', atendimentos: 8, faturamento: 530, faturamentoMax: 530, top: true },
+  { initials: 'TW', name: 'Thomas Wolf',  atendimentos: 5, faturamento: 115, faturamentoMax: 530 },
+]
+
+const PRODUTOS: ProdutoRow[] = [
+  { name: 'Pomada matte',        unidades: 2, total: 140 },
+  { name: 'Cerveja Heineken 330ml', unidades: 4, total: 40 },
+]
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+const PERIODO_LABELS: Record<Periodo, string> = {
+  hoje:   'Hoje',
+  semana: 'Esta semana',
+  mes:    'Este mês',
+  ano:    'Este ano',
 }
 
-function monthStartInputValue() {
-  const now = new Date()
-  return new Date(now.getFullYear(), now.getMonth(), 1)
-    .toISOString()
-    .slice(0, 10)
+function DeltaIcon({ type }: { type: KpiCard['deltaType'] }) {
+  if (type === 'up')   return <i className="ti ti-arrow-up-right text-[11px]" aria-hidden="true" />
+  if (type === 'down') return <i className="ti ti-arrow-down-right text-[11px]" aria-hidden="true" />
+  return null
 }
 
-function formatDate(value: string) {
-  return new Date(`${value}T00:00:00`).toLocaleDateString('pt-BR')
+function deltaClass(type: KpiCard['deltaType']) {
+  if (type === 'up')   return 'text-[color:var(--color-text-success)]'
+  if (type === 'down') return 'text-[color:var(--color-text-danger)]'
+  return 'text-[color:var(--color-text-secondary)]'
 }
 
-function formatDateInputLabel(value: string) {
-  if (!value) {
-    return 'DD/MM/AAAA'
-  }
+// ─── componente principal ─────────────────────────────────────────────────────
 
-  const [year, month, day] = value.split('-')
+export default function RelatoriosPage() {
+  const [periodo, setPeriodo] = useState<Periodo>('mes')
 
-  if (!year || !month || !day) {
-    return value
-  }
-
-  return `${day}/${month}/${year}`
-}
-
-type DateFilterFieldProps = {
-  label: string
-  onChange: (value: string) => void
-  value: string
-}
-
-function DateFilterField({ label, onChange, value }: DateFilterFieldProps) {
   return (
-    <label className="block min-w-0">
-      <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-        {label}
-      </span>
-      <div className="relative mt-2">
-        <div className="flex h-12 w-full min-w-0 items-center rounded-2xl border border-slate-200 bg-white px-4 text-[16px] font-semibold leading-none text-slate-950 shadow-sm transition duration-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50">
-          <span className="truncate">{formatDateInputLabel(value)}</span>
-        </div>
-        <input
-          aria-label={label}
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-          onChange={(event) => onChange(event.target.value)}
-          type="date"
-          value={value}
-        />
+    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-[20px] font-medium text-[color:var(--color-text-primary)]">Relatórios</h1>
+        <p className="text-[13px] text-[color:var(--color-text-secondary)] mt-0.5">
+          Visão consolidada da operação — escolha o período e o recorte
+        </p>
       </div>
-    </label>
-  )
-}
 
-function reportTitle(tipo: RelatorioTipo) {
-  const labels: Record<RelatorioTipo, string> = {
-    agenda: 'Relatório de Agenda',
-    anual: 'Relatório Anual',
-    barbeiro: 'Relatório de Barbeiros',
-    clientes: 'Relatório de Clientes',
-    diario: 'Relatório Diário',
-    financeiro: 'Relatório Financeiro',
-    mensal: 'Relatório Mensal',
-    produtos: 'Relatório de Produtos',
-  }
+      {/* Barra de período */}
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        {(Object.keys(PERIODO_LABELS) as Periodo[]).map((p) => (
+          <button
+            key={p}
+            onClick={() => setPeriodo(p)}
+            className={[
+              'px-3.5 py-1.5 rounded-full text-[13px] border cursor-pointer transition-colors',
+              periodo === p
+                ? 'bg-[color:var(--color-background-info)] text-[color:var(--color-text-info)] border-[color:var(--color-border-info)] font-medium'
+                : 'bg-[color:var(--color-background-primary)] text-[color:var(--color-text-secondary)] border-[color:var(--color-border-secondary)]',
+            ].join(' ')}
+          >
+            {PERIODO_LABELS[p]}
+          </button>
+        ))}
 
-  return labels[tipo]
-}
+        <div className="w-px h-5 bg-[color:var(--color-border-tertiary)] mx-1" aria-hidden="true" />
 
-function escapeCsv(value: string | number) {
-  return `"${String(value).replace(/"/g, '""')}"`
-}
-
-function escapeHtml(value: string | number) {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-}
-
-function fileSafeDate(value: string) {
-  return value.slice(0, 7)
-}
-
-function fileSafeReportName(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-}
-
-function absoluteAssetUrl(value: string) {
-  if (value.startsWith('http') || value.startsWith('data:')) {
-    return value
-  }
-
-  return new URL(value, window.location.origin).toString()
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) {
-    return '-'
-  }
-
-  return new Date(value).toLocaleString('pt-BR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  })
-}
-
-function formatStatus(value: string) {
-  return value
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
-}
-
-function buildReportTables(
-  data: ReportData,
-  tipo: RelatorioTipo,
-  atendimentos: number,
-  ticketMedio: number,
-) {
-  const financeiroRows = [
-    ['Entradas', currencyFormatter.format(data.summary.receitaServicos + data.summary.receitaProdutos)],
-    ['Receita de serviços', currencyFormatter.format(data.summary.receitaServicos)],
-    ['Receita de produtos', currencyFormatter.format(data.summary.receitaProdutos)],
-    ['Saídas', currencyFormatter.format(data.summary.despesas)],
-    ['Comissões', currencyFormatter.format(data.summary.comissoes)],
-    ['Lucro líquido', currencyFormatter.format(data.summary.lucroLiquido)],
-    ['Ticket médio', currencyFormatter.format(ticketMedio)],
-  ]
-
-  if (tipo === 'barbeiro') {
-    return [
-      {
-        empty: 'Nenhum barbeiro com atendimento no período.',
-        headers: ['Barbeiro', 'Atendimentos', 'Faturamento', 'Comissão', 'Ticket médio', 'Cancelamentos'],
-        rows: data.topBarbers.map((barber) => [
-          barber.nome,
-          numberFormatter.format(barber.atendimentos),
-          currencyFormatter.format(barber.faturamento),
-          currencyFormatter.format(barber.comissao),
-          currencyFormatter.format(barber.ticketMedio),
-          numberFormatter.format(barber.cancelamentos),
-        ]),
-        title: 'Desempenho por barbeiro',
-      },
-    ]
-  }
-
-  if (tipo === 'clientes') {
-    return [
-      {
-        empty: 'Nenhum cliente com movimentação no período.',
-        headers: ['Cliente', 'Perfil', 'Visitas', 'Total gasto', 'Última visita'],
-        rows: data.clients.map((client) => [
-          client.nome,
-          client.novo ? 'Novo' : client.recorrente ? 'Recorrente' : 'Cliente',
-          numberFormatter.format(client.visitas),
-          currencyFormatter.format(client.gastoTotal),
-          formatDateTime(client.ultimaVisita),
-        ]),
-        title: 'Clientes no período',
-      },
-    ]
-  }
-
-  if (tipo === 'produtos') {
-    return [
-      {
-        empty: 'Nenhuma venda de produto no período.',
-        headers: ['Produto', 'Quantidade', 'Receita', 'Estoque'],
-        rows: data.topProducts.map((product) => [
-          product.nome,
-          numberFormatter.format(product.quantidade),
-          currencyFormatter.format(product.valorTotal),
-          product.estoqueAtual == null ? '-' : numberFormatter.format(product.estoqueAtual),
-        ]),
-        title: 'Produtos vendidos',
-      },
-    ]
-  }
-
-  if (tipo === 'financeiro') {
-    return [
-      {
-        empty: 'Nenhuma movimentação financeira no período.',
-        headers: ['Indicador', 'Valor'],
-        rows: financeiroRows,
-        title: 'Resumo financeiro',
-      },
-    ]
-  }
-
-  if (tipo === 'agenda') {
-    return [
-      {
-        empty: 'Nenhum atendimento na agenda do período.',
-        headers: ['Horário', 'Cliente', 'Barbeiro', 'Serviço', 'Status', 'Valor'],
-        rows: data.agendaItems.map((appointment) => [
-          formatDateTime(appointment.horario),
-          appointment.cliente,
-          appointment.barbeiro,
-          appointment.servico,
-          formatStatus(appointment.status),
-          currencyFormatter.format(appointment.valor),
-        ]),
-        title: 'Agenda do período',
-      },
-    ]
-  }
-
-  return [
-    {
-      empty: 'Nenhum atendimento concluído no período.',
-      headers: ['Barbeiro', 'Atendimentos', 'Faturamento'],
-      rows: data.topBarbers.map((barber) => [
-        barber.nome,
-        numberFormatter.format(barber.atendimentos),
-        currencyFormatter.format(barber.faturamento),
-      ]),
-      title: 'Atendimentos por barbeiro',
-    },
-    {
-      empty: 'Nenhuma venda de produto no período.',
-      headers: ['Produto', 'Quantidade', 'Valor total'],
-      rows: data.topProducts.map((product) => [
-        product.nome,
-        numberFormatter.format(product.quantidade),
-        currencyFormatter.format(product.valorTotal),
-      ]),
-      title: 'Produtos mais vendidos',
-    },
-    {
-      empty: 'Nenhum dado financeiro no período.',
-      headers: ['Indicador', 'Valor'],
-      rows: [
-        ...financeiroRows,
-        ['Atendimentos', numberFormatter.format(atendimentos)],
-      ],
-      title: 'Resumo financeiro',
-    },
-  ]
-}
-
-function buildExcelRows(input: {
-  data: ReportData
-  periodo: string
-  tipo: RelatorioTipo
-  title: string
-  atendimentos: number
-  ticketMedio: number
-}) {
-  const tables = buildReportTables(
-    input.data,
-    input.tipo,
-    input.atendimentos,
-    input.ticketMedio,
-  )
-
-  return [
-    ['Relatório', input.title],
-    ['Período', input.periodo],
-    [],
-    ...tables.flatMap((table) => [
-      [table.title],
-      table.headers,
-      ...(table.rows.length > 0 ? table.rows : [[table.empty]]),
-      [],
-    ]),
-  ]
-}
-
-function buildPdfHtml(input: {
-  data: ReportData
-  dataFim: string
-  dataInicio: string
-  empresaNome: string
-  logoUrl: string
-  tipo: RelatorioTipo
-}) {
-  const { data, dataFim, dataInicio, empresaNome, logoUrl, tipo } = input
-  const title = reportTitle(tipo)
-  const atendimentos = data.topBarbers.reduce(
-    (total, barber) => total + barber.atendimentos,
-    0,
-  )
-  const entradas = data.summary.receitaServicos + data.summary.receitaProdutos
-  const ticketMedio = atendimentos > 0 ? data.summary.receitaServicos / atendimentos : 0
-  const margem = entradas > 0 ? (data.summary.lucroLiquido / entradas) * 100 : 0
-  const topBarber = data.topBarbers[0]
-  const topProduct = data.topProducts[0]
-  const emittedAt = new Date().toLocaleString('pt-BR')
-
-  const kpis = [
-    ['Receita de serviços', currencyFormatter.format(data.summary.receitaServicos)],
-    ['Receita de produtos', currencyFormatter.format(data.summary.receitaProdutos)],
-    ['Despesas', currencyFormatter.format(data.summary.despesas)],
-    ['Lucro líquido', currencyFormatter.format(data.summary.lucroLiquido)],
-    ['Comissões', currencyFormatter.format(data.summary.comissoes)],
-    ['Atendimentos', numberFormatter.format(atendimentos)],
-    ['Ticket médio', currencyFormatter.format(ticketMedio)],
-    ['Margem', `${margem.toFixed(1).replace('.', ',')}%`],
-  ]
-
-  // For barbeiro reports: build a detailed per-barber table for page 1
-  const barberTableRows = tipo === 'barbeiro'
-    ? data.topBarbers.map((b) => `
-        <tr>
-          <td><strong>${escapeHtml(b.nome)}</strong></td>
-          <td>${numberFormatter.format(b.atendimentos)}</td>
-          <td>${currencyFormatter.format(b.faturamento)}</td>
-          <td>${currencyFormatter.format(b.comissao)}</td>
-          <td>${currencyFormatter.format(b.ticketMedio)}</td>
-          <td>${numberFormatter.format(b.cancelamentos)}</td>
-        </tr>
-      `).join('')
-    : ''
-
-  const reportTables =
-    tipo === 'barbeiro' ? [] : buildReportTables(data, tipo, atendimentos, ticketMedio)
-  const tablePanels = reportTables
-    .map((table) => {
-      const colSpan = Math.max(1, table.headers.length)
-      const rows = table.rows
-        .slice(0, 18)
-        .map(
-          (row) => `
-            <tr>
-              ${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}
-            </tr>
-          `,
-        )
-        .join('')
-
-      return `
-        <div class="panel">
-          <div class="panel-head"><h3>${escapeHtml(table.title)}</h3></div>
-          <table>
-            <thead>
-              <tr>${table.headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr>
-            </thead>
-            <tbody>
-              ${rows || `<tr><td colspan="${colSpan}">${escapeHtml(table.empty)}</td></tr>`}
-            </tbody>
-          </table>
+        <div className="flex items-center gap-1.5 text-[13px] text-[color:var(--color-text-secondary)] bg-[color:var(--color-background-secondary)] border border-[color:var(--color-border-tertiary)] px-2.5 py-1 rounded-lg">
+          <i className="ti ti-calendar text-[14px]" aria-hidden="true" />
+          <span>01/06/2026</span>
+          <span className="text-[color:var(--color-text-tertiary)]">→</span>
+          <span>22/06/2026</span>
         </div>
-      `
-    })
-    .join('')
-  return `<!doctype html>
-    <html lang="pt-BR">
-      <head>
-        <meta charset="utf-8" />
-        <title>BW-Barber-${escapeHtml(title)}-${fileSafeDate(dataInicio)}</title>
-        <style>
-          @page { size: A4; margin: 0; }
-          * { box-sizing: border-box; }
-          body {
-            margin: 0;
-            background: #e5edf3;
-            color: #0f172a;
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          .page {
-            background: #ffffff;
-            box-shadow: 0 18px 70px rgba(15, 23, 42, .12);
-            margin: 18px auto;
-            min-height: 297mm;
-            overflow: hidden;
-            padding: 15mm 14mm 13mm;
-            page-break-after: always;
-            position: relative;
-            width: 210mm;
-          }
-          .page:last-child { page-break-after: auto; }
-          .header {
-            align-items: center;
-            border-bottom: 1px solid #dbe7ef;
-            display: flex;
-            justify-content: space-between;
-            min-height: 58px;
-            padding-bottom: 12px;
-          }
-          .brand { align-items: center; display: flex; gap: 14px; }
-          .logo-box {
-            align-items: center;
-            background: #071426;
-            border-radius: 14px;
-            display: flex;
-            height: 44px;
-            justify-content: center;
-            overflow: hidden;
-            width: 44px;
-          }
-          .logo-box img {
-            display: block;
-            height: 38px;
-            max-width: 38px;
-            object-fit: contain;
-          }
-          .logo-box span {
-            color: #12c6f3;
-            display: none;
-            font-size: 14px;
-            font-weight: 900;
-          }
-          .eyebrow {
-            color: #0891b2;
-            font-size: 8.5px;
-            font-weight: 800;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-          }
-          h1 {
-            color: #071426;
-            font-size: 24px;
-            letter-spacing: -0.02em;
-            line-height: 1.08;
-            margin: 14px 0 6px;
-          }
-          h2 {
-            color: #071426;
-            font-size: 17px;
-            margin: 18px 0 10px;
-          }
-          h3 { color: #071426; font-size: 12.5px; margin: 0; }
-          p { color: #526176; font-size: 10.5px; line-height: 1.55; margin: 0; }
-          .meta { color: #526176; font-size: 9.5px; line-height: 1.45; text-align: right; }
-          .hero {
-            background: linear-gradient(135deg, #071426, #0e1d32);
-            border-radius: 18px;
-            color: #fff;
-            margin-top: 16px;
-            overflow: hidden;
-            padding: 18px 20px;
-            position: relative;
-          }
-          .hero:after {
-            border: 1px solid rgba(18,198,243,.18);
-            border-radius: 999px;
-            content: "";
-            height: 128px;
-            position: absolute;
-            right: -46px;
-            top: -58px;
-            width: 128px;
-          }
-          .hero h1 { color: #fff; margin-top: 6px; }
-          .hero p { color: #b7c8dd; max-width: 430px; }
-          .period {
-            background: rgba(18,198,243,.12);
-            border: 1px solid rgba(18,198,243,.24);
-            border-radius: 999px;
-            color: #bff4ff;
-            display: inline-block;
-            font-size: 9.5px;
-            font-weight: 800;
-            margin-top: 12px;
-            padding: 6px 10px;
-          }
-          .kpi-grid {
-            display: grid;
-            gap: 8px;
-            grid-template-columns: repeat(4, 1fr);
-            margin-top: 14px;
-          }
-          .kpi {
-            background: #f8fbfd;
-            border: 1px solid #e4edf3;
-            border-radius: 12px;
-            min-height: 66px;
-            padding: 10px;
-          }
-          .kpi span {
-            color: #64748b;
-            display: block;
-            font-size: 7.8px;
-            font-weight: 800;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-          }
-          .kpi strong {
-            color: #071426;
-            display: block;
-            font-size: 13.5px;
-            margin-top: 5px;
-          }
-          .panel {
-            border: 1px solid #e4edf3;
-            border-radius: 14px;
-            margin-top: 12px;
-            overflow: hidden;
-          }
-          .panel-head {
-            background: #f8fbfd;
-            border-bottom: 1px solid #e4edf3;
-            padding: 10px 12px;
-          }
-          table { border-collapse: collapse; width: 100%; }
-          th {
-            color: #64748b;
-            font-size: 8.4px;
-            letter-spacing: .08em;
-            padding: 9px 12px;
-            text-align: left;
-            text-transform: uppercase;
-          }
-          td {
-            border-top: 1px solid #edf3f7;
-            color: #172033;
-            font-size: 10.2px;
-            padding: 9px 12px;
-          }
-          .two-col { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
-          .insight {
-            background: #f8fbfd;
-            border: 1px solid #e4edf3;
-            border-radius: 14px;
-            padding: 14px;
-          }
-          .summary-strip {
-            display: grid;
-            gap: 10px;
-            grid-template-columns: 1.1fr .9fr;
-            margin-top: 14px;
-          }
-          .summary-card {
-            background: #ffffff;
-            border: 1px solid #e4edf3;
-            border-radius: 14px;
-            padding: 13px;
-          }
-          .summary-card p { margin-top: 8px; }
-          .mini-list {
-            display: grid;
-            gap: 7px;
-            margin-top: 9px;
-          }
-          .mini-item {
-            align-items: center;
-            background: #f8fbfd;
-            border: 1px solid #edf3f7;
-            border-radius: 11px;
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 10px;
-          }
-          .mini-item span {
-            color: #64748b;
-            font-size: 9.5px;
-            font-weight: 700;
-          }
-          .mini-item strong {
-            color: #071426;
-            font-size: 10.5px;
-          }
-          .accent { color: #0891b2; font-weight: 900; }
-          .footer {
-            bottom: 7mm;
-            color: #94a3b8;
-            display: flex;
-            font-size: 8.6px;
-            justify-content: space-between;
-            left: 14mm;
-            position: absolute;
-            right: 14mm;
-          }
-          @media print {
-            body { background: #ffffff; }
-            .page {
-              box-shadow: none;
-              margin: 0;
-              min-height: 297mm;
-              width: 210mm;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <section class="page">
-          <header class="header">
-            <div class="brand">
-              <div class="logo-box">
-                <img src="${escapeHtml(logoUrl)}" alt="BW Barber" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
-                <span>BW</span>
-              </div>
-              <div>
-                <div class="eyebrow">BW Barber</div>
-                <h3>${escapeHtml(empresaNome)}</h3>
-              </div>
-            </div>
-            <div class="meta">
-              ${escapeHtml(title)}<br />
-              Emitido em ${escapeHtml(emittedAt)}
-            </div>
-          </header>
-          <div class="hero">
-            <div class="eyebrow">Relatório Operacional</div>
-            <h1>${escapeHtml(title)}</h1>
-            <p>${
-              tipo === 'barbeiro'   ? 'Desempenho individual de cada barbeiro no período: atendimentos, faturamento, comissões, ticket médio e cancelamentos.' :
-              tipo === 'financeiro' ? 'Visão completa das finanças do período: entradas, saídas, comissões e lucro líquido da barbearia.' :
-              tipo === 'produtos'   ? 'Produtos mais vendidos no período com quantidade, receita gerada e estoque atual.' :
-              tipo === 'clientes'   ? 'Comportamento dos clientes no período: visitas, gasto total e perfil (novo ou recorrente).' :
-              tipo === 'agenda'     ? 'Registro completo dos atendimentos agendados no período com status e valores.' :
-              'Resumo consolidado do período para acompanhamento de performance operacional e financeira.'
-            }</p>
-            <span class="period">${formatDate(dataInicio)} até ${formatDate(dataFim)}</span>
-          </div>
 
-          ${tipo === 'barbeiro' ? `
-            <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-top:14px;">
-              <div class="kpi"><span>Receita de serviços</span><strong>${currencyFormatter.format(data.summary.receitaServicos)}</strong></div>
-              <div class="kpi"><span>Receita de produtos</span><strong>${currencyFormatter.format(data.summary.receitaProdutos)}</strong></div>
-              <div class="kpi"><span>Total de atendimentos</span><strong>${numberFormatter.format(atendimentos)}</strong></div>
-              <div class="kpi"><span>Ticket médio</span><strong>${currencyFormatter.format(ticketMedio)}</strong></div>
-              <div class="kpi"><span>Comissões</span><strong>${currencyFormatter.format(data.summary.comissoes)}</strong></div>
-              <div class="kpi"><span>Despesas</span><strong>${currencyFormatter.format(data.summary.despesas)}</strong></div>
-              <div class="kpi"><span>Lucro líquido</span><strong>${currencyFormatter.format(data.summary.lucroLiquido)}</strong></div>
-              <div class="kpi"><span>Margem</span><strong>${margem.toFixed(1).replace('.', ',')}%</strong></div>
-            </div>
-            <div class="panel" style="margin-top:16px;">
-              <div class="panel-head"><h3>Desempenho por barbeiro</h3></div>
-              <table>
-                <thead><tr><th>Barbeiro</th><th>Atendimentos</th><th>Faturamento</th><th>Comissão</th><th>Ticket médio</th><th>Cancelamentos</th></tr></thead>
-                <tbody>${barberTableRows || `<tr><td colspan="6">Nenhum barbeiro com atendimento no período.</td></tr>`}</tbody>
-              </table>
-            </div>
-
-          ` : tipo === 'financeiro' ? `
-            <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-top:14px;">
-              <div class="kpi"><span>Entradas totais</span><strong>${currencyFormatter.format(entradas)}</strong></div>
-              <div class="kpi"><span>Receita de serviços</span><strong>${currencyFormatter.format(data.summary.receitaServicos)}</strong></div>
-              <div class="kpi"><span>Receita de produtos</span><strong>${currencyFormatter.format(data.summary.receitaProdutos)}</strong></div>
-              <div class="kpi"><span>Despesas</span><strong>${currencyFormatter.format(data.summary.despesas)}</strong></div>
-              <div class="kpi"><span>Comissões</span><strong>${currencyFormatter.format(data.summary.comissoes)}</strong></div>
-              <div class="kpi"><span>Lucro líquido</span><strong>${currencyFormatter.format(data.summary.lucroLiquido)}</strong></div>
-              <div class="kpi"><span>Atendimentos</span><strong>${numberFormatter.format(atendimentos)}</strong></div>
-              <div class="kpi"><span>Margem</span><strong>${margem.toFixed(1).replace('.', ',')}%</strong></div>
-            </div>
-            <div class="summary-strip" style="margin-top:14px;">
-              <div class="summary-card">
-                <div class="eyebrow">Análise do período</div>
-                <h3>Resultado financeiro</h3>
-                <p>O período gerou <span class="accent">${currencyFormatter.format(entradas)}</span> em entradas totais. Após despesas de <span class="accent">${currencyFormatter.format(data.summary.despesas)}</span> e comissões de <span class="accent">${currencyFormatter.format(data.summary.comissoes)}</span>, o lucro líquido foi de <span class="accent">${currencyFormatter.format(data.summary.lucroLiquido)}</span> com margem de <span class="accent">${margem.toFixed(1).replace('.', ',')}%</span>.</p>
-              </div>
-              <div class="summary-card">
-                <div class="eyebrow">Destaques</div>
-                <div class="mini-list">
-                  <div class="mini-item"><span>Melhor barbeiro</span><strong>${topBarber ? escapeHtml(topBarber.nome) : 'Sem dados'}</strong></div>
-                  <div class="mini-item"><span>Produto destaque</span><strong>${topProduct ? escapeHtml(topProduct.nome) : 'Sem dados'}</strong></div>
-                  <div class="mini-item"><span>Ticket médio</span><strong>${currencyFormatter.format(ticketMedio)}</strong></div>
-                </div>
-              </div>
-            </div>
-
-          ` : tipo === 'produtos' ? `
-            <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-top:14px;">
-              <div class="kpi"><span>Receita de produtos</span><strong>${currencyFormatter.format(data.summary.receitaProdutos)}</strong></div>
-              <div class="kpi"><span>Produtos distintos</span><strong>${numberFormatter.format(data.topProducts.length)}</strong></div>
-              <div class="kpi"><span>Produto destaque</span><strong>${topProduct ? escapeHtml(topProduct.nome) : 'Sem dados'}</strong></div>
-            </div>
-            <div class="panel" style="margin-top:16px;">
-              <div class="panel-head"><h3>Produtos vendidos no período</h3></div>
-              <table>
-                <thead><tr><th>Produto</th><th>Quantidade</th><th>Receita</th><th>Estoque atual</th></tr></thead>
-                <tbody>
-                  ${data.topProducts.length > 0
-                    ? data.topProducts.slice(0, 20).map((p) => `
-                        <tr>
-                          <td><strong>${escapeHtml(p.nome)}</strong></td>
-                          <td>${numberFormatter.format(p.quantidade)}</td>
-                          <td>${currencyFormatter.format(p.valorTotal)}</td>
-                          <td>${p.estoqueAtual == null ? '-' : numberFormatter.format(p.estoqueAtual)}</td>
-                        </tr>`).join('')
-                    : `<tr><td colspan="4">Nenhuma venda de produto no período.</td></tr>`}
-                </tbody>
-              </table>
-            </div>
-
-          ` : tipo === 'clientes' ? `
-            <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-top:14px;">
-              <div class="kpi"><span>Total de clientes</span><strong>${numberFormatter.format(data.clients.length)}</strong></div>
-              <div class="kpi"><span>Clientes novos</span><strong>${numberFormatter.format(data.clients.filter((c) => c.novo).length)}</strong></div>
-              <div class="kpi"><span>Recorrentes</span><strong>${numberFormatter.format(data.clients.filter((c) => c.recorrente).length)}</strong></div>
-              <div class="kpi"><span>Receita de serviços</span><strong>${currencyFormatter.format(data.summary.receitaServicos)}</strong></div>
-            </div>
-            <div class="panel" style="margin-top:16px;">
-              <div class="panel-head"><h3>Clientes no período</h3></div>
-              <table>
-                <thead><tr><th>Cliente</th><th>Perfil</th><th>Visitas</th><th>Total gasto</th><th>Última visita</th></tr></thead>
-                <tbody>
-                  ${data.clients.length > 0
-                    ? data.clients.slice(0, 18).map((c) => `
-                        <tr>
-                          <td><strong>${escapeHtml(c.nome)}</strong></td>
-                          <td>${c.novo ? 'Novo' : c.recorrente ? 'Recorrente' : 'Cliente'}</td>
-                          <td>${numberFormatter.format(c.visitas)}</td>
-                          <td>${currencyFormatter.format(c.gastoTotal)}</td>
-                          <td>${formatDateTime(c.ultimaVisita)}</td>
-                        </tr>`).join('')
-                    : `<tr><td colspan="5">Nenhum cliente com movimentação no período.</td></tr>`}
-                </tbody>
-              </table>
-            </div>
-
-          ` : tipo === 'agenda' ? `
-            <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-top:14px;">
-              <div class="kpi"><span>Total de agendamentos</span><strong>${numberFormatter.format(data.agendaItems.length)}</strong></div>
-              <div class="kpi"><span>Concluídos</span><strong>${numberFormatter.format(data.agendaItems.filter((a) => a.status === 'concluido').length)}</strong></div>
-              <div class="kpi"><span>Cancelados</span><strong>${numberFormatter.format(data.agendaItems.filter((a) => a.status === 'cancelado').length)}</strong></div>
-              <div class="kpi"><span>Receita de serviços</span><strong>${currencyFormatter.format(data.summary.receitaServicos)}</strong></div>
-            </div>
-            <div class="panel" style="margin-top:16px;">
-              <div class="panel-head"><h3>Agenda do período</h3></div>
-              <table>
-                <thead><tr><th>Horário</th><th>Cliente</th><th>Barbeiro</th><th>Serviço</th><th>Status</th><th>Valor</th></tr></thead>
-                <tbody>
-                  ${data.agendaItems.length > 0
-                    ? data.agendaItems.slice(0, 18).map((a) => `
-                        <tr>
-                          <td>${formatDateTime(a.horario)}</td>
-                          <td><strong>${escapeHtml(a.cliente)}</strong></td>
-                          <td>${escapeHtml(a.barbeiro)}</td>
-                          <td>${escapeHtml(a.servico)}</td>
-                          <td>${formatStatus(a.status)}</td>
-                          <td>${currencyFormatter.format(a.valor)}</td>
-                        </tr>`).join('')
-                    : `<tr><td colspan="6">Nenhum atendimento na agenda do período.</td></tr>`}
-                </tbody>
-              </table>
-            </div>
-
-          ` : `
-            <div class="kpi-grid">
-              ${kpis.map(([label, value]) => `
-                <div class="kpi">
-                  <span>${escapeHtml(label)}</span>
-                  <strong>${escapeHtml(value)}</strong>
-                </div>
-              `).join('')}
-            </div>
-            <div class="summary-strip">
-              <div class="summary-card">
-                <div class="eyebrow">Leitura do período</div>
-                <h3>Resumo operacional</h3>
-                <p>O período consolidou <span class="accent">${currencyFormatter.format(entradas)}</span> em entradas, com lucro líquido de <span class="accent">${currencyFormatter.format(data.summary.lucroLiquido)}</span> e margem de <span class="accent">${margem.toFixed(1).replace('.', ',')}%</span>.</p>
-              </div>
-              <div class="summary-card">
-                <div class="eyebrow">Destaques</div>
-                <div class="mini-list">
-                  <div class="mini-item"><span>Melhor barbeiro</span><strong>${topBarber ? escapeHtml(topBarber.nome) : 'Sem dados'}</strong></div>
-                  <div class="mini-item"><span>Produto destaque</span><strong>${topProduct ? escapeHtml(topProduct.nome) : 'Sem dados'}</strong></div>
-                  <div class="mini-item"><span>Ticket médio</span><strong>${currencyFormatter.format(ticketMedio)}</strong></div>
-                </div>
-              </div>
-            </div>
-          `}
-          <footer class="footer"><span>BW Barber</span><span>Página 1 de 2</span></footer>
-        </section>
-
-        <section class="page">
-          <header class="header">
-            <div><div class="eyebrow">Detalhamento</div><h2>${escapeHtml(title)}</h2></div>
-            <div class="meta">${formatDate(dataInicio)} até ${formatDate(dataFim)}</div>
-          </header>
-          ${tablePanels}
-          <footer class="footer"><span>BW Barber</span><span>Página 2 de 2</span></footer>
-        </section>
-
-        <script>
-          window.addEventListener('load', function () {
-            setTimeout(function () {
-              window.focus();
-              window.print();
-            }, 250);
-          });
-        </script>
-      </body>
-    </html>`
-}
-
-export function RelatoriosPage() {
-  const { profile } = useAuth()
-  const empresaId = profile?.empresa_id
-  const advancedReportsAccess = useFeatureAccess('HAS_ADVANCED_REPORTS')
-  const [tipo, setTipo] = useState<RelatorioTipo>('mensal')
-  const [dataInicio, setDataInicio] = useState(monthStartInputValue())
-  const [dataFim, setDataFim] = useState(todayInputValue())
-  const [appliedFilters, setAppliedFilters] = useState({
-    dataFim: todayInputValue(),
-    dataInicio: monthStartInputValue(),
-    tipo: 'mensal' as RelatorioTipo,
-  })
-
-  const { data, error, isLoading, refetch } = useQuery({
-    enabled: Boolean(empresaId),
-    queryFn: () =>
-      getRelatorioData(
-        empresaId as string,
-        appliedFilters.dataInicio,
-        appliedFilters.dataFim,
-      ),
-    queryKey: [
-      'relatórios',
-      empresaId,
-      appliedFilters.tipo,
-      appliedFilters.dataInicio,
-      appliedFilters.dataFim,
-    ],
-  })
-
-  const title = reportTitle(appliedFilters.tipo)
-  const periodLabel = `${formatDate(appliedFilters.dataInicio)} até ${formatDate(appliedFilters.dataFim)}`
-  const atendimentos = useMemo(
-    () =>
-      data?.topBarbers.reduce((total, barber) => total + barber.atendimentos, 0) ??
-      0,
-    [data?.topBarbers],
-  )
-  const ticketMedio =
-    data && atendimentos > 0 ? data.summary.receitaServicos / atendimentos : 0
-  const registros =
-    (data?.topProducts.length ?? 0) + (data?.topBarbers.length ?? 0) + atendimentos
-
-  function applyFilters() {
-    setAppliedFilters({ dataFim, dataInicio, tipo })
-    void refetch()
-  }
-
-  function clearFilters() {
-    const nextStart = monthStartInputValue()
-    const nextEnd = todayInputValue()
-    setTipo('mensal')
-    setDataInicio(nextStart)
-    setDataFim(nextEnd)
-    setAppliedFilters({ dataFim: nextEnd, dataInicio: nextStart, tipo: 'mensal' })
-  }
-
-  function exportPdf() {
-    if (!data) {
-      return
-    }
-
-    const html = buildPdfHtml({
-      data,
-      dataFim: appliedFilters.dataFim,
-      dataInicio: appliedFilters.dataInicio,
-      empresaNome: profile?.empresa?.nome ?? 'BW Barber',
-      logoUrl: absoluteAssetUrl(
-        profile?.empresa?.logo_url || '/brand/bw-barber-login-logo.png',
-      ),
-      tipo: appliedFilters.tipo,
-    })
-    exportHtmlReport({
-      filename: `BW-Barber-${fileSafeReportName(title)}-${fileSafeDate(appliedFilters.dataInicio)}.html`,
-      html,
-      previewFeatures: 'width=900,height=1200',
-    })
-  }
-
-  function exportExcel() {
-    if (!data) {
-      return
-    }
-
-    const rows = buildExcelRows({
-      atendimentos,
-      data,
-      periodo: periodLabel,
-      ticketMedio,
-      tipo: appliedFilters.tipo,
-      title,
-    })
-
-    const csv = rows
-      .map((row) => row.map((cell) => escapeCsv(cell ?? '')).join(';'))
-      .join('\n')
-    const blob = new Blob([`\uFEFF${csv}`], {
-      type: 'text/csv;charset=utf-8;',
-    })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `BW-Barber-${fileSafeReportName(title)}-${fileSafeDate(appliedFilters.dataInicio)}.csv`
-    link.click()
-    URL.revokeObjectURL(url)
-  }
-
-  if (!empresaId) {
-    return (
-      <Card>
-        <CardContent>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Complete o vínculo do usuário com uma empresa para visualizar
-            relatórios.
-          </p>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  return (
-    <div className="space-y-5 md:space-y-8">
-      <section className="flex flex-wrap items-end justify-between gap-3 md:gap-5">
-        <div>
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">
-            Relatórios
-          </p>
-          <h2 className="mt-2 text-xl font-black tracking-normal text-slate-950 md:mt-3 md:text-3xl dark:text-white">
-            Análises do BW Barber
-          </h2>
-          <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-600 dark:text-slate-400 md:mt-2 md:leading-6">
-            Escolha o tipo, ajuste o período e gere um PDF operacional pronto para
-            enviar.
-          </p>
+        <div className="flex gap-1.5 ml-auto">
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[color:var(--color-border-secondary)] bg-[color:var(--color-background-primary)] text-[color:var(--color-text-primary)] text-[13px] cursor-pointer hover:bg-[color:var(--color-background-secondary)] transition-colors">
+            <i className="ti ti-file-spreadsheet" aria-hidden="true" /> Excel
+          </button>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1a6ef5] text-white text-[13px] cursor-pointer hover:bg-[#1560d8] transition-colors border border-[#1a6ef5]">
+            <i className="ti ti-file-download" aria-hidden="true" /> PDF
+          </button>
         </div>
-      </section>
+      </div>
 
-      <Card className="overflow-hidden">
-        <CardContent className="space-y-4 md:space-y-6">
-          <div>
-            <p className="text-sm font-bold text-slate-950 dark:text-white">
-              Tipo de relatório
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {reportTypes.map((item) => {
-                const isActive = tipo === item.value
-
-                return (
-                  <button
-                    className={cn(
-                      'min-h-10 rounded-full border px-3 text-xs font-black transition duration-200 md:min-h-11 md:px-4 md:text-sm',
-                      isActive
-                        ? 'border-brand-300 bg-brand-500 text-slate-950 shadow-[0_12px_28px_rgb(18_198_243/0.22)]'
-                        : 'border-slate-200 bg-white text-slate-600 hover:-translate-y-0.5 hover:border-brand-200 hover:bg-brand-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-brand-800 dark:hover:bg-brand-950/40',
-                    )}
-                    key={item.value}
-                    onClick={() => setTipo(item.value)}
-                    type="button"
-                  >
-                    {item.label}
-                  </button>
-                )
-              })}
+      {/* KPI grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-5">
+        {KPI_CARDS.map((card) => (
+          <div
+            key={card.label}
+            className="bg-[color:var(--color-background-secondary)] rounded-lg p-3"
+          >
+            <div className="text-[11px] uppercase tracking-[0.04em] text-[color:var(--color-text-secondary)] mb-1">
+              {card.label}
+            </div>
+            <div className="text-[20px] font-medium text-[color:var(--color-text-primary)]">
+              {card.value}
+            </div>
+            <div className={`text-[11px] mt-0.5 flex items-center gap-0.5 ${deltaClass(card.deltaType)}`}>
+              <DeltaIcon type={card.deltaType} />
+              {card.delta}
             </div>
           </div>
+        ))}
+      </div>
 
-          <div className="grid gap-3 md:gap-4 lg:grid-cols-[1fr_1fr_auto_auto_auto_auto] lg:items-end">
-            <DateFilterField
-              label="Data inicial"
-              onChange={setDataInicio}
-              value={dataInicio}
-            />
-            <DateFilterField
-              label="Data final"
-              onChange={setDataFim}
-              value={dataFim}
-            />
-            <Button onClick={applyFilters} type="button" variant="secondary">
-              Aplicar filtros
-            </Button>
-            <Button
-              leftIcon={<RotateCcw size={16} />}
-              onClick={clearFilters}
-              type="button"
-              variant="ghost"
-            >
-              Limpar
-            </Button>
-            <Button
-              disabled={!data || !advancedReportsAccess.canUse}
-              leftIcon={<FileText size={18} />}
-              onClick={exportPdf}
-              type="button"
-            >
-              Exportar PDF
-            </Button>
-            <Button
-              disabled={!data || !advancedReportsAccess.canUse}
-              leftIcon={<FileSpreadsheet size={18} />}
-              onClick={exportExcel}
-              type="button"
-            >
-              Exportar Excel
-            </Button>
-          </div>
-          {!advancedReportsAccess.isLoading && !advancedReportsAccess.canUse && (
-            <p className="rounded-xl border border-brand-100 bg-brand-50 px-3 py-2.5 text-sm font-semibold text-slate-700 dark:border-brand-800 dark:bg-brand-950/40 dark:text-slate-200 md:rounded-2xl md:px-4 md:py-3">
-              Exportações em PDF e Excel exigem upgrade de
-              plano.
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {error && (
-        <Card>
-          <CardContent>
-            <p className="text-sm text-red-600">{error.message}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {isLoading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-28" />
-          <div className="grid gap-4 md:grid-cols-3">
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-          </div>
+      {/* Gráfico diário */}
+      <div className="bg-[color:var(--color-background-primary)] border border-[color:var(--color-border-tertiary)] rounded-xl p-4 mb-2.5">
+        <div className="text-[13px] font-medium text-[color:var(--color-text-primary)] mb-3">
+          Faturamento diário <span className="text-[11px] font-normal text-[color:var(--color-text-secondary)] ml-1.5">junho 2026</span>
         </div>
-      ) : data ? (
-        <div className="space-y-4 md:space-y-6">
-          <section className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-950 dark:text-white md:text-xl">
-                {title}
-              </h3>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {periodLabel}
-              </p>
+        <div className="flex items-end gap-1.5 h-[90px] pt-2" role="img" aria-label="Gráfico de faturamento diário de junho 2026">
+          {DAILY_BARS.map(({ day, pct, highlight }) => (
+            <div key={day} className="flex-1 flex flex-col items-center gap-1">
+              <div className="w-full flex justify-center items-end" style={{ height: 65 }}>
+                <div
+                  className="w-[70%] rounded-t-[3px]"
+                  style={{
+                    height: `${pct}%`,
+                    background: '#1a6ef5',
+                    opacity: highlight ? 1 : 0.7,
+                  }}
+                />
+              </div>
+              <span className="text-[10px] text-[color:var(--color-text-secondary)]">{day}</span>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="warning">Período filtrado</Badge>
-              <Badge variant="info">{numberFormatter.format(registros)} registros</Badge>
-              <Badge>{reportTypes.find((item) => item.value === appliedFilters.tipo)?.label}</Badge>
-            </div>
-          </section>
+          ))}
+        </div>
+      </div>
 
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-            {[
-              ['Receita de serviços', currencyFormatter.format(data.summary.receitaServicos)],
-              ['Receita de produtos', currencyFormatter.format(data.summary.receitaProdutos)],
-              ['Despesas', currencyFormatter.format(data.summary.despesas)],
-              ['Lucro líquido', currencyFormatter.format(data.summary.lucroLiquido)],
-              ['Comissões', currencyFormatter.format(data.summary.comissoes)],
-              ['Ticket médio', currencyFormatter.format(ticketMedio)],
-            ].map(([label, value]) => (
-              <Card key={label}>
-                <CardContent>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
-                  <p className="mt-1.5 text-lg font-black text-slate-950 dark:text-white md:mt-2 md:text-xl">
-                    {value}
-                  </p>
-                </CardContent>
-              </Card>
+      {/* Grid 2 colunas — barbeiros e produtos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mb-2.5">
+
+        {/* Barbeiros por faturamento */}
+        <div className="bg-[color:var(--color-background-primary)] border border-[color:var(--color-border-tertiary)] rounded-xl p-4">
+          <div className="text-[13px] font-medium text-[color:var(--color-text-primary)] mb-3">
+            Barbeiros <span className="text-[11px] font-normal text-[color:var(--color-text-secondary)] ml-1.5">por faturamento</span>
+          </div>
+          <div className="flex flex-col gap-2.5">
+            {BARBERS.map((b) => (
+              <div key={b.name} className="flex items-center gap-2">
+                <span className="text-[12px] text-[color:var(--color-text-secondary)] w-[100px] shrink-0 truncate">
+                  {b.name}
+                </span>
+                <div className="flex-1 h-1.5 bg-[color:var(--color-background-secondary)] rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${(b.faturamento / b.faturamentoMax) * 100}%`,
+                      background: '#1a6ef5',
+                      opacity: b.top ? 1 : 0.6,
+                    }}
+                  />
+                </div>
+                <span className="text-[12px] text-[color:var(--color-text-primary)] w-[60px] text-right shrink-0">
+                  R$ {b.faturamento}
+                </span>
+              </div>
             ))}
-          </section>
-
-          <section className="grid gap-4 md:gap-6 xl:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <h3 className="text-base font-semibold text-slate-950 dark:text-white">
-                  Produtos mais vendidos
-                </h3>
-              </CardHeader>
-              <CardContent className="p-0">
-                {data.topProducts.length === 0 ? (
-                  <div className="p-3 text-sm text-slate-500 dark:text-slate-400 md:p-5">
-                    Nenhuma venda de produto no período.
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableHeaderCell>Produto</TableHeaderCell>
-                        <TableHeaderCell>Quantidade</TableHeaderCell>
-                        <TableHeaderCell>Valor total</TableHeaderCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {data.topProducts.map((product) => (
-                        <TableRow key={product.nome}>
-                          <TableCell className="font-medium text-slate-950 dark:text-white">
-                            {product.nome}
-                          </TableCell>
-                          <TableCell>{product.quantidade}</TableCell>
-                          <TableCell>
-                            {currencyFormatter.format(product.valorTotal)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <h3 className="text-base font-semibold text-slate-950 dark:text-white">
-                  Barbeiros com maior faturamento
-                </h3>
-              </CardHeader>
-              <CardContent className="p-0">
-                {data.topBarbers.length === 0 ? (
-                  <div className="p-3 text-sm text-slate-500 dark:text-slate-400 md:p-5">
-                    Nenhum atendimento concluído no período.
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableHeaderCell>Barbeiro</TableHeaderCell>
-                        <TableHeaderCell>Atendimentos</TableHeaderCell>
-                        <TableHeaderCell>Faturamento</TableHeaderCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {data.topBarbers.map((barber) => (
-                        <TableRow key={barber.nome}>
-                          <TableCell className="font-medium text-slate-950 dark:text-white">
-                            {barber.nome}
-                          </TableCell>
-                          <TableCell>{barber.atendimentos}</TableCell>
-                          <TableCell>
-                            {currencyFormatter.format(barber.faturamento)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </section>
-
+          </div>
         </div>
-      ) : null}
+
+        {/* Produtos mais vendidos */}
+        <div className="bg-[color:var(--color-background-primary)] border border-[color:var(--color-border-tertiary)] rounded-xl p-4">
+          <div className="text-[13px] font-medium text-[color:var(--color-text-primary)] mb-3">
+            Produtos mais vendidos
+          </div>
+          <div className="flex flex-col">
+            {PRODUTOS.map((p, i) => (
+              <div
+                key={p.name}
+                className={`flex items-center justify-between py-[7px] ${i < PRODUTOS.length - 1 ? 'border-b border-[color:var(--color-border-tertiary)]' : ''}`}
+              >
+                <div>
+                  <div className="text-[13px] text-[color:var(--color-text-primary)]">{p.name}</div>
+                  <div className="text-[11px] text-[color:var(--color-text-secondary)]">{p.unidades} unidades</div>
+                </div>
+                <div className="text-[13px] font-medium text-[color:var(--color-text-primary)]">
+                  R$ {p.total}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Grid 2 colunas — atendimentos e distribuição */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+
+        {/* Atendimentos por barbeiro */}
+        <div className="bg-[color:var(--color-background-primary)] border border-[color:var(--color-border-tertiary)] rounded-xl p-4">
+          <div className="text-[13px] font-medium text-[color:var(--color-text-primary)] mb-3">
+            Atendimentos <span className="text-[11px] font-normal text-[color:var(--color-text-secondary)] ml-1.5">por barbeiro</span>
+          </div>
+          <div className="flex flex-col">
+            {BARBERS.map((b, i) => (
+              <div
+                key={b.name}
+                className={`flex items-center justify-between py-[7px] ${i < BARBERS.length - 1 ? 'border-b border-[color:var(--color-border-tertiary)]' : ''}`}
+              >
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium shrink-0"
+                    style={{
+                      background: b.top
+                        ? 'var(--color-background-info)'
+                        : 'var(--color-background-secondary)',
+                      color: b.top
+                        ? 'var(--color-text-info)'
+                        : 'var(--color-text-secondary)',
+                    }}
+                  >
+                    {b.initials}
+                  </div>
+                  <div>
+                    <div className="text-[13px] text-[color:var(--color-text-primary)]">{b.name}</div>
+                    <div className="text-[11px] text-[color:var(--color-text-secondary)]">
+                      {b.atendimentos} atendimentos
+                    </div>
+                  </div>
+                </div>
+                {b.top ? (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[color:var(--color-background-success)] text-[color:var(--color-text-success)] font-medium">
+                    Top
+                  </span>
+                ) : (
+                  <span className="text-[13px] font-medium text-[color:var(--color-text-primary)]">
+                    {b.atendimentos}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Distribuição da receita */}
+        <div className="bg-[color:var(--color-background-primary)] border border-[color:var(--color-border-tertiary)] rounded-xl p-4">
+          <div className="text-[13px] font-medium text-[color:var(--color-text-primary)] mb-3">
+            Distribuição da receita
+          </div>
+          <div className="flex flex-col gap-2 mt-1">
+            <div>
+              <div className="flex justify-between text-[12px] text-[color:var(--color-text-secondary)] mb-1">
+                <span>Serviços</span><span>66%</span>
+              </div>
+              <div className="h-2 bg-[color:var(--color-background-secondary)] rounded-full overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: '66%', background: '#1a6ef5' }} />
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between text-[12px] text-[color:var(--color-text-secondary)] mb-1">
+                <span>Produtos</span><span>34%</span>
+              </div>
+              <div className="h-2 bg-[color:var(--color-background-secondary)] rounded-full overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: '34%', background: '#5DCAA5' }} />
+              </div>
+            </div>
+            <div className="mt-1 pt-2 border-t border-[color:var(--color-border-tertiary)] flex justify-between">
+              <span className="text-[12px] text-[color:var(--color-text-secondary)]">Total bruto</span>
+              <span className="text-[13px] font-medium text-[color:var(--color-text-primary)]">R$ 975</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   )
 }
