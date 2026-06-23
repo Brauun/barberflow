@@ -134,9 +134,7 @@ const RegisterPage = lazy(lazyWithRetry(() =>
   })),
 ))
 const RelatoriosPage = lazy(lazyWithRetry(() =>
-  import('../pages/RelatoriosPage').then(({ RelatoriosPage }) => ({
-    default: RelatoriosPage,
-  })),
+  import('../pages/RelatoriosPage'),
 ))
 const RelatoriosExecutivosPage = lazy(lazyWithRetry(() =>
   import('../pages/RelatoriosExecutivosPage').then(
