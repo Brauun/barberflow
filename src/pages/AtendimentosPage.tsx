@@ -1536,7 +1536,7 @@ export function AtendimentosPage() {
           </div>
 
           {recordQuickFilter === 'custom' && (
-            <div className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-950/50 sm:grid-cols-2 md:gap-3 md:rounded-[1.35rem] md:p-4 xl:grid-cols-3">
+            <div className="grid w-full min-w-0 max-w-full gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-950/50 sm:grid-cols-2 md:gap-3 md:rounded-[1.35rem] md:p-4 xl:grid-cols-3">
               <DateFilterField
                 label="Data inicial"
                 onChange={setRecordStartDate}
@@ -1843,7 +1843,7 @@ export function AtendimentosPage() {
             {...register('servico_id')}
           />
 
-          <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+          <div className="grid w-full min-w-0 max-w-full gap-4 sm:grid-cols-2">
             <Input
               error={errors.data?.message}
               label="Data"
@@ -2115,7 +2115,7 @@ export function AtendimentosPage() {
               {rescheduleMutation.error.message}
             </p>
           )}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid w-full min-w-0 max-w-full gap-4 sm:grid-cols-2">
             <Input
               label="Nova data"
               min={todayInputValue()}

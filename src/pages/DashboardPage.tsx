@@ -395,7 +395,7 @@ function BarberDashboard({
           </p>
         </div>
 
-        <div className="grid w-full gap-2 rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:w-auto sm:grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_auto] sm:items-end">
+        <div className="grid w-full min-w-0 max-w-full gap-2 rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:w-auto sm:grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_auto] sm:items-end">
           <Input
             label="Data inicial"
             max={draftPeriod.endDate}

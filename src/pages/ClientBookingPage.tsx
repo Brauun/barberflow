@@ -341,12 +341,12 @@ export function ClientBookingPage() {
               Este profissional ainda não possui serviços vinculados pela administração.
             </p>
           )}
-          <label className="block">
+          <label className="block min-w-0 max-w-full">
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Data
             </span>
             <input
-              className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition duration-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100/80"
+              className="mt-2 h-11 w-full max-w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition duration-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100/80"
               min={todayInputValue()}
               onChange={(event) => {
                 setDate(event.target.value)

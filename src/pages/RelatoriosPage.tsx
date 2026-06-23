@@ -624,7 +624,7 @@ export default function RelatoriosPage() {
           </div>
 
           <div className="mt-4 grid min-w-0 max-w-full gap-3 md:grid-cols-[1fr_1fr_auto_auto_auto_auto] md:items-end">
-            <label className="min-w-0 space-y-2 text-sm font-semibold text-white/75">
+            <label className="block min-w-0 max-w-full space-y-2 text-sm font-semibold text-white/75">
               Data inicial
               <input
                 className="block h-11 w-full max-w-full min-w-0 overflow-hidden rounded-xl border border-white/10 bg-[#101827] px-3 text-sm text-white outline-none focus:border-cyan-300 sm:text-base md:text-sm"
@@ -633,7 +633,7 @@ export default function RelatoriosPage() {
                 value={pendingInicio}
               />
             </label>
-            <label className="min-w-0 space-y-2 text-sm font-semibold text-white/75">
+            <label className="block min-w-0 max-w-full space-y-2 text-sm font-semibold text-white/75">
               Data final
               <input
                 className="block h-11 w-full max-w-full min-w-0 overflow-hidden rounded-xl border border-white/10 bg-[#101827] px-3 text-sm text-white outline-none focus:border-cyan-300 sm:text-base md:text-sm"

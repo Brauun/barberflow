@@ -248,8 +248,8 @@ export function FluxoCaixaPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+          <div className="flex min-w-0 max-w-full flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
               <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
                 Movimentações financeiras
               </h3>
@@ -259,7 +259,7 @@ export function FluxoCaixaPage() {
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid w-full min-w-0 max-w-full gap-3 sm:grid-cols-2 lg:w-auto">
               <Input
                 label="Data inicial"
                 onChange={(event) => setDataInicio(event.target.value)}
