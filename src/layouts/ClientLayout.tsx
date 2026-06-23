@@ -163,7 +163,7 @@ export function ClientLayout() {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-slate-800 dark:bg-slate-950 md:hidden">
-      <div className="mx-auto grid h-[4.25rem] max-h-[4.25rem] min-h-[4.25rem] w-full max-w-[34rem] grid-cols-5 items-stretch gap-1 px-1">
+      <div className="mx-auto grid h-16 max-h-16 min-h-16 w-full max-w-[34rem] grid-cols-5 items-center gap-1 px-2">
       {clientNavigation.map((item) => {
         const Icon = item.icon
 
@@ -171,7 +171,7 @@ export function ClientLayout() {
           <NavLink
             className={({ isActive }) =>
               cn(
-                'flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 text-center text-[0.62rem] font-semibold leading-none text-slate-500 transition',
+                'flex h-[3.35rem] min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-center text-[0.65rem] font-semibold leading-none text-slate-500 transition',
                 'dark:text-slate-300',
                 isActive &&
                   'bg-brand-50 text-brand-600 dark:bg-brand-400/15 dark:text-brand-100',
@@ -181,7 +181,7 @@ export function ClientLayout() {
             key={item.path}
             to={item.path}
           >
-            <Icon className="shrink-0" size={18} />
+            <Icon className="shrink-0" size={19} />
             <span className="block w-full max-w-full truncate whitespace-nowrap leading-none">
               {item.mobileLabel}
             </span>

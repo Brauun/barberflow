@@ -141,15 +141,15 @@ export function LoginPage() {
           )}
         </label>
 
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm">
-          <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap font-medium text-[#A5B4CB]">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-xs min-[390px]:text-sm">
+          <label className="inline-flex min-w-0 cursor-pointer items-center gap-2 font-medium text-[#A5B4CB]">
             <input
               className="h-5 w-5 shrink-0 rounded border-white/10 bg-white/5 accent-[#12C6F3] sm:h-4 sm:w-4"
               type="checkbox"
             />
-            Lembrar acesso
+            <span className="whitespace-nowrap">Lembrar acesso</span>
           </label>
-          <Link className="font-semibold text-[#12C6F3] transition hover:text-white" to="/recuperar-senha">
+          <Link className="justify-self-end whitespace-nowrap text-right font-semibold text-[#12C6F3] transition hover:text-white" to="/recuperar-senha">
             Esqueci minha senha
           </Link>
         </div>

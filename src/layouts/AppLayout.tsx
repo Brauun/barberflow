@@ -1,4 +1,5 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { CalendarDays, LayoutDashboard, UserRound } from 'lucide-react'
+import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { Sidebar } from '../components/layout/Sidebar'
 import { TopBar } from '../components/layout/TopBar'
@@ -6,11 +7,18 @@ import { SubscriptionBanner } from '../components/layout/SubscriptionBanner'
 import { allowedExpiredPaths, useAppLayout } from '../hooks/useAppLayout'
 import { cn } from '../utils/cn'
 
+const barberMobileNavigation = [
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/app/dashboard' },
+  { icon: CalendarDays, label: 'Agenda', path: '/app/atendimentos' },
+  { icon: UserRound, label: 'Perfil', path: '/app/perfil' },
+]
+
 export function AppLayout() {
   const location = useLocation()
   const {
     // Auth
     isLoading,
+    profile,
     userType,
     canAccessCurrentAppRoute,
     defaultAppPath,
@@ -128,7 +136,13 @@ export function AppLayout() {
           unreadCount={unreadCount}
         />
 
-        <main className="w-full max-w-full min-w-0 overflow-x-hidden px-3 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-6 sm:py-8 sm:pb-[calc(env(safe-area-inset-bottom)+2rem)] md:px-8 lg:px-10 lg:py-9 xl:px-12">
+        <main
+          className={cn(
+            'w-full max-w-full min-w-0 overflow-x-hidden px-3 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-6 sm:py-8 sm:pb-[calc(env(safe-area-inset-bottom)+2rem)] md:px-8 lg:px-10 lg:py-9 xl:px-12',
+            profile?.papel === 'barbeiro' &&
+              'pb-[calc(env(safe-area-inset-bottom)+5.5rem)] md:pb-[calc(env(safe-area-inset-bottom)+2rem)]',
+          )}
+        >
           <SubscriptionBanner
             isExpired={isSubscriptionExpired}
             isTrialing={subscriptionStatus === 'TRIAL'}
@@ -137,6 +151,35 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
+
+      {profile?.papel === 'barbeiro' && (
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-slate-800 dark:bg-slate-950 md:hidden">
+          <div className="mx-auto grid h-16 max-h-16 min-h-16 w-full max-w-[24rem] grid-cols-3 items-center gap-1 px-2">
+            {barberMobileNavigation.map((item) => {
+              const Icon = item.icon
+
+              return (
+                <NavLink
+                  className={({ isActive }) =>
+                    cn(
+                      'flex h-[3.35rem] min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-center text-[0.65rem] font-semibold leading-none text-slate-500 transition dark:text-slate-300',
+                      isActive &&
+                        'bg-brand-50 text-brand-600 dark:bg-brand-400/15 dark:text-brand-100',
+                    )
+                  }
+                  key={item.path}
+                  to={item.path}
+                >
+                  <Icon className="shrink-0" size={19} />
+                  <span className="block w-full max-w-full truncate whitespace-nowrap leading-none">
+                    {item.label}
+                  </span>
+                </NavLink>
+              )
+            })}
+          </div>
+        </nav>
+      )}
     </div>
   )
 }
