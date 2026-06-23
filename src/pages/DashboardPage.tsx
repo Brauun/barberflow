@@ -7,7 +7,6 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 
 import {
   Badge,
@@ -103,7 +102,6 @@ function DashboardSkeleton() {
 function MetricCard({
   delta,
   deltaUp,
-  href,
   icon: Icon,
   iconColor,
   label,
@@ -111,29 +109,19 @@ function MetricCard({
 }: {
   delta: string
   deltaUp: boolean
-  href?: string
   icon: typeof TrendingUp
   iconColor: 'blue' | 'green' | 'amber'
   label: string
   value: string
 }) {
-  const navigate = useNavigate()
   const iconBg = {
     amber: 'bg-amber-500/10 text-amber-400',
     blue: 'bg-brand-500/10 text-brand-400',
     green: 'bg-emerald-500/10 text-emerald-400',
   }[iconColor]
 
-  const Tag = href ? 'button' : 'div'
-
   return (
-    <Tag
-      className={cn(
-        'rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:rounded-2xl sm:p-5 text-left w-full',
-        href && 'cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-[0_8px_24px_rgb(15_23_42/0.08)] dark:hover:border-brand-500/30 active:scale-[0.98]',
-      )}
-      onClick={href ? () => navigate(href) : undefined}
-    >
+    <div className="w-full rounded-xl border border-slate-100 bg-white p-3 text-left dark:border-slate-800 dark:bg-slate-900 sm:rounded-2xl sm:p-5">
       <div className="flex items-start justify-between gap-2 sm:gap-3">
         <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">{label}</p>
         <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 sm:rounded-xl', iconBg)}>
@@ -147,7 +135,7 @@ function MetricCard({
         {deltaUp ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
         {delta}
       </p>
-    </Tag>
+    </div>
   )
 }
 
@@ -193,7 +181,7 @@ function RevenueChart({ data }: { data: MonthlyFinancePoint[] }) {
           <TrendingUp size={20} />
         </div>
         <p className="mt-3 text-sm font-semibold text-slate-950 dark:text-white">
-          Ainda não existem receitas concluidas.
+          Ainda nÃ£o existem receitas concluidas.
         </p>
         <p className="mt-1 max-w-xs text-xs text-slate-500 dark:text-slate-400">
           Conclua atendimentos para visualizar o fluxo de receita.
@@ -332,7 +320,7 @@ export function DashboardPage() {
     enabled: Boolean(empresaId),
     queryFn: () => getDashboardData(empresaId as string),
     queryKey: ['dashboard', empresaId],
-    staleTime: 1000 * 60 * 5, // 5 minutos — evita refetch a cada foco de aba
+    staleTime: 1000 * 60 * 5, // 5 minutos â€” evita refetch a cada foco de aba
   })
 
   if (!empresaId) {
@@ -340,7 +328,7 @@ export function DashboardPage() {
       <Card>
         <CardContent>
           <p className="text-sm text-slate-600">
-            Complete o vínculo do usuário com uma empresa para visualizar o Dashboard.
+            Complete o vÃ­nculo do usuÃ¡rio com uma empresa para visualizar o Dashboard.
           </p>
         </CardContent>
       </Card>
@@ -353,7 +341,7 @@ export function DashboardPage() {
     return (
       <Card>
         <CardContent>
-          <p className="text-sm font-medium text-red-600">Não foi possível carregar o Dashboard.</p>
+          <p className="text-sm font-medium text-red-600">NÃ£o foi possÃ­vel carregar o Dashboard.</p>
           <p className="mt-2 text-sm text-slate-600">{error.message}</p>
         </CardContent>
       </Card>
@@ -362,10 +350,10 @@ export function DashboardPage() {
 
   if (!data) return null
 
-  const userName = profile?.nome ?? user?.user_metadata.nome ?? 'Usuário'
+  const userName = profile?.nome ?? user?.user_metadata.nome ?? 'UsuÃ¡rio'
   const todayRevenue = data.metrics[0]
   const appointments = {
-    helper: 'Atendimentos concluídos hoje',
+    helper: 'Atendimentos concluÃ­dos hoje',
     label: 'Atendimentos Hoje',
     value: String(data.todayAppointments),
   }
@@ -407,7 +395,7 @@ export function DashboardPage() {
     data.popularServicesToday.reduce<
       Record<string, { count: number; name: string; total: number }>
     >((acc, appointment) => {
-      const name = appointment.servicos?.nome ?? 'Serviço'
+      const name = appointment.servicos?.nome ?? 'ServiÃ§o'
       const current = acc[name] ?? { count: 0, name, total: 0 }
       current.count += 1
       current.total += Number(appointment.valor)
@@ -427,7 +415,7 @@ export function DashboardPage() {
           {getGreeting()}, {String(userName).split(' ')[0]}
         </h2>
         <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-          Hoje você teve{' '}
+          Hoje vocÃª teve{' '}
           <span className="font-semibold text-slate-950 dark:text-white">{appointments?.value}</span>{' '}
           atendimentos e faturou{' '}
           <span className="font-semibold text-brand-500">{todayRevenue?.value}</span>
@@ -438,7 +426,6 @@ export function DashboardPage() {
         <MetricCard
           delta={revenueDelta.text}
           deltaUp={revenueDelta.up}
-          href="/fluxo-caixa"
           icon={TrendingUp}
           iconColor="blue"
           label="Receita hoje"
@@ -447,7 +434,6 @@ export function DashboardPage() {
         <MetricCard
           delta={appointmentsDelta.text}
           deltaUp={appointmentsDelta.up}
-          href="/atendimentos"
           icon={Scissors}
           iconColor="green"
           label="Atendimentos"
@@ -456,10 +442,9 @@ export function DashboardPage() {
         <MetricCard
           delta={ticketDelta.text}
           deltaUp={ticketDelta.up}
-          href="/relatorios"
           icon={CreditCard}
           iconColor="amber"
-          label="Ticket médio"
+          label="Ticket mÃ©dio"
           value={formatCurrency(revenueTicketHoje)}
         />
       </section>
@@ -480,11 +465,11 @@ export function DashboardPage() {
 
         <div className="rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:rounded-2xl sm:p-5">
           <div className="mb-3 sm:mb-5">
-            <h3 className="text-sm font-semibold text-slate-950 dark:text-white sm:text-base">Serviços Populares</h3>
+            <h3 className="text-sm font-semibold text-slate-950 dark:text-white sm:text-base">ServiÃ§os Populares</h3>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Hoje</p>
           </div>
           {popularServices.length === 0 ? (
-            <p className="text-sm text-slate-500">Nenhum serviço registrado ainda.</p>
+            <p className="text-sm text-slate-500">Nenhum serviÃ§o registrado ainda.</p>
           ) : (
             <div className="space-y-3 sm:space-y-5">
               {popularServices.map((service) => (
@@ -525,7 +510,7 @@ export function DashboardPage() {
             <TableHead>
               <TableRow>
                 <TableHeaderCell>Cliente</TableHeaderCell>
-                <TableHeaderCell>Serviço</TableHeaderCell>
+                <TableHeaderCell>ServiÃ§o</TableHeaderCell>
                 <TableHeaderCell>Barbeiro</TableHeaderCell>
                 <TableHeaderCell>Data</TableHeaderCell>
                 <TableHeaderCell>Valor</TableHeaderCell>
@@ -536,9 +521,9 @@ export function DashboardPage() {
               {data.latestAppointments.map((appointment) => (
                 <TableRow key={appointment.id}>
                   <TableCell className="font-semibold text-slate-950 dark:text-white">
-                    {appointment.clientes?.nome?.trim() || 'Cliente não identificado'}
+                    {appointment.clientes?.nome?.trim() || 'Cliente nÃ£o identificado'}
                   </TableCell>
-                  <TableCell>{appointment.servicos?.nome ?? 'Serviço'}</TableCell>
+                  <TableCell>{appointment.servicos?.nome ?? 'ServiÃ§o'}</TableCell>
                   <TableCell>{appointment.barbeiros?.nome ?? 'Barbeiro'}</TableCell>
                   <TableCell>
                     {dateTimeFormatter.format(new Date(appointment.data_hora_inicio))}
