@@ -1153,10 +1153,10 @@ export function AtendimentosPage() {
             <div className="space-y-3">
               {dailyAppointmentsQuery.data.map((appointment) => (
                 <div
-                  className="grid min-w-0 gap-2.5 rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-[1.35rem] md:gap-4 md:p-4 lg:grid-cols-[5rem_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                  className="grid min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-[1.35rem] md:p-4 lg:grid-cols-[5rem_minmax(0,1.25fr)_minmax(0,1fr)_8.5rem_minmax(17rem,auto)] xl:grid-cols-[5rem_minmax(0,1.25fr)_minmax(0,1fr)_9rem_minmax(20rem,auto)]"
                   key={`${appointment.source}-${appointment.id}`}
                 >
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400">
                       Horário
                     </p>
@@ -1167,7 +1167,7 @@ export function AtendimentosPage() {
                       })}
                     </p>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <p className="text-sm font-black text-slate-950 dark:text-white md:text-base">
                         {appointment.cliente}
@@ -1185,7 +1185,7 @@ export function AtendimentosPage() {
                       </p>
                     )}
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs font-semibold text-slate-950 dark:text-white md:text-sm">
                       {appointment.barbeiro}
                     </p>
@@ -1193,17 +1193,19 @@ export function AtendimentosPage() {
                       {appointment.duration_minutes}min
                     </p>
                   </div>
-                  <div>
+                  <div className="min-w-0 lg:text-left">
                     <p className="text-sm font-black text-brand-600 md:text-base">
                       {currencyFormatter.format(appointment.valor)}
                     </p>
-                    <Badge variant={getStatusVariant(appointment.status)}>
-                      {getStatusLabel(appointment.status)}
-                    </Badge>
+                    <div className="mt-1 flex min-w-0">
+                      <Badge variant={getStatusVariant(appointment.status)}>
+                        {getStatusLabel(appointment.status)}
+                      </Badge>
+                    </div>
                   </div>
                   <div className="flex min-w-0 flex-wrap items-center gap-2 lg:justify-end">
                     <Select
-                      className="min-w-0 sm:min-w-44"
+                      className="w-full min-w-0 sm:w-44"
                       onChange={(event) =>
                         updateStatusMutation.mutate({
                           appointment,
@@ -1638,10 +1640,10 @@ export function AtendimentosPage() {
               <div className="space-y-3">
                 {atendimentosQuery.data.items.map((atendimento) => (
                   <div
-                    className="grid min-w-0 gap-2.5 rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-[1.35rem] md:gap-4 md:p-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                    className="grid min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_50px_rgb(15_23_42/0.025)] dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-[1.35rem] md:p-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.95fr)_minmax(16rem,0.8fr)_11rem]"
                     key={`${atendimento.source}-${atendimento.id}`}
                   >
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex min-w-0 flex-wrap items-center gap-2">
                         <p className="text-sm font-black text-slate-950 dark:text-white md:text-base">
                           {atendimento.cliente}
@@ -1656,7 +1658,7 @@ export function AtendimentosPage() {
                         {dateTimeFormatter.format(new Date(atendimento.starts_at))}
                       </p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs font-semibold text-slate-950 dark:text-white md:text-sm">
                         {atendimento.barbeiro}
                       </p>
@@ -1664,7 +1666,7 @@ export function AtendimentosPage() {
                         {atendimento.servico}
                       </p>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-xs md:text-sm xl:block">
+                    <div className="grid min-w-0 grid-cols-3 gap-2 text-xs md:text-sm xl:grid-cols-1 xl:gap-1">
                       <div>
                         <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
                           Valor
@@ -1692,7 +1694,7 @@ export function AtendimentosPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center xl:justify-end">
+                    <div className="flex min-w-0 items-center justify-start xl:justify-end">
                       <Badge variant={getStatusVariant(atendimento.status)}>
                         {getStatusLabel(atendimento.status)}
                       </Badge>

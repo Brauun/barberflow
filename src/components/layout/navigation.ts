@@ -43,7 +43,7 @@ export function canAccessNavigationItem(item: NavigationItem, role: AppRole) {
 
 export const navigationItems: NavigationItem[] = [
   {
-    canAccess: (role) => role === 'administrador',
+    canAccess: (role) => role === 'administrador' || role === 'barbeiro',
     icon: LayoutDashboard,
     label: 'Dashboard',
     path: '/app/dashboard',
