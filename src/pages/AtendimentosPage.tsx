@@ -29,6 +29,7 @@ import {
 import { useAuth } from '../hooks/useAuth'
 import { useFeatureAccess } from '../hooks/useSubscription'
 import {
+  getAtendimentoBarbeiroByUsuario,
   listAtendimentoBarbeiros,
   listAtendimentoRecords,
   listAtendimentoServicos,
@@ -254,6 +255,7 @@ function getStatusLabel(status: string) {
 export function AtendimentosPage() {
   const { profile } = useAuth()
   const empresaId = profile?.empresa_id
+  const isBarbeiroUser = profile?.papel === 'barbeiro'
   const waitlistAccess = useFeatureAccess('HAS_WAITLIST')
   const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
@@ -300,6 +302,19 @@ export function AtendimentosPage() {
     status: '',
   })
   const handledDeepLinkRef = useRef<string | null>(null)
+
+  const currentBarbeiroQuery = useQuery({
+    enabled: Boolean(empresaId && profile?.id && isBarbeiroUser),
+    queryFn: () =>
+      getAtendimentoBarbeiroByUsuario(empresaId as string, profile?.id as string),
+    queryKey: ['current-atendimento-barbeiro', empresaId, profile?.id],
+  })
+
+  const currentBarbeiroId = currentBarbeiroQuery.data?.id ?? ''
+  const effectiveDailyBarberId = isBarbeiroUser ? currentBarbeiroId : dailyBarberId
+  const effectiveRecordBarberId = isBarbeiroUser
+    ? currentBarbeiroId
+    : appliedRecordFilters.barbeiroId
 
   const {
     formState: { errors, isSubmitting },
@@ -361,10 +376,11 @@ export function AtendimentosPage() {
   const valorEmpresa = valorFinal - comissaoBarbeiro
 
   const atendimentosQuery = useQuery({
-    enabled: Boolean(empresaId),
+    enabled: Boolean(empresaId && (!isBarbeiroUser || currentBarbeiroId)),
     queryFn: () =>
       listAtendimentoRecords(empresaId as string, {
         ...appliedRecordFilters,
+        barbeiroId: effectiveRecordBarberId,
         page: recordPage,
         pageSize: recordPageSize,
       }),
@@ -372,6 +388,7 @@ export function AtendimentosPage() {
       'atendimentos',
       empresaId,
       appliedRecordFilters,
+      effectiveRecordBarberId,
       recordPage,
       recordPageSize,
     ],
@@ -384,7 +401,7 @@ export function AtendimentosPage() {
   })
 
   const barbeirosQuery = useQuery({
-    enabled: Boolean(empresaId),
+    enabled: Boolean(empresaId && !isBarbeiroUser),
     queryFn: () => listAtendimentoBarbeiros(empresaId as string),
     queryKey: ['atendimentos-barbeiros', empresaId],
   })
@@ -450,12 +467,12 @@ export function AtendimentosPage() {
   )
 
   const dailyAppointmentsQuery = useQuery({
-    enabled: Boolean(empresaId),
+    enabled: Boolean(empresaId && (!isBarbeiroUser || currentBarbeiroId)),
     queryFn: async () => {
       await processPendingAppointmentCompletions(empresaId as string)
 
       return listDailyAppointments({
-        barbeiroId: dailyBarberId,
+        barbeiroId: effectiveDailyBarberId,
         date: dailyDate,
         empresaId: empresaId as string,
         status: dailyStatus,
@@ -465,19 +482,20 @@ export function AtendimentosPage() {
       'daily-appointments',
       empresaId,
       dailyDate,
-      dailyBarberId,
+      effectiveDailyBarberId,
       dailyStatus,
     ],
   })
 
   const todayAppointmentsQuery = useQuery({
-    enabled: Boolean(empresaId),
+    enabled: Boolean(empresaId && (!isBarbeiroUser || currentBarbeiroId)),
     queryFn: () =>
       listDailyAppointments({
+        barbeiroId: effectiveDailyBarberId,
         date: today,
         empresaId: empresaId as string,
       }),
-    queryKey: ['today-appointments-summary', empresaId, today],
+    queryKey: ['today-appointments-summary', empresaId, today, effectiveDailyBarberId],
   })
 
   const completedToday = (todayAppointmentsQuery.data ?? []).filter((appointment) =>
@@ -534,16 +552,31 @@ export function AtendimentosPage() {
     deepLinkAppointmentId,
   ])
 
-  const barbeiroOptions = useMemo(
-    () => [
+  const barbeiroOptions = useMemo(() => {
+    if (isBarbeiroUser) {
+      return currentBarbeiroId
+        ? [
+            {
+              label: currentBarbeiroQuery.data?.nome ?? 'Seu atendimento',
+              value: currentBarbeiroId,
+            },
+          ]
+        : []
+    }
+
+    return [
       { label: 'Selecione um barbeiro', value: '' },
       ...(barbeirosQuery.data ?? []).map((barbeiro) => ({
         label: barbeiro.nome,
         value: barbeiro.id,
       })),
-    ],
-    [barbeirosQuery.data],
-  )
+    ]
+  }, [
+    barbeirosQuery.data,
+    currentBarbeiroId,
+    currentBarbeiroQuery.data?.nome,
+    isBarbeiroUser,
+  ])
 
   const servicoOptions = useMemo(
     () => [
@@ -606,13 +639,29 @@ export function AtendimentosPage() {
     }
   }, [atendimentoTipo, setValue])
 
+  useEffect(() => {
+    if (!isBarbeiroUser || !currentBarbeiroId) {
+      return
+    }
+
+    setDailyBarberId(currentBarbeiroId)
+    setRecordBarberId(currentBarbeiroId)
+    setValue('barbeiro_id', currentBarbeiroId, {
+      shouldDirty: true,
+      shouldValidate: true,
+    })
+  }, [currentBarbeiroId, isBarbeiroUser, setValue])
+
   const saveMutation = useMutation({
     mutationFn: async (data: AtendimentoFormData) => {
       if (!empresaId) {
         throw new Error('Empresa não encontrada.')
       }
 
-      await registrarAtendimento(empresaId, data)
+      await registrarAtendimento(empresaId, {
+        ...data,
+        barbeiro_id: isBarbeiroUser ? currentBarbeiroId : data.barbeiro_id,
+      })
     },
     onSuccess: async () => {
       await Promise.all([
@@ -621,7 +670,10 @@ export function AtendimentosPage() {
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
         queryClient.invalidateQueries({ queryKey: ['barbeiros'] }),
       ])
-      reset(emptyFormValues())
+      reset({
+        ...emptyFormValues(),
+        barbeiro_id: isBarbeiroUser ? currentBarbeiroId : '',
+      })
       setFormClient(null)
       setFormError(null)
       setIsFormOpen(false)
@@ -734,6 +786,10 @@ export function AtendimentosPage() {
     setFormError(null)
 
     try {
+      if (isBarbeiroUser && !currentBarbeiroId) {
+        throw new Error('Seu usuário ainda não está vinculado a um barbeiro ativo.')
+      }
+
       await saveMutation.mutateAsync(data)
     } catch (error) {
       setFormError(
@@ -758,7 +814,7 @@ export function AtendimentosPage() {
     setRecordClient(null)
     setRecordPage(0)
     setAppliedRecordFilters({
-      barbeiroId: '',
+      barbeiroId: isBarbeiroUser ? currentBarbeiroId : '',
       clienteId: '',
       dataFim: range.end,
       dataInicio: range.start,
@@ -770,7 +826,7 @@ export function AtendimentosPage() {
   function applyRecordFilters() {
     setRecordPage(0)
     setAppliedRecordFilters({
-      barbeiroId: recordBarberId,
+      barbeiroId: isBarbeiroUser ? currentBarbeiroId : recordBarberId,
       clienteId: recordClientId,
       dataFim: recordEndDate,
       dataInicio: recordStartDate,
@@ -784,14 +840,14 @@ export function AtendimentosPage() {
     setRecordQuickFilter('7d')
     setRecordStartDate(range.start)
     setRecordEndDate(range.end)
-    setRecordBarberId('')
+    setRecordBarberId(isBarbeiroUser ? currentBarbeiroId : '')
     setRecordClientId('')
     setRecordClient(null)
     setRecordServiceId('')
     setRecordStatus('')
     setRecordPage(0)
     setAppliedRecordFilters({
-      barbeiroId: '',
+      barbeiroId: isBarbeiroUser ? currentBarbeiroId : '',
       clienteId: '',
       dataFim: range.end,
       dataInicio: range.start,
@@ -807,6 +863,7 @@ export function AtendimentosPage() {
 
     return listAtendimentoRecords(empresaId, {
       ...appliedRecordFilters,
+      barbeiroId: effectiveRecordBarberId,
       page: 0,
       pageSize: 5000,
     })
@@ -1052,19 +1109,21 @@ export function AtendimentosPage() {
                 Consulte a agenda por data, barbeiro e status.
               </p>
             </div>
-            <div className="grid w-full min-w-0 gap-3 sm:grid-cols-2 lg:w-auto lg:min-w-[46rem] lg:grid-cols-3">
+            <div className={`grid w-full min-w-0 gap-3 sm:grid-cols-2 lg:w-auto ${isBarbeiroUser ? 'lg:min-w-[30rem] lg:grid-cols-2' : 'lg:min-w-[46rem] lg:grid-cols-3'}`}>
               <DateFilterField
                 label="Data"
                 onChange={setDailyDate}
                 value={dailyDate}
               />
-              <Select
-                className="h-12 sm:h-11"
-                label="Barbeiro"
-                onChange={(event) => setDailyBarberId(event.target.value)}
-                options={barbeiroOptions}
-                value={dailyBarberId}
-              />
+              {!isBarbeiroUser && (
+                <Select
+                  className="h-12 sm:h-11"
+                  label="Barbeiro"
+                  onChange={(event) => setDailyBarberId(event.target.value)}
+                  options={barbeiroOptions}
+                  value={dailyBarberId}
+                />
+              )}
               <Select
                 className="h-12 sm:h-11"
                 label="Status"
@@ -1486,13 +1545,15 @@ export function AtendimentosPage() {
                 onChange={setRecordEndDate}
                 value={recordEndDate}
               />
-              <Select
-                className="h-12 sm:h-11"
-                label="Barbeiro"
-                onChange={(event) => setRecordBarberId(event.target.value)}
-                options={barbeiroOptions}
-                value={recordBarberId}
-              />
+              {!isBarbeiroUser && (
+                <Select
+                  className="h-12 sm:h-11"
+                  label="Barbeiro"
+                  onChange={(event) => setRecordBarberId(event.target.value)}
+                  options={barbeiroOptions}
+                  value={recordBarberId}
+                />
+              )}
               <ClienteAutocomplete
                 empresaId={empresaId}
                 label="Cliente"
@@ -1751,12 +1812,23 @@ export function AtendimentosPage() {
             </div>
           )}
 
-          <Select
-            error={errors.barbeiro_id?.message}
-            label="Barbeiro"
-            options={barbeiroOptions}
-            {...register('barbeiro_id')}
-          />
+          {isBarbeiroUser ? (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300">
+              <span className="block text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                Profissional
+              </span>
+              <span className="mt-1 block font-semibold text-slate-900 dark:text-white">
+                {currentBarbeiroQuery.data?.nome ?? 'Seu atendimento'}
+              </span>
+            </div>
+          ) : (
+            <Select
+              error={errors.barbeiro_id?.message}
+              label="Barbeiro"
+              options={barbeiroOptions}
+              {...register('barbeiro_id')}
+            />
+          )}
 
           <Select
             error={errors.servico_id?.message}

@@ -808,6 +808,25 @@ export async function listAtendimentoBarbeiros(
   return data ?? []
 }
 
+export async function getAtendimentoBarbeiroByUsuario(
+  empresaId: string,
+  usuarioId: string,
+): Promise<AtendimentoOption | null> {
+  const { data, error } = await supabase
+    .from('barbeiros')
+    .select('id,nome')
+    .eq('empresa_id', empresaId)
+    .eq('usuario_id', usuarioId)
+    .eq('status', 'ativo')
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data ?? null
+}
+
 export async function listAtendimentoServicos(
   empresaId: string,
 ): Promise<ServicoOption[]> {
