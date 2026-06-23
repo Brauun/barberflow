@@ -154,17 +154,17 @@ type DateFilterFieldProps = {
 
 function DateFilterField({ label, onChange, value }: DateFilterFieldProps) {
   return (
-    <label className="block">
+    <label className="block min-w-0 max-w-full">
       <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
         {label}
       </span>
-      <div className="relative mt-2">
-        <div className="flex h-12 w-full min-w-0 items-center rounded-xl border border-slate-200 bg-white px-3.5 text-base text-slate-950 transition duration-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 sm:h-11 sm:text-sm">
+      <div className="relative mt-2 min-w-0 max-w-full overflow-hidden">
+        <div className="flex h-12 w-full max-w-full min-w-0 items-center overflow-hidden rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 transition duration-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 sm:h-11 sm:text-sm">
           {formatDateInputLabel(value)}
         </div>
         <input
           aria-label={label}
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          className="absolute inset-0 h-full w-full max-w-full cursor-pointer opacity-0"
           onChange={(event) => onChange(event.target.value)}
           type="date"
           value={value}
@@ -813,7 +813,14 @@ export function AtendimentosPage() {
   }
 
   async function exportAtendimentosCsv() {
-    const result = await getExportRecords()
+    let result: Awaited<ReturnType<typeof getExportRecords>>
+
+    try {
+      result = await getExportRecords()
+    } catch {
+      window.alert('Não foi possível exportar os atendimentos agora.')
+      return
+    }
 
     if (!result) {
       return
@@ -860,7 +867,14 @@ export function AtendimentosPage() {
   }
 
   async function exportAtendimentosPdf() {
-    const result = await getExportRecords()
+    let result: Awaited<ReturnType<typeof getExportRecords>>
+
+    try {
+      result = await getExportRecords()
+    } catch {
+      window.alert('Não foi possível exportar os atendimentos agora.')
+      return
+    }
 
     if (!result) {
       return
@@ -1412,11 +1426,11 @@ export function AtendimentosPage() {
               </div>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button
-                className="w-full sm:w-auto"
-                disabled={!atendimentosQuery.data?.items.length}
-                leftIcon={<FileText size={16} />}
-                onClick={exportAtendimentosPdf}
+                <Button
+                  className="w-full sm:w-auto"
+                  disabled={atendimentosQuery.isLoading}
+                  leftIcon={<FileText size={16} />}
+                  onClick={exportAtendimentosPdf}
                 size="sm"
                 type="button"
               >
@@ -1660,36 +1674,36 @@ export function AtendimentosPage() {
         onClose={() => setIsFormOpen(false)}
         title="Registrar atendimento"
       >
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <form className="w-full max-w-full min-w-0 space-y-4 overflow-x-hidden" onSubmit={handleSubmit(onSubmit)}>
           {formError && (
             <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {formError}
             </p>
           )}
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:has-[:checked]:border-brand-400 dark:has-[:checked]:bg-brand-400/10">
+          <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+            <label className="flex min-w-0 cursor-pointer flex-nowrap items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:has-[:checked]:border-brand-400 dark:has-[:checked]:bg-brand-400/10">
               <input
-                className="h-4 w-4 accent-brand-500"
+                className="h-4 w-4 shrink-0 accent-brand-500"
                 type="radio"
                 value="cadastrado"
                 {...register('atendimento_tipo')}
               />
-              Cliente cadastrado
+              <span className="min-w-0 whitespace-nowrap">Cliente cadastrado</span>
             </label>
-            <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:has-[:checked]:border-brand-400 dark:has-[:checked]:bg-brand-400/10">
+            <label className="flex min-w-0 cursor-pointer flex-nowrap items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:has-[:checked]:border-brand-400 dark:has-[:checked]:bg-brand-400/10">
               <input
-                className="h-4 w-4 accent-brand-500"
+                className="h-4 w-4 shrink-0 accent-brand-500"
                 type="radio"
                 value="avulso"
                 {...register('atendimento_tipo')}
               />
-              Cliente avulso
+              <span className="min-w-0 whitespace-nowrap">Cliente avulso</span>
             </label>
           </div>
 
           {atendimentoTipo === 'avulso' ? (
-            <div className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/70 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/70 sm:grid-cols-2">
               <Input
                 error={errors.cliente_avulso_nome?.message}
                 label="Nome do cliente"
@@ -1751,7 +1765,7 @@ export function AtendimentosPage() {
             {...register('servico_id')}
           />
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2">
             <Input
               error={errors.data?.message}
               label="Data"
@@ -1786,7 +1800,7 @@ export function AtendimentosPage() {
                 {internalSlotResult.message}
               </p>
             ) : availableInternalSlots.length > 0 ? (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
                 {availableInternalSlots.map((slot) => (
                   <button
                     className={`min-h-10 rounded-xl border px-3 text-sm font-semibold transition ${
@@ -1829,7 +1843,7 @@ export function AtendimentosPage() {
             {...register('valor')}
           />
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2">
             <Select
               error={errors.desconto_tipo?.message}
               label="Tipo de desconto"
@@ -1849,7 +1863,7 @@ export function AtendimentosPage() {
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2">
             <Select
               error={errors.motivo_desconto?.message}
               label="Motivo do desconto"
@@ -1885,7 +1899,7 @@ export function AtendimentosPage() {
             {...register('forma_pagamento')}
           />
 
-          <div className="grid gap-3 rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-zinc-800 dark:bg-zinc-950 sm:grid-cols-2">
+          <div className="grid min-w-0 gap-3 rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-zinc-800 dark:bg-zinc-950 sm:grid-cols-2">
             <div>
               <p className="text-zinc-500 dark:text-zinc-400">Pago</p>
               <p className="mt-1 font-semibold text-brand-600">

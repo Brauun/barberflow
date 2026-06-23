@@ -47,18 +47,31 @@ export function exportHtmlReport(input: {
     return
   }
 
-  const printWindow = window.open(
-    '',
-    '_blank',
-    input.previewFeatures ?? 'width=920,height=1200',
-  )
+  let printWindow: Window | null = null
+
+  try {
+    printWindow = window.open(
+      '',
+      '_blank',
+      input.previewFeatures ?? 'width=920,height=1200',
+    )
+  } catch {
+    downloadHtml(input.html, filename)
+    return
+  }
 
   if (!printWindow) {
     downloadHtml(input.html, filename)
     return
   }
 
-  printWindow.document.open()
-  printWindow.document.write(input.html)
-  printWindow.document.close()
+  try {
+    printWindow.document.open()
+    printWindow.document.write(input.html)
+    printWindow.document.close()
+    printWindow.focus()
+  } catch {
+    printWindow.close()
+    downloadHtml(input.html, filename)
+  }
 }

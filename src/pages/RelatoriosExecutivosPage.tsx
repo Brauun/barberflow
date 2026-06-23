@@ -431,15 +431,19 @@ export default function RelatorioExecutivosPage() {
   function exportPdf() {
     if (!data) return
 
-    exportHtmlReport({
-      filename: `${fileBaseName}.html`,
-      html: buildExecutiveHtml({
-        data,
-        dataFim: appliedFilters.dataFim,
-        dataInicio: appliedFilters.dataInicio,
-      }),
-      previewFeatures: 'width=1120,height=1200',
-    })
+    try {
+      exportHtmlReport({
+        filename: `${fileBaseName}.html`,
+        html: buildExecutiveHtml({
+          data,
+          dataFim: appliedFilters.dataFim,
+          dataInicio: appliedFilters.dataInicio,
+        }),
+        previewFeatures: 'width=1120,height=1200',
+      })
+    } catch {
+      window.alert('Não foi possível exportar o relatório executivo agora.')
+    }
   }
 
   function exportCsv() {
@@ -492,26 +496,26 @@ export default function RelatorioExecutivosPage() {
             ))}
           </div>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
-            <label className="space-y-2 text-sm font-semibold text-white/75">
+          <div className="mt-4 grid min-w-0 max-w-full gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
+            <label className="min-w-0 space-y-2 text-sm font-semibold text-white/75">
               Data inicial
               <input
-                className="h-11 w-full min-w-0 rounded-xl border border-white/10 bg-[#101827] px-3 text-base text-white outline-none focus:border-cyan-300 md:text-sm"
+                className="block h-11 w-full max-w-full min-w-0 overflow-hidden rounded-xl border border-white/10 bg-[#101827] px-3 text-sm text-white outline-none focus:border-cyan-300 sm:text-base md:text-sm"
                 onChange={(event) => setPendingInicio(event.target.value)}
                 type="date"
                 value={pendingInicio}
               />
             </label>
-            <label className="space-y-2 text-sm font-semibold text-white/75">
+            <label className="min-w-0 space-y-2 text-sm font-semibold text-white/75">
               Data final
               <input
-                className="h-11 w-full min-w-0 rounded-xl border border-white/10 bg-[#101827] px-3 text-base text-white outline-none focus:border-cyan-300 md:text-sm"
+                className="block h-11 w-full max-w-full min-w-0 overflow-hidden rounded-xl border border-white/10 bg-[#101827] px-3 text-sm text-white outline-none focus:border-cyan-300 sm:text-base md:text-sm"
                 onChange={(event) => setPendingFim(event.target.value)}
                 type="date"
                 value={pendingFim}
               />
             </label>
-            <Button onClick={applyFilters} variant="secondary">
+            <Button className="w-full min-w-0 md:w-auto" onClick={applyFilters} variant="secondary">
               Aplicar período
             </Button>
           </div>

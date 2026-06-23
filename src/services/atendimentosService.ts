@@ -129,6 +129,62 @@ function displayCustomerName(...values: Array<null | string | undefined>) {
   return value?.trim() || 'Cliente não identificado'
 }
 
+type AppointmentProfileFallback = {
+  auth_user_id: string | null
+  id: string
+  nome: string
+  telefone: string | null
+}
+
+async function getAppointmentProfileFallbacks(
+  appointments: Array<{
+    client_profile_id?: string | null
+    created_by_user_id?: string | null
+  }>,
+) {
+  const profileIds = [
+    ...new Set(
+      appointments
+        .map((appointment) => appointment.client_profile_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ]
+  const authUserIds = [
+    ...new Set(
+      appointments
+        .map((appointment) => appointment.created_by_user_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ]
+
+  if (!profileIds.length && !authUserIds.length) {
+    return {
+      byAuthUserId: new Map<string, AppointmentProfileFallback>(),
+      byProfileId: new Map<string, AppointmentProfileFallback>(),
+    }
+  }
+
+  const filters = [
+    profileIds.length ? `id.in.(${profileIds.join(',')})` : '',
+    authUserIds.length ? `auth_user_id.in.(${authUserIds.join(',')})` : '',
+  ].filter(Boolean)
+  const { data } = await supabase
+    .from('profiles')
+    .select('id,auth_user_id,nome,telefone')
+    .or(filters.join(','))
+
+  const profiles = (data ?? []) as AppointmentProfileFallback[]
+
+  return {
+    byAuthUserId: new Map(
+      profiles
+        .filter((profile) => profile.auth_user_id)
+        .map((profile) => [profile.auth_user_id as string, profile]),
+    ),
+    byProfileId: new Map(profiles.map((profile) => [profile.id, profile])),
+  }
+}
+
 export async function listAtendimentos(
   empresaId: string,
 ): Promise<AtendimentoListItem[]> {
@@ -160,7 +216,7 @@ export async function listDailyAppointments(input: {
   let appointmentsQuery = supabase
     .from('appointments')
     .select(
-      'id,atendimento_id,starts_at,ends_at,status,valor_final,barbeiro_id,barbershop_id,auto_completed,auto_completed_at,is_walk_in,walk_in_customer_name,walk_in_customer_phone,client:profiles(nome,telefone),cliente:clientes(nome,telefone),barbeiro:barbeiros(nome),items:appointment_items(nome,duration_minutes,servico_id,valor_final)',
+      'id,atendimento_id,cliente_id,client_profile_id,created_by_user_id,starts_at,ends_at,status,valor_final,barbeiro_id,barbershop_id,auto_completed,auto_completed_at,is_walk_in,walk_in_customer_name,walk_in_customer_phone,client:profiles(nome,telefone),cliente:clientes(nome,telefone),barbeiro:barbeiros(nome),items:appointment_items(nome,duration_minutes,servico_id,valor_final)',
     )
     .eq('empresa_id', input.empresaId)
     .gte('starts_at', dayStart.toISOString())
@@ -207,6 +263,9 @@ export async function listDailyAppointments(input: {
   const appointments = (appointmentsResponse.data ?? []) as unknown as Array<{
     id: string
     atendimento_id: string | null
+    cliente_id: string | null
+    client_profile_id: string | null
+    created_by_user_id: string | null
     starts_at: string
     ends_at: string
     status: DailyAppointmentStatus
@@ -241,6 +300,7 @@ export async function listDailyAppointments(input: {
       .map((appointment) => appointment.atendimento_id)
       .filter(Boolean),
   )
+  const fallbackProfiles = await getAppointmentProfileFallbacks(appointments)
   const unlinkedAtendimentos = atendimentos.filter(
     (atendimento) => !linkedAtendimentoIds.has(atendimento.id),
   )
@@ -248,20 +308,37 @@ export async function listDailyAppointments(input: {
   return [
     ...appointments.map((appointment) => {
       const firstItem = appointment.items[0]
+      const fallbackProfile =
+        (appointment.client_profile_id
+          ? fallbackProfiles.byProfileId.get(appointment.client_profile_id)
+          : null) ??
+        (appointment.created_by_user_id
+          ? fallbackProfiles.byAuthUserId.get(appointment.created_by_user_id)
+          : null)
+      const cliente = appointment.is_walk_in
+        ? displayCustomerName(
+            appointment.walk_in_customer_name,
+            appointment.cliente?.nome,
+            appointment.client?.nome,
+            fallbackProfile?.nome,
+          )
+        : displayCustomerName(
+            appointment.cliente?.nome,
+            appointment.client?.nome,
+            fallbackProfile?.nome,
+            appointment.walk_in_customer_name,
+          )
 
       return {
         barbeiro: appointment.barbeiro?.nome ?? 'Barbeiro',
         barbeiro_id: appointment.barbeiro_id,
         barbershop_id: appointment.barbershop_id,
-        cliente: displayCustomerName(
-          appointment.walk_in_customer_name,
-          appointment.cliente?.nome,
-          appointment.client?.nome,
-        ),
+        cliente,
         cliente_telefone:
           appointment.walk_in_customer_phone ??
           appointment.cliente?.telefone ??
           appointment.client?.telefone ??
+          fallbackProfile?.telefone ??
           null,
         is_walk_in: Boolean(appointment.is_walk_in),
         duration_minutes:
@@ -1010,7 +1087,7 @@ export async function listAtendimentoRecords(
   let appointmentsQuery = supabase
     .from('appointments')
     .select(
-      'id,atendimento_id,starts_at,status,valor_original,valor_desconto,valor_final,is_walk_in,walk_in_customer_name,cliente:clientes(nome),client:profiles(nome),barbeiro:barbeiros(nome),items:appointment_items(nome,servico_id,valor_original,valor_desconto,valor_final)',
+      'id,atendimento_id,cliente_id,client_profile_id,created_by_user_id,starts_at,status,valor_original,valor_desconto,valor_final,is_walk_in,walk_in_customer_name,cliente:clientes(nome),client:profiles(nome),barbeiro:barbeiros(nome),items:appointment_items(nome,servico_id,valor_original,valor_desconto,valor_final)',
       { count: 'exact' },
     )
     .eq('empresa_id', empresaId)
@@ -1075,6 +1152,9 @@ export async function listAtendimentoRecords(
   const appointments = (appointmentsResponse.data ?? []) as unknown as Array<{
     id: string
     atendimento_id: string | null
+    cliente_id: string | null
+    client_profile_id: string | null
+    created_by_user_id: string | null
     starts_at: string
     status: DailyAppointmentStatus
     valor_original: number | null
@@ -1107,6 +1187,7 @@ export async function listAtendimentoRecords(
       .map((appointment) => appointment.atendimento_id)
       .filter(Boolean),
   )
+  const fallbackProfiles = await getAppointmentProfileFallbacks(appointments)
 
   const records: AtendimentoRecord[] = [
     ...appointments.map((appointment) => {
@@ -1125,14 +1206,30 @@ export async function listAtendimentoRecords(
           (total, item) => total + Number(item.valor_final ?? 0),
           0,
         ) || Number(appointment.valor_final ?? totalOriginal - totalDiscount)
+      const fallbackProfile =
+        (appointment.client_profile_id
+          ? fallbackProfiles.byProfileId.get(appointment.client_profile_id)
+          : null) ??
+        (appointment.created_by_user_id
+          ? fallbackProfiles.byAuthUserId.get(appointment.created_by_user_id)
+          : null)
+      const cliente = appointment.is_walk_in
+        ? displayCustomerName(
+            appointment.walk_in_customer_name,
+            appointment.cliente?.nome,
+            appointment.client?.nome,
+            fallbackProfile?.nome,
+          )
+        : displayCustomerName(
+            appointment.cliente?.nome,
+            appointment.client?.nome,
+            fallbackProfile?.nome,
+            appointment.walk_in_customer_name,
+          )
 
       return {
         barbeiro: appointment.barbeiro?.nome ?? 'Barbeiro',
-        cliente: displayCustomerName(
-          appointment.walk_in_customer_name,
-          appointment.cliente?.nome,
-          appointment.client?.nome,
-        ),
+        cliente,
         cliente_tipo: appointment.is_walk_in
           ? ('avulso' as const)
           : ('cadastrado' as const),

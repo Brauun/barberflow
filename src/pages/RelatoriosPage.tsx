@@ -537,16 +537,20 @@ export default function RelatoriosPage() {
   function exportPdf() {
     if (!builtReport) return
 
-    exportHtmlReport({
-      filename: `${fileBaseName}.html`,
-      html: buildReportHtml({
-        builtReport,
-        dataFim: appliedFilters.dataFim,
-        dataInicio: appliedFilters.dataInicio,
-        filters,
-      }),
-      previewFeatures: 'width=1120,height=1200',
-    })
+    try {
+      exportHtmlReport({
+        filename: `${fileBaseName}.html`,
+        html: buildReportHtml({
+          builtReport,
+          dataFim: appliedFilters.dataFim,
+          dataInicio: appliedFilters.dataInicio,
+          filters,
+        }),
+        previewFeatures: 'width=1120,height=1200',
+      })
+    } catch {
+      window.alert('Não foi possível exportar o relatório agora.')
+    }
   }
 
   function exportCsv() {
@@ -619,35 +623,35 @@ export default function RelatoriosPage() {
             ))}
           </div>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto_auto_auto_auto] md:items-end">
-            <label className="space-y-2 text-sm font-semibold text-white/75">
+          <div className="mt-4 grid min-w-0 max-w-full gap-3 md:grid-cols-[1fr_1fr_auto_auto_auto_auto] md:items-end">
+            <label className="min-w-0 space-y-2 text-sm font-semibold text-white/75">
               Data inicial
               <input
-                className="h-11 w-full min-w-0 rounded-xl border border-white/10 bg-[#101827] px-3 text-base text-white outline-none focus:border-cyan-300 md:text-sm"
+                className="block h-11 w-full max-w-full min-w-0 overflow-hidden rounded-xl border border-white/10 bg-[#101827] px-3 text-sm text-white outline-none focus:border-cyan-300 sm:text-base md:text-sm"
                 onChange={(event) => setPendingInicio(event.target.value)}
                 type="date"
                 value={pendingInicio}
               />
             </label>
-            <label className="space-y-2 text-sm font-semibold text-white/75">
+            <label className="min-w-0 space-y-2 text-sm font-semibold text-white/75">
               Data final
               <input
-                className="h-11 w-full min-w-0 rounded-xl border border-white/10 bg-[#101827] px-3 text-base text-white outline-none focus:border-cyan-300 md:text-sm"
+                className="block h-11 w-full max-w-full min-w-0 overflow-hidden rounded-xl border border-white/10 bg-[#101827] px-3 text-sm text-white outline-none focus:border-cyan-300 sm:text-base md:text-sm"
                 onChange={(event) => setPendingFim(event.target.value)}
                 type="date"
                 value={pendingFim}
               />
             </label>
-            <Button onClick={applyFilters} variant="secondary">
+            <Button className="w-full min-w-0 md:w-auto" onClick={applyFilters} variant="secondary">
               Aplicar filtros
             </Button>
-            <Button leftIcon={<RotateCcw size={16} />} onClick={clearFilters} variant="ghost">
+            <Button className="w-full min-w-0 md:w-auto" leftIcon={<RotateCcw size={16} />} onClick={clearFilters} variant="ghost">
               Limpar
             </Button>
-            <Button disabled={!builtReport} leftIcon={<Download size={16} />} onClick={exportPdf}>
+            <Button className="w-full min-w-0 md:w-auto" disabled={!builtReport} leftIcon={<Download size={16} />} onClick={exportPdf}>
               Exportar PDF
             </Button>
-            <Button disabled={!builtReport} leftIcon={<FileSpreadsheet size={16} />} onClick={exportCsv}>
+            <Button className="w-full min-w-0 md:w-auto" disabled={!builtReport} leftIcon={<FileSpreadsheet size={16} />} onClick={exportCsv}>
               Exportar Excel
             </Button>
           </div>

@@ -45,6 +45,7 @@ type AppointmentClientProfile = {
 
 type AppointmentClientIndicator = {
   client: AppointmentClientProfile | AppointmentClientProfile[] | null
+  cliente_id?: string | null
   client_profile_id: string | null
   starts_at: string
   status: string
@@ -91,7 +92,153 @@ function matchesClienteSearch(cliente: Cliente, search: string) {
   )
 }
 
+async function listClientesCompact(
+  empresaId: string,
+  search: string,
+): Promise<ClienteWithIndicators[]> {
+  const term = search.trim()
+  const clientesQuery = supabase
+    .from('clientes')
+    .select('*')
+    .eq('empresa_id', empresaId)
+    .eq('status', 'ativo')
+    .limit(20)
+
+  if (term.length >= 2) {
+    const escapedTerm = escapeLikeSearch(term)
+    const termDigits = onlyDigits(term)
+    const filters = [
+      `nome.ilike.%${escapedTerm}%`,
+      `email.ilike.%${escapedTerm}%`,
+      `telefone.ilike.%${escapedTerm}%`,
+    ]
+
+    if (termDigits.length >= 2) {
+      filters.push(`telefone.ilike.%${termDigits}%`)
+    }
+
+    clientesQuery.or(filters.join(',')).order('nome', { ascending: true })
+  } else {
+    clientesQuery.order('created_at', { ascending: false })
+  }
+
+  const clientesResponse = await clientesQuery
+
+  if (clientesResponse.error) {
+    throw toAppError(clientesResponse.error, 'NÃ£o foi possÃ­vel listar clientes.')
+  }
+
+  const clientes = (clientesResponse.data ?? []) as Cliente[]
+
+  if (!clientes.length) {
+    return []
+  }
+
+  const clienteIds = clientes.map((cliente) => cliente.id)
+  const clientProfileIds = clientes
+    .map((cliente) => cliente.client_profile_id)
+    .filter((clientProfileId): clientProfileId is string =>
+      Boolean(clientProfileId),
+    )
+
+  const [
+    atendimentosResponse,
+    appointmentsByClienteResponse,
+    appointmentsByProfileResponse,
+  ] = await Promise.all([
+    supabase
+      .from('atendimentos')
+      .select('cliente_id,data_hora_inicio,valor')
+      .eq('empresa_id', empresaId)
+      .in('cliente_id', clienteIds)
+      .in('status', [
+        'concluido',
+        'concluido_automatico',
+      ]),
+    supabase
+      .from('appointments')
+      .select('cliente_id,client_profile_id,starts_at,status,valor_final')
+      .eq('empresa_id', empresaId)
+      .in('cliente_id', clienteIds)
+      .not('status', 'in', '(cancelado,remarcado,nao_compareceu,faltou)'),
+    clientProfileIds.length
+      ? supabase
+          .from('appointments')
+          .select('cliente_id,client_profile_id,starts_at,status,valor_final')
+          .eq('empresa_id', empresaId)
+          .in('client_profile_id', clientProfileIds)
+          .not('status', 'in', '(cancelado,remarcado,nao_compareceu,faltou)')
+      : Promise.resolve({ data: [], error: null }),
+  ])
+
+  const failedResponse = [
+    atendimentosResponse,
+    appointmentsByClienteResponse,
+    appointmentsByProfileResponse,
+  ].find((response) => response.error)
+
+  const listError = failedResponse?.error
+
+  if (listError) {
+    throw toAppError(listError, 'NÃ£o foi possÃ­vel listar clientes.')
+  }
+
+  const atendimentos = (atendimentosResponse.data ?? []) as ClienteIndicator[]
+  const appointments = [
+    ...(appointmentsByClienteResponse.data ?? []),
+    ...(appointmentsByProfileResponse.data ?? []),
+  ] as unknown as AppointmentClientIndicator[]
+  const uniqueAppointments = Array.from(
+    new Map(
+      appointments.map((appointment) => [
+        `${appointment.cliente_id ?? ''}:${appointment.client_profile_id ?? ''}:${appointment.starts_at}`,
+        appointment,
+      ]),
+    ).values(),
+  )
+
+  return clientes.map((cliente) => {
+    const atendimentosDoCliente = atendimentos.filter(
+      (atendimento) => atendimento.cliente_id === cliente.id,
+    )
+    const agendamentosDoCliente = uniqueAppointments.filter(
+      (appointment) =>
+        appointment.cliente_id === cliente.id ||
+        (Boolean(cliente.client_profile_id) &&
+          appointment.client_profile_id === cliente.client_profile_id),
+    )
+    const ultimaVisita = [
+      ...atendimentosDoCliente.map(
+        (atendimento) => atendimento.data_hora_inicio,
+      ),
+      ...agendamentosDoCliente.map((appointment) => appointment.starts_at),
+    ]
+      .sort()
+      .at(-1)
+
+    return {
+      ...cliente,
+      agendamentos_count: agendamentosDoCliente.length,
+      is_online_only: false,
+      total_gasto: atendimentosDoCliente.reduce(
+        (total, atendimento) => total + Number(atendimento.valor),
+        0,
+      ),
+      ultima_visita: ultimaVisita ?? null,
+      visitas_count:
+        atendimentosDoCliente.length + agendamentosDoCliente.length,
+    }
+  })
+}
+
 export async function listClientes(
+  empresaId: string,
+  search: string,
+): Promise<ClienteWithIndicators[]> {
+  return listClientesCompact(empresaId, search)
+}
+
+export async function listClientesLegacy(
   empresaId: string,
   search: string,
 ): Promise<ClienteWithIndicators[]> {
@@ -123,8 +270,10 @@ export async function listClientes(
     appointmentsResponse,
   ].find((response) => response.error)
 
-  if (failedResponse?.error) {
-    throw toAppError(failedResponse.error, 'Não foi possível listar clientes.')
+  const legacyListError = failedResponse?.error
+
+  if (legacyListError) {
+    throw toAppError(legacyListError, 'Não foi possível listar clientes.')
   }
 
   const atendimentos = (atendimentosResponse.data ?? []) as ClienteIndicator[]

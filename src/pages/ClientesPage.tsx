@@ -103,6 +103,18 @@ export function ClientesPage() {
     empresaId,
     searchTerm,
   })
+  const normalizedSearchTerm = searchTerm.trim()
+  const isSearchingClientes = normalizedSearchTerm.length >= 2
+  const listTitle = isSearchingClientes
+    ? 'Resultados da pesquisa'
+    : 'Últimos clientes cadastrados'
+  const listDescription = isSearchingClientes
+    ? `${clientes.length} resultado${clientes.length === 1 ? '' : 's'} encontrado${
+        clientes.length === 1 ? '' : 's'
+      }.`
+    : `${clientes.length} cliente${clientes.length === 1 ? '' : 's'} recente${
+        clientes.length === 1 ? '' : 's'
+      }.`
 
   const historicoQuery = useClienteHistorico({
     clienteId: historyCliente?.id,
@@ -211,18 +223,17 @@ export function ClientesPage() {
           <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
               <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
-                Clientes cadastrados
+                {listTitle}
               </h3>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                {clientes.length} cliente{clientes.length === 1 ? '' : 's'} na
-                listagem atual.
+                {listDescription}
               </p>
             </div>
 
             <div className="w-full max-w-full min-w-0 lg:max-w-sm">
               <SearchInput
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Pesquisar por nome ou telefone"
+                placeholder="Pesquisar por nome, telefone ou email"
                 value={searchTerm}
               />
             </div>
