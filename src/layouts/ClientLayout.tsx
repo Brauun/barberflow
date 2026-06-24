@@ -61,7 +61,7 @@ export function ClientLayout() {
     <div className="bw-mobile-compact min-h-[100dvh] w-full max-w-full overflow-x-hidden bg-surface text-slate-950 dark:text-slate-50">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/82 pt-[env(safe-area-inset-top)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/88">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-2.5 px-3 sm:h-20 sm:gap-4 sm:px-5">
-          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-brand-600 ring-1 ring-brand-100 dark:bg-brand-400/12 dark:text-brand-100 dark:ring-brand-400/20 sm:h-11 sm:w-11">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-brand-600 ring-1 ring-brand-100 dark:bg-[var(--bf-surface-muted)] dark:text-slate-100 dark:ring-[var(--bf-border)] sm:h-11 sm:w-11">
             {avatarSrc ? (
               <img
                 alt={clientProfile?.nome ?? 'Cliente'}
@@ -162,7 +162,7 @@ export function ClientLayout() {
         </div>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95 md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface)] md:hidden">
       <div className="mx-auto grid h-[3.7rem] max-h-[3.7rem] min-h-[3.7rem] w-full max-w-[34rem] grid-cols-5 items-center gap-1 px-2">
       {clientNavigation.map((item) => {
         const Icon = item.icon

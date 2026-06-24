@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CalendarPlus, Gift } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Badge, Button, Card, CardContent, CardHeader, Select } from '../components/ui'
@@ -47,6 +47,7 @@ export function ClientBookingPage() {
   >('qualquer')
   const [selectedBenefitId, setSelectedBenefitId] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
+  const confirmActionRef = useRef<HTMLDivElement | null>(null)
 
   const primaryQuery = useQuery({
     enabled: Boolean(clientProfile?.primary_barbershop_id),
@@ -157,6 +158,17 @@ export function ClientBookingPage() {
   )
   const hasAvailableSlots = slots.some((item) => item.available)
 
+  useEffect(() => {
+    if (!selectedSlotIsAvailable) {
+      return
+    }
+
+    confirmActionRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+    })
+  }, [selectedSlotIsAvailable, slot])
+
   const bookingMutation = useMutation({
     mutationFn: async () => {
       if (!clientProfile || !barbershop || !selectedService || !selectedBarber || !slot) {
@@ -217,7 +229,7 @@ export function ClientBookingPage() {
   })
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] md:space-y-8 md:pb-0">
       <section>
         <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600">
           Agendar
@@ -236,7 +248,7 @@ export function ClientBookingPage() {
             Fluxo de agendamento
           </h3>
         </CardHeader>
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-5 pb-6 md:pb-5">
           {formError && (
             <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {formError}
@@ -455,8 +467,10 @@ export function ClientBookingPage() {
             )}
           </div>
 
-          <Button
-            disabled={bookingMutation.isPending || Boolean(slot && !selectedSlotIsAvailable)}
+          <div ref={confirmActionRef}>
+            <Button
+              className="w-full sm:w-auto"
+              disabled={bookingMutation.isPending || Boolean(slot && !selectedSlotIsAvailable)}
             leftIcon={<CalendarPlus size={18} />}
             onClick={() => {
               setFormError(null)
@@ -471,7 +485,8 @@ export function ClientBookingPage() {
             }}
           >
             {bookingMutation.isPending ? 'Agendando...' : 'Confirmar horário'}
-          </Button>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -146,7 +146,7 @@ export function ClientProfilePage() {
 
             <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-brand-100 bg-brand-50 text-brand-600 dark:border-brand-400/20 dark:bg-brand-400/10 dark:text-brand-200">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-brand-100 bg-brand-50 text-brand-600 dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface-muted)] dark:text-slate-100">
                   {avatarPreview ? (
                     <img
                       alt="Foto de perfil"
