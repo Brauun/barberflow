@@ -108,7 +108,7 @@ export function RegisterPage() {
         <AuthFormMessage message={successMessage} tone="success" />
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:h-14 sm:gap-3 sm:rounded-[18px] sm:px-4">
+          <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:h-14 sm:gap-3 sm:rounded-[18px] sm:px-4">
             <input
               className="h-4 w-4 shrink-0 accent-[#12C6F3]"
               type="radio"
@@ -117,7 +117,7 @@ export function RegisterPage() {
             />
             <span className="whitespace-nowrap">Sou Barbearia</span>
           </label>
-          <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:h-14 sm:gap-3 sm:rounded-[18px] sm:px-4">
+          <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:h-14 sm:gap-3 sm:rounded-[18px] sm:px-4">
             <input
               className="h-4 w-4 shrink-0 accent-[#12C6F3]"
               type="radio"
@@ -133,7 +133,7 @@ export function RegisterPage() {
             {accountType === 'barbearia' ? 'Nome do responsável' : 'Nome'}
           </span>
           <input
-            className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+            className="mt-2 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] focus:border-[#12C6F3] focus:bg-[var(--bf-surface-muted)] focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
             autoComplete="name"
             placeholder="João Silva"
             {...register('nome')}
@@ -149,7 +149,7 @@ export function RegisterPage() {
           <label className="block animate-[fadeIn_240ms_ease-out]">
             <span className="text-sm font-semibold text-white">Empresa</span>
             <input
-              className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+              className="mt-2 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] focus:border-[#12C6F3] focus:bg-[var(--bf-surface-muted)] focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
               autoComplete="organization"
               placeholder="Nome da barbearia"
               {...register('empresa')}
@@ -166,7 +166,7 @@ export function RegisterPage() {
           <label className="block animate-[fadeIn_240ms_ease-out]">
             <span className="text-sm font-semibold text-white">E-mail de acesso</span>
             <input
-              className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+              className="mt-2 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] focus:border-[#12C6F3] focus:bg-[var(--bf-surface-muted)] focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
               autoComplete="email"
               placeholder="exemplo@exemplo.com"
               type="email"
@@ -181,7 +181,7 @@ export function RegisterPage() {
         )}
 
         {accountType === 'barbearia' && (
-          <div className="animate-[fadeIn_240ms_ease-out] space-y-4 rounded-3xl border border-white/[0.08] bg-white/[0.03] p-4 sm:space-y-5 sm:p-5">
+          <div className="animate-[fadeIn_240ms_ease-out] space-y-4 rounded-3xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] p-4 sm:space-y-5 sm:p-5">
             <div>
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.22em] text-[#12C6F3]">
                 Dados fiscais
@@ -192,7 +192,7 @@ export function RegisterPage() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:gap-3 sm:px-4">
+              <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:gap-3 sm:px-4">
                 <input
                   className="h-4 w-4 shrink-0 accent-[#12C6F3]"
                   type="radio"
@@ -201,7 +201,7 @@ export function RegisterPage() {
                 />
                 Pessoa Física
               </label>
-              <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:gap-3 sm:px-4">
+              <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:gap-3 sm:px-4">
                 <input
                   className="h-4 w-4 shrink-0 accent-[#12C6F3]"
                   type="radio"
@@ -217,7 +217,7 @@ export function RegisterPage() {
                 {tipoPessoa === 'pj' ? 'CNPJ' : 'CPF'}
               </span>
               <input
-                className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+                className="mt-2 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] focus:border-[#12C6F3] focus:bg-[var(--bf-surface-muted)] focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
                 autoComplete="off"
                 inputMode="numeric"
                 placeholder={tipoPessoa === 'pj' ? '00.000.000/0000-00' : '000.000.000-00'}
@@ -237,7 +237,7 @@ export function RegisterPage() {
                 <label className="block">
                   <span className="text-sm font-semibold text-white">Razão social</span>
                   <input
-                    className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] focus:border-[#12C6F3] focus:bg-[var(--bf-surface-muted)] focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
                     placeholder="Razão social da empresa"
                     {...register('razao_social')}
                   />
@@ -250,7 +250,7 @@ export function RegisterPage() {
                 <label className="block">
                   <span className="text-sm font-semibold text-white">Nome fantasia</span>
                   <input
-                    className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] focus:border-[#12C6F3] focus:bg-[var(--bf-surface-muted)] focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
                     placeholder="Nome fantasia"
                     {...register('nome_fantasia')}
                   />
@@ -261,7 +261,7 @@ export function RegisterPage() {
             <label className="block">
               <span className="text-sm font-semibold text-white">E-mail financeiro</span>
               <input
-                className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+                className="mt-2 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] focus:border-[#12C6F3] focus:bg-[var(--bf-surface-muted)] focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
                 autoComplete="email"
                 placeholder="financeiro@barbearia.com"
                 type="email"
@@ -274,7 +274,7 @@ export function RegisterPage() {
               )}
             </label>
 
-            <div className="space-y-3 rounded-[1.35rem] border border-white/[0.08] bg-[#071426]/25 p-3 sm:p-4">
+            <div className="space-y-3 rounded-[1.35rem] border border-[var(--bf-border)] bg-[var(--bf-background)] p-3 sm:p-4">
               <div>
                 <p className="text-sm font-semibold text-white">Endereço</p>
                 <p className="mt-1 text-xs leading-5 text-[#A5B4CB]">
@@ -284,31 +284,31 @@ export function RegisterPage() {
               <div className="grid gap-3 sm:grid-cols-6">
                 <label className="block sm:col-span-2">
                   <span className="text-xs font-semibold text-[#A5B4CB]">CEP</span>
-                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" inputMode="numeric" placeholder="00000-000" {...register('cep', { onChange: maskCepChange })} />
+                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" inputMode="numeric" placeholder="00000-000" {...register('cep', { onChange: maskCepChange })} />
                 </label>
                 <label className="block sm:col-span-4">
                   <span className="text-xs font-semibold text-[#A5B4CB]">Rua</span>
-                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="Rua" {...register('rua')} />
+                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="Rua" {...register('rua')} />
                 </label>
                 <label className="block sm:col-span-2">
                   <span className="text-xs font-semibold text-[#A5B4CB]">Número</span>
-                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="123" {...register('numero')} />
+                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="123" {...register('numero')} />
                 </label>
                 <label className="block sm:col-span-2">
                   <span className="text-xs font-semibold text-[#A5B4CB]">Bairro</span>
-                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="Centro" {...register('bairro')} />
+                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="Centro" {...register('bairro')} />
                 </label>
                 <label className="block sm:col-span-2">
                   <span className="text-xs font-semibold text-[#A5B4CB]">Cidade</span>
-                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="Cidade" {...register('cidade')} />
+                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="Cidade" {...register('cidade')} />
                 </label>
                 <label className="block sm:col-span-2">
                   <span className="text-xs font-semibold text-[#A5B4CB]">UF</span>
-                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium uppercase text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" maxLength={2} placeholder="RS" {...register('uf')} />
+                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium uppercase text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" maxLength={2} placeholder="RS" {...register('uf')} />
                 </label>
                 <label className="block sm:col-span-4">
                   <span className="text-xs font-semibold text-[#A5B4CB]">Complemento</span>
-                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="Sala, andar ou referência" {...register('complemento')} />
+                  <input className="mt-1.5 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition focus:border-[#12C6F3] focus:ring-4 focus:ring-[#12C6F3]/10 sm:text-sm" placeholder="Sala, andar ou referência" {...register('complemento')} />
                 </label>
               </div>
             </div>
@@ -321,7 +321,7 @@ export function RegisterPage() {
               CPF do responsável
             </span>
             <input
-              className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+              className="mt-2 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] focus:border-[#12C6F3] focus:bg-[var(--bf-surface-muted)] focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
               autoComplete="off"
               inputMode="numeric"
               placeholder="000.000.000-00"
@@ -340,7 +340,7 @@ export function RegisterPage() {
         <label className="block">
           <span className="text-sm font-semibold text-white">Telefone</span>
           <input
-            className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+            className="mt-2 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] focus:border-[#12C6F3] focus:bg-[var(--bf-surface-muted)] focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
             autoComplete="tel"
             inputMode="numeric"
             placeholder="(99) 9 9999-9999"
@@ -363,7 +363,7 @@ export function RegisterPage() {
           <label className="block">
             <span className="text-sm font-semibold text-white">Senha</span>
             <input
-              className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+              className="mt-2 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] focus:border-[#12C6F3] focus:bg-[var(--bf-surface-muted)] focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
               autoComplete="new-password"
               placeholder="Digite sua senha"
               type="password"
@@ -381,7 +381,7 @@ export function RegisterPage() {
               Confirmar senha
             </span>
             <input
-              className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/60 focus:border-[#12C6F3] focus:bg-[#17304A]/80 focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
+              className="mt-2 h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-4 text-base font-medium text-white outline-none transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] focus:border-[#12C6F3] focus:bg-[var(--bf-surface-muted)] focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
               autoComplete="new-password"
               placeholder="Digite sua senha"
               type="password"
@@ -396,7 +396,7 @@ export function RegisterPage() {
         </div>
 
         {accountType === 'barbearia' && (
-          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-sm leading-6 text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[#17304A]/50">
+          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] p-4 text-sm leading-6 text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)]">
             <input
               className="mt-1 h-4 w-4 shrink-0 accent-[#12C6F3]"
               type="checkbox"
@@ -415,7 +415,7 @@ export function RegisterPage() {
         )}
 
         <button
-          className="min-h-11 h-12 w-full rounded-2xl bg-[#12C6F3] px-4 text-sm font-black text-[#071426] shadow-[0_16px_40px_rgb(18_198_243/0.22)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#4EDCFF] hover:shadow-[0_20px_48px_rgb(18_198_243/0.30)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-70 sm:h-14 sm:rounded-[18px]"
+          className="min-h-11 h-12 w-full rounded-2xl bg-[#12C6F3] px-4 text-sm font-black text-[var(--bf-background)] shadow-[0_16px_40px_rgb(18_198_243/0.22)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#4EDCFF] hover:shadow-[0_20px_48px_rgb(18_198_243/0.30)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-70 sm:h-14 sm:rounded-[18px]"
           disabled={isSubmitting}
           type="submit"
         >

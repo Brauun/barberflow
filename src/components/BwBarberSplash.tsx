@@ -10,7 +10,7 @@ export function BwBarberSplash({ isLeaving = false }: BwBarberSplashProps) {
       aria-busy="true"
       aria-label="Entrando no BW Barber"
       className={cn(
-        'bw-splash fixed inset-0 z-[9999] flex min-h-[100dvh] flex-col items-center justify-center bg-[#071426] text-white',
+        'dark bw-splash fixed inset-0 z-[9999] flex min-h-[100dvh] flex-col items-center justify-center bg-[var(--bf-background)] text-[var(--bf-text-primary)]',
         isLeaving && 'bw-splash-leaving',
       )}
       role="status"

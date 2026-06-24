@@ -8,8 +8,8 @@ export function ProtectedRoute() {
 
   if (isLoading || (isAuthenticated && profileLoading)) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-surface px-6">
-        <p className="text-sm font-medium text-ink-700">
+      <main className="dark flex min-h-screen items-center justify-center bg-[var(--bf-background)] px-6">
+        <p className="text-sm font-medium text-[var(--bf-text-secondary)]">
           Entrando no BW Barber...
         </p>
       </main>

@@ -7,8 +7,8 @@ export function HomePage() {
 
   if (isLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#071426] px-6">
-        <p className="text-sm font-medium text-white">Carregando...</p>
+      <main className="dark flex min-h-screen items-center justify-center bg-[var(--bf-background)] px-6">
+        <p className="text-sm font-medium text-[var(--bf-text-secondary)]">Carregando...</p>
       </main>
     )
   }
