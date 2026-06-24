@@ -107,24 +107,28 @@ export function RegisterPage() {
         <AuthFormMessage message={formError} />
         <AuthFormMessage message={successMessage} tone="success" />
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex h-12 min-w-0 max-w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-xs font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white min-[390px]:text-sm sm:h-14 sm:gap-3 sm:rounded-[18px] sm:px-4">
+        <div className="grid w-full min-w-0 gap-2 sm:grid-cols-2 sm:gap-3">
+          <label className="flex h-12 w-full min-w-0 max-w-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-2 text-sm font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:h-14 sm:rounded-[18px] sm:px-4">
             <input
-              className="h-4 w-4 shrink-0 accent-[#12C6F3]"
+              className="sr-only"
               type="radio"
               value="barbearia"
               {...register('accountType')}
             />
-            <span className="min-w-0 truncate whitespace-nowrap">Sou Barbearia</span>
+            <span className="block w-full min-w-0 text-center leading-tight">
+              Sou Barbearia
+            </span>
           </label>
-          <label className="flex h-12 min-w-0 max-w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-xs font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white min-[390px]:text-sm sm:h-14 sm:gap-3 sm:rounded-[18px] sm:px-4">
+          <label className="flex h-12 w-full min-w-0 max-w-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-2 text-sm font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:h-14 sm:rounded-[18px] sm:px-4">
             <input
-              className="h-4 w-4 shrink-0 accent-[#12C6F3]"
+              className="sr-only"
               type="radio"
               value="cliente"
               {...register('accountType')}
             />
-            <span className="min-w-0 truncate whitespace-nowrap">Sou Cliente</span>
+            <span className="block w-full min-w-0 text-center leading-tight">
+              Sou Cliente
+            </span>
           </label>
         </div>
 
@@ -191,24 +195,28 @@ export function RegisterPage() {
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex h-12 min-w-0 max-w-full cursor-pointer items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-xs font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white min-[390px]:text-sm sm:gap-3 sm:px-4">
+            <div className="grid w-full min-w-0 gap-2 sm:grid-cols-2 sm:gap-3">
+              <label className="flex h-12 w-full min-w-0 max-w-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface)] px-2 text-sm font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:px-4">
                 <input
-                  className="h-4 w-4 shrink-0 accent-[#12C6F3]"
+                  className="sr-only"
                   type="radio"
                   value="pf"
                   {...register('tipo_pessoa')}
                 />
-                <span className="min-w-0 truncate">Pessoa Física</span>
+                <span className="block w-full min-w-0 text-center leading-tight">
+                  Pessoa Física
+                </span>
               </label>
-              <label className="flex h-12 min-w-0 max-w-full cursor-pointer items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-xs font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white min-[390px]:text-sm sm:gap-3 sm:px-4">
+              <label className="flex h-12 w-full min-w-0 max-w-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface)] px-2 text-sm font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:px-4">
                 <input
-                  className="h-4 w-4 shrink-0 accent-[#12C6F3]"
+                  className="sr-only"
                   type="radio"
                   value="pj"
                   {...register('tipo_pessoa')}
                 />
-                <span className="min-w-0 truncate">Pessoa Jurídica</span>
+                <span className="block w-full min-w-0 text-center leading-tight">
+                  Pessoa Jurídica
+                </span>
               </label>
             </div>
 
