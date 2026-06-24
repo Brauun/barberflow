@@ -92,11 +92,11 @@ export function RegisterPage() {
   const tipoPessoa = useWatch({ control, name: 'tipo_pessoa' })
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
+    <div className="mx-auto w-full max-w-full sm:max-w-3xl">
       <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#12C6F3]">
         Cadastro
       </p>
-      <h1 className="mt-2 whitespace-nowrap text-[1.55rem] font-black leading-[1.08] tracking-normal text-white min-[390px]:text-[1.7rem] sm:mt-3 sm:text-3xl">
+      <h1 className="mt-2 text-[1.55rem] font-black leading-[1.08] tracking-normal text-white min-[390px]:text-[1.7rem] sm:mt-3 sm:text-3xl">
         Criar conta BW Barber
       </h1>
       <p className="mt-2 text-sm leading-6 text-[#A5B4CB] sm:text-[0.95rem]">
@@ -108,23 +108,23 @@ export function RegisterPage() {
         <AuthFormMessage message={successMessage} tone="success" />
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:h-14 sm:gap-3 sm:rounded-[18px] sm:px-4">
+          <label className="flex h-12 min-w-0 max-w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-xs font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white min-[390px]:text-sm sm:h-14 sm:gap-3 sm:rounded-[18px] sm:px-4">
             <input
               className="h-4 w-4 shrink-0 accent-[#12C6F3]"
               type="radio"
               value="barbearia"
               {...register('accountType')}
             />
-            <span className="whitespace-nowrap">Sou Barbearia</span>
+            <span className="min-w-0 truncate whitespace-nowrap">Sou Barbearia</span>
           </label>
-          <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:h-14 sm:gap-3 sm:rounded-[18px] sm:px-4">
+          <label className="flex h-12 min-w-0 max-w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-xs font-bold text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white min-[390px]:text-sm sm:h-14 sm:gap-3 sm:rounded-[18px] sm:px-4">
             <input
               className="h-4 w-4 shrink-0 accent-[#12C6F3]"
               type="radio"
               value="cliente"
               {...register('accountType')}
             />
-            <span className="whitespace-nowrap">Sou Cliente</span>
+            <span className="min-w-0 truncate whitespace-nowrap">Sou Cliente</span>
           </label>
         </div>
 
@@ -181,7 +181,7 @@ export function RegisterPage() {
         )}
 
         {accountType === 'barbearia' && (
-          <div className="animate-[fadeIn_240ms_ease-out] space-y-4 rounded-3xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] p-4 sm:space-y-5 sm:p-5">
+          <div className="animate-[fadeIn_240ms_ease-out] max-w-full space-y-4 overflow-hidden rounded-3xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] p-4 sm:space-y-5 sm:p-5">
             <div>
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.22em] text-[#12C6F3]">
                 Dados fiscais
@@ -192,23 +192,23 @@ export function RegisterPage() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:gap-3 sm:px-4">
+              <label className="flex h-12 min-w-0 max-w-full cursor-pointer items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-xs font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white min-[390px]:text-sm sm:gap-3 sm:px-4">
                 <input
                   className="h-4 w-4 shrink-0 accent-[#12C6F3]"
                   type="radio"
                   value="pf"
                   {...register('tipo_pessoa')}
                 />
-                Pessoa Física
+                <span className="min-w-0 truncate">Pessoa Física</span>
               </label>
-              <label className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-sm font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white sm:gap-3 sm:px-4">
+              <label className="flex h-12 min-w-0 max-w-full cursor-pointer items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] px-3 text-xs font-bold text-[#A5B4CB] transition duration-200 has-[:checked]:border-[#12C6F3] has-[:checked]:bg-[#12C6F3]/10 has-[:checked]:text-white min-[390px]:text-sm sm:gap-3 sm:px-4">
                 <input
                   className="h-4 w-4 shrink-0 accent-[#12C6F3]"
                   type="radio"
                   value="pj"
                   {...register('tipo_pessoa')}
                 />
-                Pessoa Jurídica
+                <span className="min-w-0 truncate">Pessoa Jurídica</span>
               </label>
             </div>
 
@@ -396,13 +396,13 @@ export function RegisterPage() {
         </div>
 
         {accountType === 'barbearia' && (
-          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] p-4 text-sm leading-6 text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)]">
+          <label className="flex max-w-full cursor-pointer items-start gap-3 overflow-hidden rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] p-3 text-sm leading-6 text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] sm:p-4">
             <input
               className="mt-1 h-4 w-4 shrink-0 accent-[#12C6F3]"
               type="checkbox"
               {...register('aceite_termos')}
             />
-            <span>
+            <span className="min-w-0 flex-1 break-words">
               Declaro que as informações fornecidas são verdadeiras e aceito os
               Termos de Uso e a Política de Privacidade.
               {errors.aceite_termos && (
