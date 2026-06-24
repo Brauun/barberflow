@@ -404,13 +404,13 @@ export function RegisterPage() {
         </div>
 
         {accountType === 'barbearia' && (
-          <label className="flex max-w-full cursor-pointer items-start gap-3 overflow-hidden rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] p-3 text-sm leading-6 text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] sm:p-4">
+          <label className="grid max-w-full cursor-pointer grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-3 rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] p-3 text-sm leading-5 text-[#A5B4CB] transition duration-200 hover:border-[#12C6F3]/30 hover:bg-[var(--bf-surface-muted)] sm:p-4 sm:leading-6">
             <input
-              className="mt-1 h-4 w-4 shrink-0 accent-[#12C6F3]"
+              className="mt-0.5 h-5 w-5 shrink-0 accent-[#12C6F3]"
               type="checkbox"
               {...register('aceite_termos')}
             />
-            <span className="min-w-0 flex-1 break-words">
+            <span className="block min-w-0 max-w-full whitespace-normal break-words">
               Declaro que as informações fornecidas são verdadeiras e aceito os
               Termos de Uso e a Política de Privacidade.
               {errors.aceite_termos && (
