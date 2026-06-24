@@ -10,6 +10,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  DateInput,
   Input,
   Modal,
   Select,
@@ -260,16 +261,14 @@ export function FluxoCaixaPage() {
             </div>
 
             <div className="grid w-full min-w-0 max-w-full gap-3 sm:grid-cols-2 lg:w-auto">
-              <Input
+              <DateInput
                 label="Data inicial"
-                onChange={(event) => setDataInicio(event.target.value)}
-                type="date"
+                onChange={setDataInicio}
                 value={dataInicio}
               />
-              <Input
+              <DateInput
                 label="Data final"
-                onChange={(event) => setDataFim(event.target.value)}
-                type="date"
+                onChange={setDataFim}
                 value={dataFim}
               />
             </div>

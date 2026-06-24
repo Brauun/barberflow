@@ -59,7 +59,7 @@ function normalizeBarbershopLogo(barbershop: BarbershopWithEmpresaLogo | null) {
 
   return {
     ...rest,
-    logo_url: rest.logo_url || empresa?.logo_url || null,
+    logo_url: empresa?.logo_url || rest.logo_url || null,
     nome: rest.nome || empresa?.nome || rest.nome,
   } as Barbershop
 }
@@ -70,22 +70,22 @@ async function hydrateBarbershopLogos(
   const normalized = barbershops
     .map(normalizeBarbershopLogo)
     .filter((barbershop): barbershop is Barbershop => Boolean(barbershop))
-  const missingLogoEmpresaIds = [
+  const empresaIds = [
     ...new Set(
       normalized
-        .filter((barbershop) => !barbershop.logo_url && barbershop.empresa_id)
+        .filter((barbershop) => barbershop.empresa_id)
         .map((barbershop) => barbershop.empresa_id as string),
     ),
   ]
 
-  if (!missingLogoEmpresaIds.length) {
+  if (!empresaIds.length) {
     return normalized
   }
 
   const { data, error } = await supabase
     .from('empresas')
     .select('id,logo_url,nome')
-    .in('id', missingLogoEmpresaIds)
+    .in('id', empresaIds)
 
   if (error) {
     logger.warn({
@@ -93,7 +93,7 @@ async function hydrateBarbershopLogos(
       area: 'client',
       error,
       message: 'Não foi possível carregar logo da empresa para o cliente.',
-      metadata: { totalEmpresas: missingLogoEmpresaIds.length },
+      metadata: { totalEmpresas: empresaIds.length },
     })
 
     return normalized
@@ -113,7 +113,7 @@ async function hydrateBarbershopLogos(
 
     return {
       ...barbershop,
-      logo_url: barbershop.logo_url || empresa?.logo_url || null,
+      logo_url: empresa?.logo_url || barbershop.logo_url || null,
       nome: barbershop.nome || empresa?.nome || barbershop.nome,
     }
   })

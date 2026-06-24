@@ -48,7 +48,7 @@ export function BarbershopLogo({
   return (
     <div
       className={cn(
-        'flex shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-brand-50 text-sm font-black text-brand-600 ring-1 ring-brand-100 dark:bg-brand-400/12 dark:text-brand-100 dark:ring-brand-400/20',
+        'flex shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-brand-50 text-sm font-black text-brand-600 ring-1 ring-brand-100 dark:bg-[var(--bf-surface-muted)] dark:text-slate-100 dark:ring-[var(--bf-border)]',
         className,
       )}
     >

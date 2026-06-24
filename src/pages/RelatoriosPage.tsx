@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Download, FileSpreadsheet, RotateCcw, SlidersHorizontal } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-import { Button, ClienteAutocomplete } from '../components/ui'
+import { Button, ClienteAutocomplete, DateInput } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import type { ClienteSearchResult } from '../services/clientesService'
 import { getRelatorioData, type ReportAgendaItem, type ReportData } from '../services/relatoriosService'
@@ -624,24 +624,16 @@ export default function RelatoriosPage() {
           </div>
 
           <div className="mt-4 grid min-w-0 max-w-full gap-3 md:grid-cols-[1fr_1fr_auto_auto_auto_auto] md:items-end">
-            <label className="block min-w-0 max-w-full space-y-2 text-sm font-semibold text-white/75">
-              Data inicial
-              <input
-                className="block h-11 w-full max-w-full min-w-0 overflow-hidden rounded-xl border border-white/10 bg-[#101827] px-3 text-sm text-white outline-none focus:border-cyan-300 sm:text-base md:text-sm"
-                onChange={(event) => setPendingInicio(event.target.value)}
-                type="date"
-                value={pendingInicio}
-              />
-            </label>
-            <label className="block min-w-0 max-w-full space-y-2 text-sm font-semibold text-white/75">
-              Data final
-              <input
-                className="block h-11 w-full max-w-full min-w-0 overflow-hidden rounded-xl border border-white/10 bg-[#101827] px-3 text-sm text-white outline-none focus:border-cyan-300 sm:text-base md:text-sm"
-                onChange={(event) => setPendingFim(event.target.value)}
-                type="date"
-                value={pendingFim}
-              />
-            </label>
+            <DateInput
+              label="Data inicial"
+              onChange={setPendingInicio}
+              value={pendingInicio}
+            />
+            <DateInput
+              label="Data final"
+              onChange={setPendingFim}
+              value={pendingFim}
+            />
             <Button className="w-full min-w-0 md:w-auto" onClick={applyFilters} variant="secondary">
               Aplicar filtros
             </Button>

@@ -13,7 +13,7 @@ import {
   Button,
   Card,
   CardContent,
-  Input,
+  DateInput,
   Skeleton,
   Table,
   TableBody,
@@ -396,27 +396,25 @@ function BarberDashboard({
         </div>
 
         <div className="grid w-full min-w-0 max-w-full gap-2 rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:w-auto sm:grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_auto] sm:items-end">
-          <Input
+          <DateInput
             label="Data inicial"
             max={draftPeriod.endDate}
-            type="date"
             value={draftPeriod.startDate}
-            onChange={(event) =>
+            onChange={(value) =>
               setDraftPeriod((period) => ({
                 ...period,
-                startDate: event.target.value,
+                startDate: value,
               }))
             }
           />
-          <Input
+          <DateInput
             label="Data final"
             min={draftPeriod.startDate}
-            type="date"
             value={draftPeriod.endDate}
-            onChange={(event) =>
+            onChange={(value) =>
               setDraftPeriod((period) => ({
                 ...period,
-                endDate: event.target.value,
+                endDate: value,
               }))
             }
           />
