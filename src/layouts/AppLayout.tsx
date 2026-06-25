@@ -153,7 +153,7 @@ export function AppLayout() {
       </div>
 
       {profile?.papel === 'barbeiro' && (
-        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95 md:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface)] md:hidden">
           <div className="mx-auto grid h-[3.7rem] max-h-[3.7rem] min-h-[3.7rem] w-full max-w-[24rem] grid-cols-3 items-center gap-1 px-2">
             {barberMobileNavigation.map((item) => {
               const Icon = item.icon
