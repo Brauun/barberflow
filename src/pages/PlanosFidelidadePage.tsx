@@ -991,17 +991,17 @@ export function PlanosFidelidadePage() {
             />
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface-muted)]">
+          <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface-muted)]">
             <p className="text-sm font-semibold text-slate-950 dark:text-[var(--bf-text-primary)]">
               Serviços incluídos
             </p>
             <p className="mt-1 text-xs text-slate-500 dark:text-[var(--bf-text-secondary)]">
               Deixe vazio para valer em todos os serviços.
             </p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
               {(servicosQuery.data ?? []).map((servico) => (
                 <label
-                  className="flex min-w-0 cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-medium text-slate-700 dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface)] dark:text-[var(--bf-text-secondary)]"
+                  className="grid w-full min-w-0 cursor-pointer grid-cols-[1rem_minmax(0,1fr)] items-start gap-3 overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-medium text-slate-700 dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface)] dark:text-[var(--bf-text-secondary)]"
                   key={servico.id}
                 >
                   <input
@@ -1012,7 +1012,7 @@ export function PlanosFidelidadePage() {
                     }
                     type="checkbox"
                   />
-                  <span className="min-w-0 flex-1 break-words leading-snug">
+                  <span className="block min-w-0 max-w-full whitespace-normal break-normal leading-snug">
                     {servico.nome}
                   </span>
                 </label>
@@ -1067,7 +1067,7 @@ export function PlanosFidelidadePage() {
             {...register('recompensa_descricao')}
           />
 
-          <div className="-mx-4 mt-4 flex justify-end gap-2 border-t border-slate-100 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface)] sm:-mx-5 sm:mt-6 sm:gap-3 sm:px-5 sm:pt-4">
+          <div className="mt-4 flex flex-nowrap justify-end gap-2 border-t border-slate-100 pt-3 dark:border-[var(--bf-border)] sm:mt-6 sm:gap-3 sm:pt-4">
             <Button
               className="h-10 px-4"
               onClick={() => setIsFormOpen(false)}

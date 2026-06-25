@@ -1725,26 +1725,26 @@ export function AtendimentosPage() {
           )}
 
           <div className="grid min-w-0 grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-zinc-950/70 sm:gap-3">
-            <label className="flex min-w-0 cursor-pointer flex-nowrap items-center justify-center gap-2 rounded-xl border border-transparent px-2 py-2.5 text-center text-xs font-black text-slate-600 transition has-[:checked]:border-brand-300 has-[:checked]:bg-white has-[:checked]:text-slate-950 has-[:checked]:shadow-sm dark:text-slate-300 dark:has-[:checked]:border-brand-500/40 dark:has-[:checked]:bg-[var(--bf-surface)] dark:has-[:checked]:text-white sm:gap-3 sm:px-4 sm:py-3 sm:text-sm">
+            <label className="flex min-w-0 cursor-pointer items-center justify-center rounded-xl border border-transparent px-2 py-2.5 text-center text-xs font-black text-slate-600 transition has-[:checked]:border-brand-300 has-[:checked]:bg-white has-[:checked]:text-slate-950 has-[:checked]:shadow-sm dark:text-slate-300 dark:has-[:checked]:border-brand-500/40 dark:has-[:checked]:bg-[var(--bf-surface)] dark:has-[:checked]:text-white sm:px-4 sm:py-3 sm:text-sm">
               <input
-                className="h-4 w-4 shrink-0 accent-brand-500"
+                className="sr-only"
                 type="radio"
                 value="cadastrado"
                 {...register('atendimento_tipo')}
               />
-              <span className="min-w-0 whitespace-nowrap leading-none">
+              <span className="block max-w-full truncate whitespace-nowrap leading-none">
                 <span className="sm:hidden">Cadastrado</span>
                 <span className="hidden sm:inline">Cliente cadastrado</span>
               </span>
             </label>
-            <label className="flex min-w-0 cursor-pointer flex-nowrap items-center justify-center gap-2 rounded-xl border border-transparent px-2 py-2.5 text-center text-xs font-black text-slate-600 transition has-[:checked]:border-brand-300 has-[:checked]:bg-white has-[:checked]:text-slate-950 has-[:checked]:shadow-sm dark:text-slate-300 dark:has-[:checked]:border-brand-500/40 dark:has-[:checked]:bg-[var(--bf-surface)] dark:has-[:checked]:text-white sm:gap-3 sm:px-4 sm:py-3 sm:text-sm">
+            <label className="flex min-w-0 cursor-pointer items-center justify-center rounded-xl border border-transparent px-2 py-2.5 text-center text-xs font-black text-slate-600 transition has-[:checked]:border-brand-300 has-[:checked]:bg-white has-[:checked]:text-slate-950 has-[:checked]:shadow-sm dark:text-slate-300 dark:has-[:checked]:border-brand-500/40 dark:has-[:checked]:bg-[var(--bf-surface)] dark:has-[:checked]:text-white sm:px-4 sm:py-3 sm:text-sm">
               <input
-                className="h-4 w-4 shrink-0 accent-brand-500"
+                className="sr-only"
                 type="radio"
                 value="avulso"
                 {...register('atendimento_tipo')}
               />
-              <span className="min-w-0 whitespace-nowrap leading-none">
+              <span className="block max-w-full truncate whitespace-nowrap leading-none">
                 <span className="sm:hidden">Avulso</span>
                 <span className="hidden sm:inline">Cliente avulso</span>
               </span>

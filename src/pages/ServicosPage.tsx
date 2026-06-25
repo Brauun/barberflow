@@ -428,7 +428,7 @@ export function ServicosPage() {
               {...register('ativo')}
             />
 
-            <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+            <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-slate-950 dark:text-slate-50">
@@ -454,13 +454,13 @@ export function ServicosPage() {
                 </Button>
               </div>
 
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <div className="mt-4 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
                 {barbersQuery.isLoading ? (
                   <p className="text-sm text-slate-500">Carregando barbeiros...</p>
                 ) : barbersQuery.data?.length ? (
                   barbersQuery.data.map((barber) => (
                     <label
-                      className="flex min-w-0 cursor-pointer items-start gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:border-brand-200 dark:border-slate-800 dark:text-slate-200"
+                      className="grid w-full min-w-0 cursor-pointer grid-cols-[1rem_minmax(0,1fr)] items-start gap-3 overflow-hidden rounded-xl border border-slate-200 px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:border-brand-200 dark:border-slate-800 dark:text-slate-200"
                       key={barber.id}
                     >
                       <input
@@ -470,7 +470,7 @@ export function ServicosPage() {
                         onChange={() => toggleBarber(barber.id)}
                         type="checkbox"
                       />
-                      <span className="min-w-0 flex-1 break-words leading-snug">
+                      <span className="block min-w-0 max-w-full whitespace-normal break-normal leading-snug">
                         {barber.nome}
                         {barber.status !== 'ativo' && (
                           <span className="ml-2 text-xs font-medium text-slate-400">
@@ -488,7 +488,7 @@ export function ServicosPage() {
               </div>
             </div>
 
-            <div className="sticky bottom-0 -mx-4 flex justify-end gap-2 border-t border-slate-100 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 dark:border-zinc-800 dark:bg-zinc-900/95 sm:-mx-5 sm:gap-3 sm:px-5 sm:pt-4">
+            <div className="mt-4 flex flex-nowrap justify-end gap-2 border-t border-slate-100 pt-3 dark:border-zinc-800 sm:gap-3 sm:pt-4">
               <Button className="h-10 px-4" onClick={closeFormModal} type="button" variant="secondary">
                 Cancelar
               </Button>

@@ -35,10 +35,10 @@ export function Modal({ children, isOpen, onClose, title }: ModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-2 pt-[env(safe-area-inset-top)] sm:items-center sm:px-4 sm:py-6">
+    <div className="fixed inset-0 z-50 flex max-w-[100vw] items-end justify-center overflow-x-hidden bg-black/60 px-2 pt-[env(safe-area-inset-top)] sm:items-center sm:px-4 sm:py-6">
       <div
         aria-modal="true"
-        className="flex max-h-[calc(100dvh-env(safe-area-inset-top)-0.5rem)] w-full flex-col overflow-hidden rounded-t-2xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900 sm:max-h-[100dvh] sm:max-w-lg sm:rounded-3xl"
+        className="flex max-h-[calc(100dvh-env(safe-area-inset-top)-0.5rem)] w-full max-w-[calc(100vw-1rem)] min-w-0 flex-col overflow-hidden rounded-t-2xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900 sm:max-h-[100dvh] sm:max-w-lg sm:rounded-3xl"
         ref={modalRef}
         role="dialog"
       >
@@ -55,7 +55,7 @@ export function Modal({ children, isOpen, onClose, title }: ModalProps) {
             <X size={20} />
           </Button>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-5 sm:pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+        <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-5 sm:pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
           {children}
         </div>
       </div>

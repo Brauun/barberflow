@@ -518,7 +518,7 @@ export function ProdutosPage() {
             {...produtoForm.register('ativo')}
           />
 
-          <div className="sticky bottom-0 -mx-4 flex justify-end gap-2 border-t border-slate-100 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 dark:border-zinc-800 dark:bg-zinc-900/95 sm:-mx-5 sm:gap-3 sm:px-5 sm:pt-4">
+          <div className="mt-4 flex flex-nowrap justify-end gap-2 border-t border-slate-100 pt-3 dark:border-zinc-800 sm:gap-3 sm:pt-4">
             <Button
               className="h-10 px-4"
               onClick={closeFormModal}
