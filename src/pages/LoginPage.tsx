@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff, Lock, User } from 'lucide-react'
+import { Check, Eye, EyeOff, Lock, User } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -122,7 +122,7 @@ export function LoginPage() {
             />
             <input
               className="h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] pl-11 pr-4 text-base font-medium text-white outline-none transition duration-200 placeholder:text-[#A5B4CB]/60 hover:border-[#12C6F3]/30 focus:border-[#12C6F3] focus:bg-[var(--bf-surface-muted)] focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
-              placeholder="E-mail ou telefone"
+              placeholder="exemplo@exemplo.com ou (51) 9 9999-9999"
               type="text"
               {...register('email')}
             />
@@ -165,10 +165,17 @@ export function LoginPage() {
 
         <div className="flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-2 text-[0.78rem] sm:text-sm">
           <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 font-medium text-[#A5B4CB]">
-            <input
-              className="h-5 w-5 shrink-0 rounded border-white/10 bg-white/5 accent-[#12C6F3] focus:ring-2 focus:ring-[#12C6F3]/40 sm:h-4 sm:w-4"
-              type="checkbox"
-            />
+            <span className="relative inline-flex h-5 w-5 shrink-0 items-center justify-center sm:h-4 sm:w-4">
+              <input
+                className="peer h-5 w-5 shrink-0 appearance-none rounded border border-white/15 bg-white/5 transition checked:border-[#12C6F3] checked:bg-[#12C6F3] focus:outline-none focus:ring-2 focus:ring-[#12C6F3]/40 sm:h-4 sm:w-4"
+                type="checkbox"
+              />
+              <Check
+                className="pointer-events-none absolute text-[var(--bf-background)] opacity-0 transition peer-checked:opacity-100"
+                size={13}
+                strokeWidth={3}
+              />
+            </span>
             <span className="whitespace-nowrap">Lembrar acesso</span>
           </label>
           <Link
