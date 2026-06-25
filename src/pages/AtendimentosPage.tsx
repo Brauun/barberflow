@@ -1069,26 +1069,6 @@ export function AtendimentosPage() {
         <Card>
           <CardContent>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Comissão barbeiro
-            </p>
-            <p className="mt-1.5 text-xl font-semibold text-zinc-950 sm:mt-2 md:text-2xl dark:text-zinc-50">
-              {comissaoPercentual}%
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Parte da empresa
-            </p>
-            <p className="mt-1.5 text-xl font-semibold text-zinc-950 sm:mt-2 md:text-2xl dark:text-zinc-50">
-              {empresaPercentual}%
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Concluídos hoje
             </p>
             <p className="mt-1.5 text-xl font-semibold text-zinc-950 sm:mt-2 md:text-2xl dark:text-zinc-50">

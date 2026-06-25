@@ -568,22 +568,22 @@ export default function RelatoriosPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#0f1117] p-3 text-white sm:p-4 md:p-6">
+    <div className="min-h-screen overflow-x-hidden bg-[var(--bf-background)] p-3 text-[var(--bf-text-primary)] sm:p-4 md:p-6">
       <div className="mx-auto w-full max-w-6xl space-y-4 md:space-y-5">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-cyan-300">
             Relatórios
           </p>
-          <h1 className="mt-1 text-2xl font-black leading-tight text-white md:text-3xl">
+          <h1 className="mt-1 text-2xl font-black leading-tight text-[var(--bf-text-primary)] md:text-3xl">
             Relatórios operacionais
           </h1>
-          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-white/60">
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--bf-text-secondary)]">
             Escolha o tipo, aplique filtros e exporte somente os dados do relatório selecionado.
           </p>
         </div>
 
-        <section className="rounded-2xl border border-white/10 bg-[#161b27] p-3 sm:p-4">
-          <p className="mb-3 text-sm font-bold text-white">Tipo de relatório</p>
+        <section className="rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface)] p-3 sm:p-4">
+          <p className="mb-3 text-sm font-bold text-[var(--bf-text-primary)]">Tipo de relatório</p>
           <div className="flex max-w-full flex-wrap gap-2 overflow-hidden pb-1">
             {reportTypes.map(([value, label]) => (
               <button
@@ -591,7 +591,7 @@ export default function RelatoriosPage() {
                   'min-h-10 shrink-0 rounded-full border px-4 text-sm font-bold transition-colors',
                   reportType === value
                     ? 'border-cyan-300 bg-cyan-500 text-slate-950'
-                    : 'border-white/15 bg-transparent text-white/65 hover:border-white/30',
+                    : 'border-[var(--bf-border)] bg-transparent text-[var(--bf-text-secondary)] hover:border-slate-400/50',
                 ].join(' ')}
                 key={value}
                 onClick={() => {
@@ -612,7 +612,7 @@ export default function RelatoriosPage() {
                   'min-h-9 shrink-0 rounded-full border px-3 text-xs font-bold transition-colors',
                   periodPreset === value
                     ? 'border-cyan-300 bg-cyan-400/15 text-cyan-200'
-                    : 'border-white/15 bg-transparent text-white/55 hover:border-white/30',
+                    : 'border-[var(--bf-border)] bg-transparent text-[var(--bf-text-secondary)] hover:border-slate-400/50',
                 ].join(' ')}
                 key={value}
                 onClick={() => selectPreset(value)}
@@ -648,8 +648,8 @@ export default function RelatoriosPage() {
             </Button>
           </div>
 
-          <details className="mt-4 rounded-xl border border-white/10 bg-[#101827] p-3">
-            <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-bold text-white">
+          <details className="mt-4 rounded-xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] p-3">
+            <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-bold text-[var(--bf-text-primary)]">
               <SlidersHorizontal size={16} />
               Filtros avançados
             </summary>
@@ -672,10 +672,10 @@ export default function RelatoriosPage() {
                 ['status', 'Status', options.status],
                 ['formaPagamento', 'Pagamento', options.formasPagamento],
               ].map(([key, label, values]) => (
-                <label className="space-y-2 text-xs font-bold uppercase tracking-[0.08em] text-white/45" key={String(key)}>
+                <label className="space-y-2 text-xs font-bold uppercase tracking-[0.08em] text-[var(--bf-text-secondary)]" key={String(key)}>
                   {String(label)}
                   <select
-                    className="h-10 w-full min-w-0 rounded-xl border border-white/10 bg-[#161b27] px-3 text-sm normal-case tracking-normal text-white outline-none focus:border-cyan-300"
+                    className="h-10 w-full min-w-0 rounded-xl border border-[var(--bf-border)] bg-[var(--bf-surface)] px-3 text-sm normal-case tracking-normal text-white outline-none focus:border-cyan-300"
                     onChange={(event) => updateFilter(key as keyof AdvancedFilters, event.target.value)}
                     value={filters[key as keyof AdvancedFilters]}
                   >
@@ -698,7 +698,7 @@ export default function RelatoriosPage() {
               <h2 className="text-xl font-black md:text-2xl">
                 {builtReport?.title ?? `Relatório ${reportTypeLabels[reportType]}`}
               </h2>
-              <p className="text-sm text-white/55">
+              <p className="text-sm text-[var(--bf-text-secondary)]">
                 {formatDate(appliedFilters.dataInicio)} até {formatDate(appliedFilters.dataFim)}
               </p>
             </div>
@@ -706,7 +706,7 @@ export default function RelatoriosPage() {
               <span className="rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-300">
                 Período filtrado
               </span>
-              <span className="rounded-full bg-white/8 px-3 py-1 text-xs font-bold text-white/70">
+              <span className="rounded-full bg-[var(--bf-surface-muted)] px-3 py-1 text-xs font-bold text-[var(--bf-text-secondary)]">
                 {builtReport?.rows.length ?? 0} registros
               </span>
             </div>
@@ -719,15 +719,15 @@ export default function RelatoriosPage() {
           )}
 
           {reportQuery.isLoading ? (
-            <div className="mt-4 rounded-xl border border-white/10 bg-[#161b27] p-4 text-sm text-white/60">
+            <div className="mt-4 rounded-xl border border-[var(--bf-border)] bg-[var(--bf-surface)] p-4 text-sm text-[var(--bf-text-secondary)]">
               Carregando relatório...
             </div>
           ) : builtReport ? (
             <>
               <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
                 {builtReport.kpis.map((kpi) => (
-                  <div className="rounded-xl border border-white/10 bg-[#161b27] p-3 md:p-4" key={kpi.label}>
-                    <p className="text-[11px] text-white/45">{kpi.label}</p>
+                  <div className="rounded-xl border border-[var(--bf-border)] bg-[var(--bf-surface)] p-3 md:p-4" key={kpi.label}>
+                    <p className="text-[11px] text-[var(--bf-text-secondary)]">{kpi.label}</p>
                     <p className="mt-1 text-lg font-black md:text-xl">{kpi.value}</p>
                   </div>
                 ))}
@@ -736,12 +736,12 @@ export default function RelatoriosPage() {
               <div className="mt-4 space-y-2 md:hidden">
                 {pagedRows.length ? (
                   pagedRows.map((row, index) => (
-                    <article className="rounded-xl border border-white/10 bg-[#161b27] p-3" key={`${row.title}-${index}`}>
+                    <article className="rounded-xl border border-[var(--bf-border)] bg-[var(--bf-surface)] p-3" key={`${row.title}-${index}`}>
                       <div className="flex min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <h3 className="break-words text-sm font-black text-white">{row.title}</h3>
-                          <p className="mt-1 break-words text-xs text-white/55">{row.subtitle}</p>
-                          <p className="mt-1 break-words text-xs text-white/45">{row.detail}</p>
+                          <h3 className="break-words text-sm font-black text-[var(--bf-text-primary)]">{row.title}</h3>
+                          <p className="mt-1 break-words text-xs text-[var(--bf-text-secondary)]">{row.subtitle}</p>
+                          <p className="mt-1 break-words text-xs text-[var(--bf-text-secondary)]">{row.detail}</p>
                         </div>
                         {row.amount !== undefined && (
                           <strong className="shrink-0 text-sm text-cyan-300">
@@ -750,22 +750,22 @@ export default function RelatoriosPage() {
                         )}
                       </div>
                       {row.status && (
-                        <span className="mt-2 inline-flex rounded-full bg-white/8 px-2 py-0.5 text-xs font-bold text-white/70">
+                        <span className="mt-2 inline-flex rounded-full bg-[var(--bf-surface-muted)] px-2 py-0.5 text-xs font-bold text-[var(--bf-text-secondary)]">
                           {row.status}
                         </span>
                       )}
                     </article>
                   ))
                 ) : (
-                  <div className="rounded-xl border border-white/10 bg-[#161b27] p-4 text-sm text-white/55">
+                  <div className="rounded-xl border border-[var(--bf-border)] bg-[var(--bf-surface)] p-4 text-sm text-[var(--bf-text-secondary)]">
                     Nenhum registro encontrado para os filtros aplicados.
                   </div>
                 )}
               </div>
 
-              <div className="mt-4 hidden overflow-hidden rounded-xl border border-white/10 bg-[#161b27] md:block">
+              <div className="mt-4 hidden overflow-hidden rounded-xl border border-[var(--bf-border)] bg-[var(--bf-surface)] md:block">
                 <table className="w-full table-fixed text-left text-sm">
-                  <thead className="bg-white/5 text-xs uppercase tracking-[0.08em] text-white/45">
+                  <thead className="bg-[var(--bf-surface-muted)] text-xs uppercase tracking-[0.08em] text-[var(--bf-text-secondary)]">
                     <tr>
                       {builtReport.columns.map((cell) => (
                         <th className="break-words px-4 py-3" key={cell}>
@@ -779,7 +779,7 @@ export default function RelatoriosPage() {
                       pagedRows.map((row, index) => (
                         <tr key={`${row.title}-${index}`}>
                           {row.cells.map((cell, cellIndex) => (
-                            <td className="break-words px-4 py-3 text-white/75" key={`${index}-${cellIndex}`}>
+                            <td className="break-words px-4 py-3 text-[var(--bf-text-secondary)]" key={`${index}-${cellIndex}`}>
                               {cell}
                             </td>
                           ))}
@@ -787,7 +787,7 @@ export default function RelatoriosPage() {
                       ))
                     ) : (
                       <tr>
-                        <td className="px-4 py-5 text-white/55" colSpan={builtReport.columns.length}>
+                        <td className="px-4 py-5 text-[var(--bf-text-secondary)]" colSpan={builtReport.columns.length}>
                           Nenhum registro encontrado para os filtros aplicados.
                         </td>
                       </tr>
@@ -800,7 +800,7 @@ export default function RelatoriosPage() {
                 <Button disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} variant="secondary">
                   Anterior
                 </Button>
-                <span className="text-xs font-bold text-white/55">
+                <span className="text-xs font-bold text-[var(--bf-text-secondary)]">
                   Página {page} de {totalPages}
                 </span>
                 <Button disabled={page >= totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))} variant="secondary">

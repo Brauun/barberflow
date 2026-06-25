@@ -460,10 +460,17 @@ export function ServicosPage() {
                 ) : barbersQuery.data?.length ? (
                   barbersQuery.data.map((barber) => (
                     <label
-                      className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-200 dark:border-slate-800 dark:text-slate-200"
+                      className="flex min-w-0 cursor-pointer items-start gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:border-brand-200 dark:border-slate-800 dark:text-slate-200"
                       key={barber.id}
                     >
-                      <span>
+                      <input
+                        checked={selectedBarberIds.includes(barber.id)}
+                        className="mt-0.5 h-4 w-4 shrink-0 accent-brand-500"
+                        disabled={!editingServico}
+                        onChange={() => toggleBarber(barber.id)}
+                        type="checkbox"
+                      />
+                      <span className="min-w-0 flex-1 break-words leading-snug">
                         {barber.nome}
                         {barber.status !== 'ativo' && (
                           <span className="ml-2 text-xs font-medium text-slate-400">
@@ -471,13 +478,6 @@ export function ServicosPage() {
                           </span>
                         )}
                       </span>
-                      <input
-                        checked={selectedBarberIds.includes(barber.id)}
-                        className="h-4 w-4 accent-brand-500"
-                        disabled={!editingServico}
-                        onChange={() => toggleBarber(barber.id)}
-                        type="checkbox"
-                      />
                     </label>
                   ))
                 ) : (
@@ -488,11 +488,15 @@ export function ServicosPage() {
               </div>
             </div>
 
-            <div className="sticky bottom-0 -mx-5 flex justify-end gap-3 border-t border-slate-100 bg-white px-5 pb-[env(safe-area-inset-bottom)] pt-4 dark:border-slate-800 dark:bg-slate-950">
-              <Button onClick={closeFormModal} type="button" variant="secondary">
+            <div className="sticky bottom-0 -mx-4 flex justify-end gap-2 border-t border-slate-100 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 dark:border-zinc-800 dark:bg-zinc-900/95 sm:-mx-5 sm:gap-3 sm:px-5 sm:pt-4">
+              <Button className="h-10 px-4" onClick={closeFormModal} type="button" variant="secondary">
                 Cancelar
               </Button>
-              <Button disabled={isSubmitting || saveServicoMutation.isPending} type="submit">
+              <Button
+                className="h-10 px-4"
+                disabled={isSubmitting || saveServicoMutation.isPending}
+                type="submit"
+              >
                 {saveServicoMutation.isPending ? 'Salvando...' : 'Salvar serviço'}
               </Button>
             </div>

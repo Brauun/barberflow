@@ -835,8 +835,8 @@ export function PlanosFidelidadePage() {
             </p>
           )}
 
-          <div className="rounded-2xl border border-brand-200 bg-brand-50 p-4 text-sm text-slate-700 shadow-sm dark:border-brand-500/30 dark:bg-slate-950/70 dark:text-slate-300">
-            <p className="font-black text-slate-950 dark:text-white">
+          <div className="rounded-2xl border border-brand-200 bg-brand-50 p-4 text-sm text-slate-700 shadow-sm dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface-muted)] dark:text-[var(--bf-text-secondary)]">
+            <p className="font-black text-slate-950 dark:text-[var(--bf-text-primary)]">
               Fluxo rápido para o piloto
             </p>
             <p className="mt-1 leading-6">
@@ -858,8 +858,8 @@ export function PlanosFidelidadePage() {
                     className={[
                       'min-h-[136px] rounded-2xl border px-4 py-4 text-left transition hover:-translate-y-0.5',
                       isSelected
-                        ? 'border-brand-300 bg-brand-50 text-brand-700 shadow-sm dark:border-brand-400/70 dark:bg-brand-500/15 dark:text-white'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200',
+                        ? 'border-brand-300 bg-brand-50 text-brand-700 shadow-sm dark:border-brand-400/70 dark:bg-brand-500/15 dark:text-[var(--bf-text-primary)]'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface)] dark:text-[var(--bf-text-secondary)]',
                     ].join(' ')}
                     key={option.value}
                     onClick={() =>
@@ -914,7 +914,7 @@ export function PlanosFidelidadePage() {
               Descrição
             </span>
             <textarea
-              className="mt-2 min-h-24 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-brand-300 focus:ring-4 focus:ring-brand-100/80 sm:text-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50"
+              className="mt-2 min-h-24 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-brand-300 focus:ring-4 focus:ring-brand-100/80 sm:text-sm dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface)] dark:text-[var(--bf-text-primary)]"
               placeholder="Explique de forma simples o que o cliente recebe."
               {...register('descricao')}
             />
@@ -991,28 +991,30 @@ export function PlanosFidelidadePage() {
             />
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
-            <p className="text-sm font-semibold text-slate-950 dark:text-slate-50">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface-muted)]">
+            <p className="text-sm font-semibold text-slate-950 dark:text-[var(--bf-text-primary)]">
               Serviços incluídos
             </p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-xs text-slate-500 dark:text-[var(--bf-text-secondary)]">
               Deixe vazio para valer em todos os serviços.
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {(servicosQuery.data ?? []).map((servico) => (
                 <label
-                  className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+                  className="flex min-w-0 cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-medium text-slate-700 dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface)] dark:text-[var(--bf-text-secondary)]"
                   key={servico.id}
                 >
                   <input
                     checked={selectedServiceIds.includes(servico.id)}
-                    className="h-4 w-4 accent-brand-500"
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-brand-500"
                     onChange={() =>
                       toggleArrayValue('servico_ids', selectedServiceIds, servico.id)
                     }
                     type="checkbox"
                   />
-                  {servico.nome}
+                  <span className="min-w-0 flex-1 break-words leading-snug">
+                    {servico.nome}
+                  </span>
                 </label>
               ))}
             </div>
@@ -1024,14 +1026,14 @@ export function PlanosFidelidadePage() {
           </div>
 
           {publicTarget === 'clientes_especificos' && (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
-              <p className="text-sm font-semibold text-slate-950 dark:text-slate-50">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface-muted)]">
+              <p className="text-sm font-semibold text-slate-950 dark:text-[var(--bf-text-primary)]">
                 Clientes especificos
               </p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {(clientesQuery.data ?? []).map((cliente) => (
                   <label
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface)] dark:text-[var(--bf-text-secondary)]"
                     key={cliente.id}
                   >
                     <input
@@ -1065,15 +1067,20 @@ export function PlanosFidelidadePage() {
             {...register('recompensa_descricao')}
           />
 
-          <div className="-mx-5 mt-6 flex justify-end gap-3 border-t border-slate-100 bg-white px-5 pb-[env(safe-area-inset-bottom)] pt-4 dark:border-slate-800 dark:bg-zinc-900">
+          <div className="-mx-4 mt-4 flex justify-end gap-2 border-t border-slate-100 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface)] sm:-mx-5 sm:mt-6 sm:gap-3 sm:px-5 sm:pt-4">
             <Button
+              className="h-10 px-4"
               onClick={() => setIsFormOpen(false)}
               type="button"
               variant="secondary"
             >
               Cancelar
             </Button>
-            <Button disabled={isSubmitting || saveMutation.isPending} type="submit">
+            <Button
+              className="h-10 px-4"
+              disabled={isSubmitting || saveMutation.isPending}
+              type="submit"
+            >
               {saveMutation.isPending ? 'Publicando...' : 'Publicar benefício'}
             </Button>
           </div>

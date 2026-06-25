@@ -367,7 +367,7 @@ function insightToneClass(tone: ExecutiveInsight['tone']) {
   if (tone === 'good') return 'border-emerald-400/20 bg-emerald-400/8 text-emerald-100'
   if (tone === 'warning') return 'border-amber-400/20 bg-amber-400/8 text-amber-100'
   if (tone === 'danger') return 'border-red-400/20 bg-red-400/8 text-red-100'
-  return 'border-white/10 bg-white/5 text-white/75'
+  return 'border-[var(--bf-border)] bg-[var(--bf-surface-muted)] text-[var(--bf-text-secondary)]'
 }
 
 export default function RelatorioExecutivosPage() {
@@ -453,17 +453,17 @@ export default function RelatorioExecutivosPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#0f1117] p-3 text-white sm:p-4 md:p-6">
+    <div className="min-h-screen overflow-x-hidden bg-[var(--bf-background)] p-3 text-[var(--bf-text-primary)] sm:p-4 md:p-6">
       <div className="mx-auto w-full max-w-6xl space-y-4 md:space-y-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-cyan-300">
               Relatórios Executivos
             </p>
-            <h1 className="text-2xl font-black leading-tight text-white md:text-3xl">
+            <h1 className="text-2xl font-black leading-tight text-[var(--bf-text-primary)] md:text-3xl">
               Panorama do Negócio
             </h1>
-            <p className="mt-1 max-w-xl text-sm leading-relaxed text-white/60">
+            <p className="mt-1 max-w-xl text-sm leading-relaxed text-[var(--bf-text-secondary)]">
               Visão gerencial premium com score, indicadores, alertas e recomendações.
             </p>
           </div>
@@ -477,7 +477,7 @@ export default function RelatorioExecutivosPage() {
           </div>
         </div>
 
-        <section className="rounded-2xl border border-white/10 bg-[#161b27] p-3 sm:p-4">
+        <section className="rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface)] p-3 sm:p-4">
           <div className="flex max-w-full flex-wrap gap-2 overflow-hidden pb-1">
             {(Object.keys(periodoLabels) as Periodo[]).map((item) => (
               <button
@@ -485,7 +485,7 @@ export default function RelatorioExecutivosPage() {
                   'min-h-10 shrink-0 rounded-full border px-4 text-sm font-bold transition-colors',
                   periodo === item
                     ? 'border-cyan-300 bg-cyan-500 text-slate-950'
-                    : 'border-white/15 bg-transparent text-white/65 hover:border-white/30',
+                    : 'border-[var(--bf-border)] bg-transparent text-[var(--bf-text-secondary)] hover:border-slate-400/50',
                 ].join(' ')}
                 key={item}
                 onClick={() => setQuickPeriodo(item)}
@@ -529,22 +529,22 @@ export default function RelatorioExecutivosPage() {
         )}
 
         {reportQuery.isLoading ? (
-          <div className="rounded-xl border border-white/10 bg-[#161b27] p-4 text-sm text-white/60">
+          <div className="rounded-xl border border-[var(--bf-border)] bg-[var(--bf-surface)] p-4 text-sm text-[var(--bf-text-secondary)]">
             Carregando relatório executivo...
           </div>
         ) : data && metrics ? (
           <>
             <section className="grid gap-3 md:grid-cols-[0.8fr_1.2fr]">
-              <div className="rounded-2xl border border-white/10 bg-[#161b27] p-4 md:p-5">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-white/45">
+              <div className="rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface)] p-4 md:p-5">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--bf-text-secondary)]">
                   Score da operação
                 </p>
                 <div className="mt-4 flex items-end gap-2">
-                  <span className="text-5xl font-black leading-none text-white">{data.score.value}</span>
-                  <span className="pb-1 text-lg font-bold text-white/45">/100</span>
+                  <span className="text-5xl font-black leading-none text-[var(--bf-text-primary)]">{data.score.value}</span>
+                  <span className="pb-1 text-lg font-bold text-[var(--bf-text-secondary)]">/100</span>
                 </div>
-                <p className="mt-3 text-base font-black text-white">{data.score.label}</p>
-                <p className="mt-2 text-sm leading-relaxed text-white/55">
+                <p className="mt-3 text-base font-black text-[var(--bf-text-primary)]">{data.score.label}</p>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--bf-text-secondary)]">
                   Score baseado em receita, margem, ocupação, cancelamentos e ritmo do período.
                 </p>
               </div>
@@ -560,9 +560,9 @@ export default function RelatorioExecutivosPage() {
                   ['Comissões', currencyFormatter.format(data.summary.comissoes)],
                   ['Produtos vendidos', data.produtos.maisVendidos.reduce((total, product) => total + product.quantidade, 0)],
                 ].map(([label, value]) => (
-                  <div className="rounded-xl border border-white/10 bg-[#161b27] p-3 md:p-4" key={label}>
-                    <p className="text-xs text-white/50">{label}</p>
-                    <p className="mt-1 break-words text-lg font-black leading-tight text-white md:text-2xl">
+                  <div className="rounded-xl border border-[var(--bf-border)] bg-[var(--bf-surface)] p-3 md:p-4" key={label}>
+                    <p className="text-xs text-[var(--bf-text-secondary)]">{label}</p>
+                    <p className="mt-1 break-words text-lg font-black leading-tight text-[var(--bf-text-primary)] md:text-2xl">
                       {value}
                     </p>
                   </div>
@@ -570,7 +570,7 @@ export default function RelatorioExecutivosPage() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-white/10 bg-[#161b27] p-3 sm:p-4">
+            <section className="rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface)] p-3 sm:p-4">
               <div className="flex max-w-full flex-wrap gap-2 overflow-hidden pb-1">
                 {(Object.keys(tabLabels) as Tab[]).map((item) => (
                   <button
@@ -578,7 +578,7 @@ export default function RelatorioExecutivosPage() {
                       'min-h-10 shrink-0 rounded-full border px-4 text-sm font-bold transition-colors',
                       activeTab === item
                         ? 'border-cyan-300 bg-cyan-500 text-slate-950'
-                        : 'border-white/15 bg-transparent text-white/65 hover:border-white/30',
+                        : 'border-[var(--bf-border)] bg-transparent text-[var(--bf-text-secondary)] hover:border-slate-400/50',
                     ].join(' ')}
                     key={item}
                     onClick={() => setActiveTab(item)}
@@ -603,12 +603,12 @@ export default function RelatorioExecutivosPage() {
 
                 {activeTab === 'equipe' &&
                   data.equipe.slice(0, 6).map((barber, index) => (
-                    <article className="rounded-xl border border-white/10 bg-[#101827] p-3" key={barber.nome}>
+                    <article className="rounded-xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] p-3" key={barber.nome}>
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <span className="text-xs font-bold text-cyan-300">#{index + 1}</span>
-                          <h3 className="text-sm font-black text-white">{barber.nome}</h3>
-                          <p className="mt-1 text-xs text-white/55">
+                          <h3 className="text-sm font-black text-[var(--bf-text-primary)]">{barber.nome}</h3>
+                          <p className="mt-1 text-xs text-[var(--bf-text-secondary)]">
                             {barber.atendimentos} atendimentos • Ticket {currencyFormatter.format(barber.ticketMedio)}
                           </p>
                         </div>
@@ -619,9 +619,9 @@ export default function RelatorioExecutivosPage() {
 
                 {activeTab === 'clientes' &&
                   data.clientes.topClientes.slice(0, 6).map((client) => (
-                    <article className="rounded-xl border border-white/10 bg-[#101827] p-3" key={client.nome}>
-                      <h3 className="text-sm font-black text-white">{client.nome}</h3>
-                      <p className="mt-1 text-xs text-white/55">
+                    <article className="rounded-xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] p-3" key={client.nome}>
+                      <h3 className="text-sm font-black text-[var(--bf-text-primary)]">{client.nome}</h3>
+                      <p className="mt-1 text-xs text-[var(--bf-text-secondary)]">
                         {client.visitas} visitas • {currencyFormatter.format(client.gastoTotal)}
                       </p>
                     </article>
@@ -636,9 +636,9 @@ export default function RelatorioExecutivosPage() {
                     ['Remarcados', data.agenda.status.remarcado],
                     ['Em atendimento', data.agenda.status.emAtendimento],
                   ].map(([label, value]) => (
-                    <article className="rounded-xl border border-white/10 bg-[#101827] p-3" key={label}>
-                      <p className="text-xs text-white/50">{label}</p>
-                      <p className="mt-1 text-xl font-black text-white">{value}</p>
+                    <article className="rounded-xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] p-3" key={label}>
+                      <p className="text-xs text-[var(--bf-text-secondary)]">{label}</p>
+                      <p className="mt-1 text-xl font-black text-[var(--bf-text-primary)]">{value}</p>
                     </article>
                   ))}
 
@@ -651,9 +651,9 @@ export default function RelatorioExecutivosPage() {
                     ['Produtos baixo estoque', data.produtos.baixoEstoque],
                     ['Clientes previstos 30 dias', data.previsao.clientes30Dias],
                   ].map(([label, value]) => (
-                    <article className="rounded-xl border border-white/10 bg-[#101827] p-3" key={label}>
-                      <p className="text-xs text-white/50">{label}</p>
-                      <p className="mt-1 break-words text-lg font-black text-white">{value}</p>
+                    <article className="rounded-xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] p-3" key={label}>
+                      <p className="text-xs text-[var(--bf-text-secondary)]">{label}</p>
+                      <p className="mt-1 break-words text-lg font-black text-[var(--bf-text-primary)]">{value}</p>
                     </article>
                   ))}
               </div>
