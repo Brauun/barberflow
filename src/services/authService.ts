@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
 import type { UserRole, Usuario } from '../types/database'
+import { duplicateAwareError, friendlyDuplicateMessage } from '../utils/duplicateErrors'
 
 type SignInInput = {
   email: string
@@ -213,6 +214,15 @@ export async function signUpWithCompany(input: SignUpInput) {
   })
 
   if (error) {
+    const duplicateMessage = friendlyDuplicateMessage(error, {
+      users_email_key: 'Já existe uma conta cadastrada com este e-mail.',
+    })
+    const authDuplicateMessage = error.message
+      .toLowerCase()
+      .includes('already registered')
+      ? 'Já existe uma conta cadastrada com este e-mail.'
+      : null
+
     logger.error({
       action: 'signup_auth_user_failed',
       area: 'auth',
@@ -222,7 +232,11 @@ export async function signUpWithCompany(input: SignUpInput) {
         accountType: 'barbearia',
       },
     })
-    throw new Error(`Falha ao criar usuario no Supabase Auth: ${error.message}`)
+    throw new Error(
+      duplicateMessage ??
+        authDuplicateMessage ??
+        `Falha ao criar usuario no Supabase Auth: ${error.message}`,
+    )
   }
 
   if (!data.user?.id) {
@@ -312,6 +326,16 @@ export async function signUpClient(input: SignUpInput) {
   })
 
   if (error) {
+    const duplicateMessage = friendlyDuplicateMessage(error, {
+      users_email_key:
+        'Já existe uma conta cadastrada com este e-mail ou telefone.',
+    })
+    const authDuplicateMessage = error.message
+      .toLowerCase()
+      .includes('already registered')
+      ? 'Já existe uma conta cadastrada com este e-mail ou telefone.'
+      : null
+
     logger.error({
       action: 'signup_client_auth_failed',
       area: 'auth',
@@ -321,7 +345,11 @@ export async function signUpClient(input: SignUpInput) {
         hasEmail: Boolean(input.email),
       },
     })
-    throw new Error(`Falha ao criar cliente no Supabase Auth: ${error.message}`)
+    throw new Error(
+      duplicateMessage ??
+        authDuplicateMessage ??
+        `Falha ao criar cliente no Supabase Auth: ${error.message}`,
+    )
   }
 
   if (!data.user?.id) {
@@ -368,7 +396,16 @@ export async function createClientProfile(input: {
       throw new Error(missingClientSchemaMessage())
     }
 
-    throw new Error(`Falha ao criar perfil de cliente: ${error.message}`)
+    throw duplicateAwareError(
+      error,
+      {
+        profiles_cliente_email_normalizado_unique_idx:
+          'Já existe um cliente cadastrado com este e-mail.',
+        profiles_cliente_telefone_normalizado_unique_idx:
+          'Já existe um cliente cadastrado com este telefone.',
+      },
+      `Falha ao criar perfil de cliente: ${error.message}`,
+    )
   }
 }
 
@@ -434,7 +471,14 @@ export async function createCompanyUser(input: CreateCompanyUserInput) {
     .eq('id', (data as Usuario).empresa_id)
 
   if (empresaUpdateError) {
-    throw new Error(`Falha ao salvar dados fiscais: ${empresaUpdateError.message}`)
+    throw duplicateAwareError(
+      empresaUpdateError,
+      {
+        empresas_cpf_cnpj_normalizado_unique_idx:
+          'Já existe uma barbearia cadastrada com este CPF/CNPJ.',
+      },
+      `Falha ao salvar dados fiscais: ${empresaUpdateError.message}`,
+    )
   }
 
   const { error: barbershopUpsertError } = await supabase.from('barbershops').upsert(
@@ -449,7 +493,12 @@ export async function createCompanyUser(input: CreateCompanyUserInput) {
   )
 
   if (barbershopUpsertError) {
-    throw new Error(
+    throw duplicateAwareError(
+      barbershopUpsertError,
+      {
+        barbershops_cpf_cnpj_normalizado_unique_idx:
+          'Já existe uma barbearia cadastrada com este CPF/CNPJ.',
+      },
       `Falha ao salvar dados da barbearia: ${barbershopUpsertError.message}`,
     )
   }

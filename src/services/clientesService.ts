@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase'
 import type { Database } from '../types/database'
 import type { ClienteFormData } from '../types/clientes'
+import { duplicateAwareError } from '../utils/duplicateErrors'
 import { toAppError } from '../utils/handleAppError'
 import { onlyDigits } from '../utils/masks'
 
@@ -59,6 +60,39 @@ function normalizeClienteInput(data: ClienteFormData, empresaId: string) {
     nome: data.nome.trim(),
     observacoes: data.observacoes?.trim() || null,
     telefone: onlyDigits(data.telefone) || null,
+  }
+}
+
+async function ensureClienteNotDuplicated(
+  empresaId: string,
+  data: ClienteFormData,
+  clienteId?: string,
+) {
+  const telefone = onlyDigits(data.telefone)
+
+  if (!telefone) {
+    return
+  }
+
+  let query = supabase
+    .from('clientes')
+    .select('id')
+    .eq('empresa_id', empresaId)
+    .eq('telefone', telefone)
+    .limit(1)
+
+  if (clienteId) {
+    query = query.neq('id', clienteId)
+  }
+
+  const { data: duplicated, error } = await query.maybeSingle()
+
+  if (error) {
+    throw toAppError(error, 'Não foi possível validar duplicidade do cliente.')
+  }
+
+  if (duplicated) {
+    throw new Error('Já existe um cliente cadastrado com este telefone.')
   }
 }
 
@@ -402,12 +436,23 @@ export async function searchClientes(
 }
 
 export async function createCliente(empresaId: string, data: ClienteFormData) {
+  await ensureClienteNotDuplicated(empresaId, data)
+
   const { error } = await supabase
     .from('clientes')
     .insert(normalizeClienteInput(data, empresaId))
 
   if (error) {
-    throw toAppError(error, 'Não foi possível criar o cliente.')
+    throw duplicateAwareError(
+      error,
+      {
+        clientes_empresa_email_normalizado_unique_idx:
+          'Já existe um cliente cadastrado com este e-mail.',
+        clientes_empresa_telefone_normalizado_unique_idx:
+          'Já existe um cliente cadastrado com este telefone.',
+      },
+      'Não foi possível criar o cliente.',
+    )
   }
 }
 
@@ -416,6 +461,8 @@ export async function updateCliente(
   clienteId: string,
   data: ClienteFormData,
 ) {
+  await ensureClienteNotDuplicated(empresaId, data, clienteId)
+
   const { error } = await supabase
     .from('clientes')
     .update(normalizeClienteInput(data, empresaId))
@@ -423,7 +470,16 @@ export async function updateCliente(
     .eq('id', clienteId)
 
   if (error) {
-    throw toAppError(error, 'Não foi possível atualizar o cliente.')
+    throw duplicateAwareError(
+      error,
+      {
+        clientes_empresa_email_normalizado_unique_idx:
+          'Já existe um cliente cadastrado com este e-mail.',
+        clientes_empresa_telefone_normalizado_unique_idx:
+          'Já existe um cliente cadastrado com este telefone.',
+      },
+      'Não foi possível atualizar o cliente.',
+    )
   }
 }
 

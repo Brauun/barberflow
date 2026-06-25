@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase'
 import type { Database } from '../types/database'
 import type { ServicoFormData } from '../types/servicos'
+import { duplicateAwareError } from '../utils/duplicateErrors'
 import { toAppError } from '../utils/handleAppError'
 import { createAuditLog } from './observabilityService'
 
@@ -26,6 +27,41 @@ function normalizeServicoInput(data: ServicoFormData, empresaId: string) {
     percentual_comissao: Number(data.percentual_comissao ?? 60),
     preco: Number(data.preco),
     status,
+  }
+}
+
+async function ensureServicoNotDuplicated(
+  empresaId: string,
+  data: ServicoFormData,
+  servicoId?: string,
+) {
+  const nome = data.nome.trim()
+
+  if (!nome) {
+    return
+  }
+
+  let query = supabase
+    .from('servicos')
+    .select('id')
+    .eq('empresa_id', empresaId)
+    .ilike('nome', nome)
+    .eq('ativo', true)
+    .neq('status', 'inativo')
+    .limit(1)
+
+  if (servicoId) {
+    query = query.neq('id', servicoId)
+  }
+
+  const { data: duplicated, error } = await query.maybeSingle()
+
+  if (error) {
+    throw toAppError(error, 'Não foi possível validar duplicidade do serviço.')
+  }
+
+  if (duplicated) {
+    throw new Error('Já existe um serviço com este nome.')
   }
 }
 
@@ -55,6 +91,8 @@ export async function listServicos(
 }
 
 export async function createServico(empresaId: string, data: ServicoFormData) {
+  await ensureServicoNotDuplicated(empresaId, data)
+
   const { data: created, error } = await supabase
     .from('servicos')
     .insert(normalizeServicoInput(data, empresaId))
@@ -62,7 +100,14 @@ export async function createServico(empresaId: string, data: ServicoFormData) {
     .single()
 
   if (error) {
-    throw toAppError(error, 'Não foi possível criar o servico.')
+    throw duplicateAwareError(
+      error,
+      {
+        servicos_empresa_nome_ativo_normalizado_unique_idx:
+          'Já existe um serviço com este nome.',
+      },
+      'Não foi possível criar o serviço.',
+    )
   }
 
   await linkServicoToActiveBarbers({
@@ -127,6 +172,8 @@ export async function updateServico(
   servicoId: string,
   data: ServicoFormData,
 ) {
+  await ensureServicoNotDuplicated(empresaId, data, servicoId)
+
   const { error } = await supabase
     .from('servicos')
     .update(normalizeServicoInput(data, empresaId))
@@ -134,7 +181,14 @@ export async function updateServico(
     .eq('id', servicoId)
 
   if (error) {
-    throw toAppError(error, 'Não foi possível atualizar o servico.')
+    throw duplicateAwareError(
+      error,
+      {
+        servicos_empresa_nome_ativo_normalizado_unique_idx:
+          'Já existe um serviço com este nome.',
+      },
+      'Não foi possível atualizar o serviço.',
+    )
   }
 
   await createAuditLog({

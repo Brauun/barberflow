@@ -3,6 +3,7 @@ import type {
   EmployeeInvitationFormData,
 } from '../types/employees'
 import type { Database } from '../types/database'
+import { duplicateAwareError } from '../utils/duplicateErrors'
 import { onlyDigits } from '../utils/masks'
 import { createAuditLog } from './observabilityService'
 
@@ -51,13 +52,31 @@ export async function createEmployeeInvitation(input: {
   data: EmployeeInvitationFormData
 }) {
   const telefone = onlyDigits(input.data.telefone)
+  const email = input.data.email.trim().toLowerCase()
+
+  const { data: existingInvitation, error: existingError } = await supabase
+    .from('employee_invitations')
+    .select('id')
+    .eq('empresa_id', input.empresaId)
+    .eq('email', email)
+    .eq('status', 'pendente')
+    .limit(1)
+    .maybeSingle()
+
+  if (existingError) {
+    throw new Error('Não foi possível validar duplicidade do convite.')
+  }
+
+  if (existingInvitation) {
+    throw new Error('Já existe um convite pendente para este e-mail.')
+  }
 
   const { data: invitation, error } = await supabase.rpc(
     'create_employee_invitation',
     {
       p_commission_percentage: Number(input.data.commission_percentage),
       p_created_by: input.createdBy,
-      p_email: input.data.email.trim().toLowerCase(),
+      p_email: email,
       p_empresa_id: input.empresaId,
       p_nome: input.data.nome.trim(),
       p_role: input.data.role,
@@ -66,7 +85,14 @@ export async function createEmployeeInvitation(input: {
   )
 
   if (error) {
-    throw new Error(error.message)
+    throw duplicateAwareError(
+      error,
+      {
+        employee_invitations_empresa_email_pendente_unique_idx:
+          'Já existe um convite pendente para este e-mail.',
+      },
+      error.message,
+    )
   }
 
   await createAuditLog({

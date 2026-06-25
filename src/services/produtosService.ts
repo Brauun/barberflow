@@ -5,6 +5,7 @@ import type {
   ProdutoFormData,
   VendaProdutoFormData,
 } from '../types/produtos'
+import { duplicateAwareError } from '../utils/duplicateErrors'
 
 export type Produto = Database['public']['Tables']['produtos']['Row']
 
@@ -17,6 +18,40 @@ function normalizeProdutoInput(data: ProdutoFormData, empresaId: string) {
     nome: data.nome.trim(),
     preco_custo: Number(data.preco_custo),
     preco_venda: Number(data.preco_venda),
+  }
+}
+
+async function ensureProdutoNotDuplicated(
+  empresaId: string,
+  data: ProdutoFormData,
+  produtoId?: string,
+) {
+  const nome = data.nome.trim()
+
+  if (!nome) {
+    return
+  }
+
+  let query = supabase
+    .from('produtos')
+    .select('id')
+    .eq('empresa_id', empresaId)
+    .ilike('nome', nome)
+    .eq('ativo', true)
+    .limit(1)
+
+  if (produtoId) {
+    query = query.neq('id', produtoId)
+  }
+
+  const { data: duplicated, error } = await query.maybeSingle()
+
+  if (error) {
+    throw new Error('Não foi possível validar duplicidade do produto.')
+  }
+
+  if (duplicated) {
+    throw new Error('Já existe um produto com este nome.')
   }
 }
 
@@ -48,12 +83,23 @@ export async function listProdutos(
 }
 
 export async function createProduto(empresaId: string, data: ProdutoFormData) {
+  await ensureProdutoNotDuplicated(empresaId, data)
+
   const { error } = await supabase
     .from('produtos')
     .insert(normalizeProdutoInput(data, empresaId))
 
   if (error) {
-    throw new Error(error.message)
+    throw duplicateAwareError(
+      error,
+      {
+        produtos_empresa_nome_ativo_normalizado_unique_idx:
+          'Já existe um produto com este nome.',
+        produtos_empresa_id_sku_key:
+          'Já existe um produto com este SKU.',
+      },
+      'Não foi possível criar o produto.',
+    )
   }
 }
 
@@ -62,6 +108,8 @@ export async function updateProduto(
   produtoId: string,
   data: ProdutoFormData,
 ) {
+  await ensureProdutoNotDuplicated(empresaId, data, produtoId)
+
   const { error } = await supabase
     .from('produtos')
     .update(normalizeProdutoInput(data, empresaId))
@@ -69,7 +117,16 @@ export async function updateProduto(
     .eq('id', produtoId)
 
   if (error) {
-    throw new Error(error.message)
+    throw duplicateAwareError(
+      error,
+      {
+        produtos_empresa_nome_ativo_normalizado_unique_idx:
+          'Já existe um produto com este nome.',
+        produtos_empresa_id_sku_key:
+          'Já existe um produto com este SKU.',
+      },
+      'Não foi possível atualizar o produto.',
+    )
   }
 }
 
