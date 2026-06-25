@@ -39,7 +39,7 @@ export function useContasPagar(input: {
   const saveContaMutation = useMutation({
     mutationFn: async (payload: { contaId?: string; data: ContaPagarFormData }) => {
       if (!input.empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       if (payload.contaId) {
@@ -55,7 +55,7 @@ export function useContasPagar(input: {
   const deleteContaMutation = useMutation({
     mutationFn: async (conta: ContaPagar) => {
       if (!input.empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       await deleteContaPagar(input.empresaId, conta.id)
@@ -66,7 +66,7 @@ export function useContasPagar(input: {
   const payContaMutation = useMutation({
     mutationFn: async (conta: ContaPagar) => {
       if (!input.empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       await marcarContaComoPaga(input.empresaId, conta.id)

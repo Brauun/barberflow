@@ -44,7 +44,7 @@ export const businessHourSchema = z
     if ((data.break_start && !data.break_end) || (!data.break_start && data.break_end)) {
       ctx.addIssue({
         code: 'custom',
-        message: 'Informe inicio e fim da pausa.',
+        message: 'Informe início e fim da pausa.',
         path: ['break_start'],
       })
       return

@@ -159,7 +159,7 @@ async function listClientesCompact(
   const clientesResponse = await clientesQuery
 
   if (clientesResponse.error) {
-    throw toAppError(clientesResponse.error, 'NÃ£o foi possÃ­vel listar clientes.')
+    throw toAppError(clientesResponse.error, 'Não foi possível listar clientes.')
   }
 
   const clientes = (clientesResponse.data ?? []) as Cliente[]
@@ -214,7 +214,7 @@ async function listClientesCompact(
   const listError = failedResponse?.error
 
   if (listError) {
-    throw toAppError(listError, 'NÃ£o foi possÃ­vel listar clientes.')
+    throw toAppError(listError, 'Não foi possível listar clientes.')
   }
 
   const atendimentos = (atendimentosResponse.data ?? []) as ClienteIndicator[]

@@ -63,8 +63,8 @@ export function buildBookingSlots(input: {
     if (specialHour.is_closed) {
       return {
         message: specialHour.reason
-          ? `Esta barbearia nao atende neste dia: ${specialHour.reason}.`
-          : 'Esta barbearia nao atende neste dia.',
+          ? `Esta barbearia não atende neste dia: ${specialHour.reason}.`
+          : 'Esta barbearia não atende neste dia.',
         slots: [],
         status: 'closed',
       } satisfies BookingSlotResult
@@ -72,7 +72,7 @@ export function buildBookingSlots(input: {
 
     if (!specialHour.open_time || !specialHour.close_time) {
       return {
-        message: 'Agenda ainda nao configurada pela barbearia.',
+        message: 'Agenda ainda não configurada pela barbearia.',
         slots: [],
         status: 'not_configured',
       } satisfies BookingSlotResult
@@ -85,7 +85,7 @@ export function buildBookingSlots(input: {
 
   if (!specialHour && !daySchedule) {
     return {
-      message: 'Agenda ainda nao configurada pela barbearia.',
+      message: 'Agenda ainda não configurada pela barbearia.',
       slots: [],
       status: 'not_configured',
     } satisfies BookingSlotResult
@@ -99,7 +99,7 @@ export function buildBookingSlots(input: {
 
   if (!isOpen) {
     return {
-      message: 'Esta barbearia nao atende neste dia.',
+      message: 'Esta barbearia não atende neste dia.',
       slots: [],
       status: 'closed',
     } satisfies BookingSlotResult
@@ -107,7 +107,7 @@ export function buildBookingSlots(input: {
 
   if (!openTime || !closeTime) {
     return {
-      message: 'Agenda ainda nao configurada pela barbearia.',
+      message: 'Agenda ainda não configurada pela barbearia.',
       slots: [],
       status: 'not_configured',
     } satisfies BookingSlotResult

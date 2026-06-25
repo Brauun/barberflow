@@ -21,7 +21,7 @@ const clientProfileSchema = z.object({
     .string()
     .optional()
     .refine((value) => !value || onlyDigits(value).length === 11, {
-      message: 'Informe um telefone com 11 digitos.',
+      message: 'Informe um telefone com 11 dígitos.',
     }),
 })
 

@@ -8,7 +8,7 @@ export const clienteSchema = z.object({
     .string()
     .optional()
     .refine((value) => !value || onlyDigits(value).length === 11, {
-      message: 'Informe um telefone com 11 digitos.',
+      message: 'Informe um telefone com 11 dígitos.',
     }),
   data_nascimento: z.string().optional(),
   observacoes: z.string().optional(),

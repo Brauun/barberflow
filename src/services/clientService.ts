@@ -164,7 +164,7 @@ export async function listBarbershops(search: string) {
 
 export function formatBarbershopAddress(barbershop: Partial<Barbershop> | null) {
   if (!barbershop) {
-    return 'Endereco nao informado'
+    return 'Endereço não informado'
   }
 
   const streetLine = [barbershop.rua, barbershop.numero]
@@ -175,7 +175,7 @@ export function formatBarbershopAddress(barbershop: Partial<Barbershop> | null) 
     .join(' - ')
   const structuredAddress = [streetLine, cityLine].filter(Boolean).join(' — ')
 
-  return structuredAddress || barbershop.endereco || 'Endereco nao informado'
+  return structuredAddress || barbershop.endereco || 'Endereço não informado'
 }
 
 export function getBarbershopRouteUrl(barbershop: Partial<Barbershop>) {
@@ -521,7 +521,7 @@ export async function notifyWaitlistForVacancy(input: {
     .eq('id', candidate.client_id)
     .maybeSingle()
 
-  const message = `Olá, ${clientData?.nome ?? 'cliente'}! Surgiu um horário disponivel na ${input.barbershopName ?? 'barbearia'} para ${vacancyDate.toLocaleDateString('pt-BR')} as ${vacancyDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}. Acesse o app BW Barber para confirmar seu agendamento.`
+  const message = `Olá, ${clientData?.nome ?? 'cliente'}! Surgiu um horário disponível na ${input.barbershopName ?? 'barbearia'} para ${vacancyDate.toLocaleDateString('pt-BR')} às ${vacancyDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}. Acesse o app BW Barber para confirmar seu agendamento.`
 
   const { error: notificationError } = await supabase
     .from('notification_logs')
@@ -551,7 +551,7 @@ export async function notifyWaitlistForVacancy(input: {
   await tryCreateInternalNotification({
     barberName: undefined,
     empresaId: input.empresaId,
-    message: `Uma vaga foi liberada para ${appointmentDateLabel(input.startsAt)} as ${appointmentTimeLabel(input.startsAt)} e um cliente da lista de espera foi notificado.`,
+    message: `Uma vaga foi liberada para ${appointmentDateLabel(input.startsAt)} às ${appointmentTimeLabel(input.startsAt)} e um cliente da lista de espera foi notificado.`,
     metadata: {
       client_id: candidate.client_id,
       desired_date: desiredDate,
@@ -616,7 +616,7 @@ export async function createClientAppointment(input: {
   await tryCreateInternalNotification({
     barberName: input.barber.nome,
     empresaId: input.barbershop.empresa_id,
-    message: `${input.clientProfile.nome} marcou ${input.service.nome} com ${input.barber.nome} em ${appointmentDateLabel(input.startsAt)} as ${appointmentTimeLabel(input.startsAt)}.`,
+    message: `${input.clientProfile.nome} marcou ${input.service.nome} com ${input.barber.nome} em ${appointmentDateLabel(input.startsAt)} às ${appointmentTimeLabel(input.startsAt)}.`,
     metadata: {
       appointment_id: appointment.id,
       barber_id: input.barber.id,
@@ -681,7 +681,7 @@ export async function cancelClientAppointment(input: {
     await tryCreateInternalNotification({
       barberName: input.appointment.barbeiro?.nome,
       empresaId: input.appointment.empresa_id,
-      message: `${displayClientName(clientData?.nome)} cancelou o agendamento de ${appointmentDateLabel(input.appointment.starts_at)} as ${appointmentTimeLabel(input.appointment.starts_at)}.`,
+      message: `${displayClientName(clientData?.nome)} cancelou o agendamento de ${appointmentDateLabel(input.appointment.starts_at)} às ${appointmentTimeLabel(input.appointment.starts_at)}.`,
       metadata: {
         appointment_id: input.appointment.id,
         reason: input.reason ?? null,
@@ -744,7 +744,7 @@ export async function rescheduleClientAppointment(input: {
     },
     newStatus: 'remarcado',
     oldStatus: input.appointment.status,
-    reason: 'Remarcacao solicitada pelo cliente',
+      reason: 'Remarcação solicitada pelo cliente',
   })
 
   await supabase
@@ -757,7 +757,7 @@ export async function rescheduleClientAppointment(input: {
     await tryCreateInternalNotification({
       barberName: input.appointment.barbeiro?.nome,
       empresaId: input.appointment.empresa_id,
-      message: `Agendamento remarcado de ${appointmentDateLabel(input.appointment.starts_at)} as ${appointmentTimeLabel(input.appointment.starts_at)} para ${appointmentDateLabel(input.startsAt)} as ${appointmentTimeLabel(input.startsAt)}.`,
+      message: `Agendamento remarcado de ${appointmentDateLabel(input.appointment.starts_at)} às ${appointmentTimeLabel(input.appointment.starts_at)} para ${appointmentDateLabel(input.startsAt)} às ${appointmentTimeLabel(input.startsAt)}.`,
       metadata: {
         appointment_id: input.appointment.id,
         from_starts_at: input.appointment.starts_at,

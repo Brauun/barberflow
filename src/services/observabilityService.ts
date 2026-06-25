@@ -50,7 +50,7 @@ export async function createAuditLog(input: AuditInput) {
       action: input.action,
       area: 'audit',
       empresaId: input.empresaId,
-      message: 'Auditoria ignorada porque nao ha usuario autenticado.',
+      message: 'Auditoria ignorada porque não há usuário autenticado.',
       metadata: input.metadata,
       userRole: input.userRole,
     })
@@ -143,7 +143,7 @@ export async function handleAppError(input: ErrorInput) {
     return errorMessage(input.error)
   }
 
-  return 'Não foi possivel concluir a acao agora. Tente novamente em alguns instantes.'
+  return 'Não foi possível concluir a ação agora. Tente novamente em alguns instantes.'
 }
 
 export async function listAuditLogs(empresaId: string): Promise<AuditLog[]> {

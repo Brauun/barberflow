@@ -633,7 +633,7 @@ export function BarbeirosPage() {
       [
         `Remover ${barbeiro.nome} da equipe ativa?`,
         'O funcionário será inativado, mas atendimentos, comissões e relatórios antigos seráo preservados.',
-        'Ele nao aparecera para novos agendamentos.',
+        'Ele não aparecerá para novos agendamentos.',
       ].join('\n'),
     )
 
@@ -1351,7 +1351,7 @@ export function BarbeirosPage() {
           />
           <Select
             error={invitationForm.formState.errors.role?.message}
-            label="Funcao"
+              label="Função"
             options={employeeRoleOptions.map((option) => ({
               label: option.label,
               value: option.value,
@@ -1444,7 +1444,7 @@ export function BarbeirosPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <Input
                 error={unavailabilityForm.formState.errors.start_time?.message}
-                label="Hora inicio"
+                label="Hora início"
                 type="time"
                 {...unavailabilityForm.register('start_time')}
               />

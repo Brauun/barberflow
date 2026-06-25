@@ -980,7 +980,7 @@ export function PlanosFidelidadePage() {
 
           <div className="hidden">
             <Select
-              label="Publico"
+              label="Público"
               options={benefitTargetTypes.map((option) => ({ ...option }))}
               {...register('publico_alvo')}
             />
@@ -1028,7 +1028,7 @@ export function PlanosFidelidadePage() {
           {publicTarget === 'clientes_especificos' && (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-[var(--bf-border)] dark:bg-[var(--bf-surface-muted)]">
               <p className="text-sm font-semibold text-slate-950 dark:text-[var(--bf-text-primary)]">
-                Clientes especificos
+                Clientes específicos
               </p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {(clientesQuery.data ?? []).map((cliente) => (

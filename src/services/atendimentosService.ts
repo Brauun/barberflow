@@ -429,7 +429,7 @@ export async function listDailyAppointments(input: {
               60000,
           ),
         id: appointment.id,
-        servico: appointment.items.map((item) => item.nome).join(' + ') || 'Servico',
+        servico: appointment.items.map((item) => item.nome).join(' + ') || 'Serviço',
         source: 'appointment' as const,
         ends_at: appointment.ends_at,
         starts_at: appointment.starts_at,
@@ -463,7 +463,7 @@ export async function listDailyAppointments(input: {
             new Date(atendimento.data_hora_inicio).getTime() +
               (atendimento.servicos?.duracao_minutos ?? 30) * 60 * 1000,
           ).toISOString(),
-        servico: atendimento.servicos?.nome ?? 'Servico',
+        servico: atendimento.servicos?.nome ?? 'Serviço',
         service_id: atendimento.servico_id,
         source: 'atendimento' as const,
         starts_at: atendimento.data_hora_inicio,
@@ -713,7 +713,7 @@ export async function rescheduleDailyAppointment(input: {
   }
 
   if (hasConflict) {
-    throw new Error('Este horário nao esta disponivel para remarcacao.')
+    throw new Error('Este horário não está disponível para remarcação.')
   }
 
   const {
@@ -775,7 +775,7 @@ export async function rescheduleDailyAppointment(input: {
       },
       new_status: 'remarcado',
       old_status: input.appointment.status,
-      reason: 'Remarcacao pela barbearia',
+      reason: 'Remarcação pela barbearia',
       source:
         input.appointment.source === 'appointment' ? 'appointments' : 'atendimentos',
     })

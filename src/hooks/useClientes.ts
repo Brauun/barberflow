@@ -26,7 +26,7 @@ export function useClientes(input: {
   const saveClienteMutation = useMutation({
     mutationFn: async (payload: { clienteId?: string; data: ClienteFormData }) => {
       if (!input.empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       if (payload.clienteId) {
@@ -44,7 +44,7 @@ export function useClientes(input: {
   const deleteClienteMutation = useMutation({
     mutationFn: async (cliente: Cliente) => {
       if (!input.empresaId) {
-        throw new Error('Empresa nao encontrada.')
+        throw new Error('Empresa não encontrada.')
       }
 
       await deleteCliente(input.empresaId, cliente.id)

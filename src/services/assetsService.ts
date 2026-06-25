@@ -78,7 +78,7 @@ export async function uploadCompanyLogo(empresaId: string, file: File) {
     })
 
   if (error) {
-    throw new Error(`Não foi possivel enviar a logo: ${error.message}`)
+    throw new Error(`Não foi possível enviar a logo: ${error.message}`)
   }
 
   return path
@@ -96,7 +96,7 @@ export async function uploadUserAvatar(userId: string, file: File) {
     })
 
   if (error) {
-    throw new Error(`Não foi possivel enviar a foto: ${error.message}`)
+    throw new Error(`Não foi possível enviar a foto: ${error.message}`)
   }
 
   return path

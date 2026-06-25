@@ -16,12 +16,12 @@ export const registerSchema = z
     accountType: accountTypeSchema.default('barbearia'),
     nome: z.string().min(2, 'Informe seu nome.'),
     empresa: z.string().optional(),
-    email: z.string().email('Informe um e-mail valido.').optional().or(z.literal('')),
+    email: z.string().email('Informe um e-mail válido.').optional().or(z.literal('')),
     tipo_pessoa: tipoPessoaSchema.default('pf'),
     cpf_cnpj: z.string().optional(),
     razao_social: z.string().optional(),
     nome_fantasia: z.string().optional(),
-    email_financeiro: z.string().email('Informe um e-mail financeiro valido.').optional().or(z.literal('')),
+    email_financeiro: z.string().email('Informe um e-mail financeiro válido.').optional().or(z.literal('')),
     cep: z.string().optional(),
     rua: z.string().optional(),
     numero: z.string().optional(),
@@ -54,7 +54,7 @@ export const registerSchema = z
     path: ['email_financeiro'],
   })
   .refine((data) => onlyDigits(data.telefone).length === 11, {
-    message: 'Informe um telefone com 11 digitos.',
+    message: 'Informe um telefone com 11 dígitos.',
     path: ['telefone'],
   })
   .refine(
@@ -63,7 +63,7 @@ export const registerSchema = z
       data.tipo_pessoa !== 'pf' ||
       onlyDigits(data.cpf_cnpj).length === 11,
     {
-      message: 'Informe um CPF com 11 digitos.',
+      message: 'Informe um CPF com 11 dígitos.',
       path: ['cpf_cnpj'],
     },
   )
@@ -73,7 +73,7 @@ export const registerSchema = z
       data.tipo_pessoa !== 'pj' ||
       onlyDigits(data.cpf_cnpj).length === 14,
     {
-      message: 'Informe um CNPJ com 14 digitos.',
+      message: 'Informe um CNPJ com 14 dígitos.',
       path: ['cpf_cnpj'],
     },
   )
@@ -88,11 +88,11 @@ export const registerSchema = z
     },
   )
   .refine((data) => data.accountType !== 'barbearia' || Boolean(data.responsavel_nome?.trim() || data.nome?.trim()), {
-    message: 'Informe o nome do responsavel.',
+      message: 'Informe o nome do responsável.',
     path: ['responsavel_nome'],
   })
   .refine((data) => data.accountType !== 'barbearia' || onlyDigits(data.responsavel_cpf).length === 11, {
-    message: 'Informe o CPF do responsavel com 11 digitos.',
+    message: 'Informe o CPF do responsável com 11 dígitos.',
     path: ['responsavel_cpf'],
   })
   .refine((data) => data.accountType !== 'barbearia' || data.aceite_termos === true, {
@@ -105,7 +105,7 @@ export const registerSchema = z
   })
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().email('Informe um e-mail valido.'),
+  email: z.string().email('Informe um e-mail válido.'),
 })
 
 export type LoginFormData = z.infer<typeof loginSchema>

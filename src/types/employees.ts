@@ -9,16 +9,16 @@ export const employeeRoleOptions = [
 export const employeeInvitationSchema = z.object({
   commission_percentage: z.coerce
     .number()
-    .min(0, 'A comissao nao pode ser negativa.')
-    .max(100, 'A comissao nao pode passar de 100%.'),
-  email: z.string().email('Informe um e-mail valido.'),
+    .min(0, 'A comissão não pode ser negativa.')
+    .max(100, 'A comissão não pode passar de 100%.'),
+  email: z.string().email('Informe um e-mail válido.'),
   nome: z.string().min(2, 'Informe o nome.'),
   role: z.enum(['barbeiro']),
   telefone: z
     .string()
     .optional()
     .refine((value) => !value || onlyDigits(value).length === 11, {
-      message: 'Informe um telefone com 11 digitos.',
+      message: 'Informe um telefone com 11 dígitos.',
     }),
 })
 
@@ -31,7 +31,7 @@ export const acceptEmployeeInvitationSchema = z
       .string()
       .optional()
       .refine((value) => !value || onlyDigits(value).length === 11, {
-        message: 'Informe um telefone com 11 digitos.',
+        message: 'Informe um telefone com 11 dígitos.',
       }),
   })
   .refine((data) => data.password === data.confirmPassword, {

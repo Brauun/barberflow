@@ -166,15 +166,15 @@ export async function signUpWithCompany(input: SignUpInput) {
   }
 
   if (responsavelCpf.length !== 11) {
-    throw new Error('Informe o CPF do responsavel com 11 digitos.')
+    throw new Error('Informe o CPF do responsável com 11 dígitos.')
   }
 
   if (tipoPessoa === 'pf' && cpfCnpj.length !== 11) {
-    throw new Error('Informe o CPF com 11 digitos.')
+    throw new Error('Informe o CPF com 11 dígitos.')
   }
 
   if (tipoPessoa === 'pj' && cpfCnpj.length !== 14) {
-    throw new Error('Informe o CNPJ com 14 digitos.')
+    throw new Error('Informe o CNPJ com 14 dígitos.')
   }
 
   if (tipoPessoa === 'pj' && !input.razao_social?.trim()) {
@@ -227,7 +227,7 @@ export async function signUpWithCompany(input: SignUpInput) {
       action: 'signup_auth_user_failed',
       area: 'auth',
       error,
-      message: 'Falha ao criar usuario no Supabase Auth.',
+      message: 'Falha ao criar usuário no Supabase Auth.',
       metadata: {
         accountType: 'barbearia',
       },
@@ -235,12 +235,12 @@ export async function signUpWithCompany(input: SignUpInput) {
     throw new Error(
       duplicateMessage ??
         authDuplicateMessage ??
-        `Falha ao criar usuario no Supabase Auth: ${error.message}`,
+        `Falha ao criar usuário no Supabase Auth: ${error.message}`,
     )
   }
 
   if (!data.user?.id) {
-    throw new Error('Supabase Auth nao retornou o id do usuario criado.')
+    throw new Error('Supabase Auth não retornou o ID do usuário criado.')
   }
 
   if (!data.session) {
@@ -252,7 +252,7 @@ export async function signUpWithCompany(input: SignUpInput) {
   logger.info({
     action: 'signup_company_link_started',
     area: 'auth',
-    message: 'Usuario criado no Auth. Criando empresa e vinculo.',
+    message: 'Usuário criado no Auth. Criando empresa e vínculo.',
     userId: data.user.id,
   })
 
@@ -282,7 +282,7 @@ export async function signUpWithCompany(input: SignUpInput) {
 
   if (!usuario?.empresa_id || usuario.auth_user_id !== data.user.id) {
     throw new Error(
-      'O cadastro criou o usuario no Auth, mas nao retornou um vinculo valido em public.usuarios.',
+      'O cadastro criou o usuário no Auth, mas não retornou um vínculo válido em public.usuarios.',
     )
   }
 
@@ -295,7 +295,7 @@ export async function signUpClient(input: SignUpInput) {
   const telefone = normalizePhone(input.telefone ?? '')
 
   if (!telefone) {
-    throw new Error('Informe um telefone valido para criar conta de cliente.')
+    throw new Error('Informe um telefone válido para criar conta de cliente.')
   }
 
   const authEmail = input.email?.trim() || clientPhoneAuthEmail(telefone)
@@ -353,7 +353,7 @@ export async function signUpClient(input: SignUpInput) {
   }
 
   if (!data.user?.id) {
-    throw new Error('Supabase Auth nao retornou o id do cliente criado.')
+    throw new Error('Supabase Auth não retornou o ID do cliente criado.')
   }
 
   if (!data.session) {
@@ -423,18 +423,18 @@ export async function createCompanyUser(input: CreateCompanyUserInput) {
       action: 'signup_company_user_rpc_failed',
       area: 'auth',
       error,
-      message: 'Falha ao criar empresa/usuario no banco.',
+      message: 'Falha ao criar empresa/usuário no banco.',
       metadata: {
         papelUsuario: input.papelUsuario,
       },
     })
     throw new Error(
-      `Falha ao criar empresa e usuario no banco: ${error.message}`,
+      `Falha ao criar empresa e usuário no banco: ${error.message}`,
     )
   }
 
   if (!data) {
-    throw new Error('A funcao de cadastro nao retornou o usuario criado.')
+    throw new Error('A função de cadastro não retornou o usuário criado.')
   }
 
   const endereco = [
