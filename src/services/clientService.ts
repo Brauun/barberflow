@@ -141,7 +141,7 @@ async function tryCreateInternalNotification(
 export async function listBarbershops(search: string) {
   let query = supabase
     .from('barbershops')
-    .select('*')
+    .select('*,empresa:empresas(id,logo_url,nome)')
     .eq('status', 'ativa')
     .order('rating', { ascending: false })
 
@@ -213,7 +213,7 @@ export async function listFavoriteBarbershopIds(clientProfileId: string) {
 export async function listFavoriteBarbershops(clientProfileId: string) {
   const { data, error } = await supabase
     .from('client_favorite_barbershops')
-    .select('*,barbershop:barbershops(*)')
+    .select('*,barbershop:barbershops(*,empresa:empresas(id,logo_url,nome))')
     .eq('client_id', clientProfileId)
     .order('created_at', { ascending: false })
 
@@ -330,7 +330,7 @@ export async function getPrimaryBarbershop(profile: ClientProfile) {
 
   const { data, error } = await supabase
     .from('barbershops')
-    .select('*')
+    .select('*,empresa:empresas(id,logo_url,nome)')
     .eq('id', profile.primary_barbershop_id)
     .maybeSingle()
 
