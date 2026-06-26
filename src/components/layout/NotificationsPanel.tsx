@@ -2,6 +2,7 @@ import type { MouseEvent } from 'react'
 
 import { cn } from '../../utils/cn'
 import type { InternalNotification } from '../../services/notificationsService'
+import { PushNotificationControl } from '../pwa/PushNotificationControl'
 
 type NotificationsPanelProps = {
   isLoading: boolean
@@ -57,6 +58,9 @@ export function NotificationsPanel({
       </div>
 
       <div className="max-h-[min(22rem,calc(100dvh-8rem))] overflow-y-auto p-2 sm:max-h-[28rem]">
+        <div className="mb-2">
+          <PushNotificationControl compact />
+        </div>
         {isLoading ? (
           <p className="px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
             Carregando notificações...

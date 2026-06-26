@@ -6,6 +6,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 
 import { Button, Card, CardContent, Input } from '../components/ui'
+import { PushNotificationControl } from '../components/pwa/PushNotificationControl'
 import { useAuth } from '../hooks/useAuth'
 import {
   resolveAssetUrl,
@@ -236,6 +237,8 @@ export function ClientProfilePage() {
           </form>
         </CardContent>
       </Card>
+
+      <PushNotificationControl />
     </div>
   )
 }

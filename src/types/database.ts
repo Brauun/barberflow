@@ -917,6 +917,36 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['notifications']['Insert']>
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          empresa_id: string | null
+          endpoint: string
+          p256dh: string
+          auth: string
+          user_agent: string | null
+          device_type: 'ios_pwa' | 'ios_safari' | 'android' | 'desktop' | 'browser'
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          empresa_id?: string | null
+          endpoint: string
+          p256dh: string
+          auth: string
+          user_agent?: string | null
+          device_type?: 'ios_pwa' | 'ios_safari' | 'android' | 'desktop' | 'browser'
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['push_subscriptions']['Insert']>
+        Relationships: []
+      }
       discount_logs: {
         Row: {
           id: string

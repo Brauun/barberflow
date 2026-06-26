@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 
 import { Badge, Card, CardContent } from '../components/ui'
+import { PushNotificationControl } from '../components/pwa/PushNotificationControl'
 import { useAuth } from '../hooks/useAuth'
 
 const roleLabels = {
@@ -84,6 +85,8 @@ export function ProfilePage() {
           )}
         </CardContent>
       </Card>
+
+      <PushNotificationControl />
     </div>
   )
 }

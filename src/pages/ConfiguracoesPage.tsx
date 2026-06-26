@@ -21,6 +21,7 @@ import { useForm, useWatch } from 'react-hook-form'
 
 import { canExportData, canManageEmployees } from '../auth/permissions'
 import { PWAInstallButton } from '../components/pwa/PWAInstallButton'
+import { PushNotificationControl } from '../components/pwa/PushNotificationControl'
 import { Button, Card, CardContent, CardHeader, Input, Select } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
@@ -793,6 +794,7 @@ export function ConfiguracoesPage() {
                 </div>
                 <PWAInstallButton />
               </div>
+              <PushNotificationControl />
               <SettingsRow
                 description={
                   profile?.telefone

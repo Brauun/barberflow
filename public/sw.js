@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'ios-fix-8f3c2a91-20260621'
+const CACHE_VERSION = 'push-foundation-20260626'
 const STATIC_CACHE = `bw-barber-static-${CACHE_VERSION}`
 const ASSET_CACHE = `bw-barber-assets-${CACHE_VERSION}`
 const OFFLINE_URL = '/offline.html'
@@ -63,6 +63,65 @@ self.addEventListener('message', (event) => {
         .then((keys) => Promise.all(keys.map((key) => caches.delete(key)))),
     )
   }
+})
+
+self.addEventListener('push', (event) => {
+  const fallbackPayload = {
+    body: 'Você recebeu uma nova atualização no BW Barber.',
+    metadata: {},
+    title: 'BW Barber',
+    url: '/app/dashboard',
+  }
+
+  let payload = fallbackPayload
+
+  try {
+    payload = {
+      ...fallbackPayload,
+      ...(event.data ? event.data.json() : {}),
+    }
+  } catch {
+    if (event.data?.text()) {
+      payload = {
+        ...fallbackPayload,
+        body: event.data.text(),
+      }
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      badge: '/icons/icon-192x192.png',
+      body: payload.body,
+      data: {
+        metadata: payload.metadata ?? {},
+        url: payload.url ?? '/app/dashboard',
+      },
+      icon: '/icons/icon-192x192.png',
+      tag: `bw-barber-${payload.metadata?.notification_id ?? payload.title}`,
+    }),
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+
+  const targetUrl = new URL(
+    event.notification.data?.url ?? '/app/dashboard',
+    self.location.origin,
+  ).href
+
+  event.waitUntil(
+    self.clients.matchAll({ includeUncontrolled: true, type: 'window' }).then((clients) => {
+      const matchingClient = clients.find((client) => client.url.startsWith(self.location.origin))
+
+      if (matchingClient) {
+        return matchingClient.focus().then(() => matchingClient.navigate(targetUrl))
+      }
+
+      return self.clients.openWindow(targetUrl)
+    }),
+  )
 })
 
 self.addEventListener('fetch', (event) => {
