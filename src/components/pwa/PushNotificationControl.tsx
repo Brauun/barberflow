@@ -39,8 +39,6 @@ export function PushNotificationControl({
             ? 'Este dispositivo recebe notificações do BW Barber.'
             : 'Receba alertas de agendamentos e atualizações importantes.'
 
-  const canActivate = isSupported && !isIOSBrowser && hasVapidKey && permission !== 'denied'
-
   return (
     <div
       className={cn(
@@ -76,7 +74,7 @@ export function PushNotificationControl({
           </Button>
         ) : (
           <Button
-            disabled={!canActivate || isLoading}
+            disabled={isLoading}
             leftIcon={isLoading ? <Loader2 className="animate-spin" size={16} /> : <BellRing size={16} />}
             onClick={() => void activate()}
             size="sm"
