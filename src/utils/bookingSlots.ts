@@ -2,6 +2,7 @@ import type {
   BusinessHour,
   SpecialBusinessHour,
 } from '../services/businessHoursService'
+import { hasConfiguredBusinessHours } from '../services/businessHoursService'
 import type { BookingUnavailability } from '../services/clientService'
 
 export type BookingSlot = {
@@ -12,8 +13,9 @@ export type BookingSlot = {
 
 export type BookingSlotResult = {
   slots: BookingSlot[]
-  status: 'available' | 'not_configured' | 'closed'
+  status: 'available' | 'agenda_not_configured' | 'closed'
   message?: string
+  description?: string
 }
 
 function localDateKey(date: Date) {
@@ -57,6 +59,16 @@ export function buildBookingSlots(input: {
   businessHours: BusinessHour[]
   specialHour?: SpecialBusinessHour | null
 }) {
+  if (!hasConfiguredBusinessHours(input.businessHours)) {
+    return {
+      description:
+        'Configure os dias e horários de funcionamento para liberar agendamentos.',
+      message: 'Sua agenda ainda não foi configurada.',
+      slots: [],
+      status: 'agenda_not_configured',
+    } satisfies BookingSlotResult
+  }
+
   const specialHour = input.specialHour
 
   if (specialHour) {
@@ -72,9 +84,11 @@ export function buildBookingSlots(input: {
 
     if (!specialHour.open_time || !specialHour.close_time) {
       return {
-        message: 'Agenda ainda não configurada pela barbearia.',
+        description:
+          'Configure os dias e horários de funcionamento para liberar agendamentos.',
+        message: 'Sua agenda ainda não foi configurada.',
         slots: [],
-        status: 'not_configured',
+        status: 'agenda_not_configured',
       } satisfies BookingSlotResult
     }
   }
@@ -85,9 +99,11 @@ export function buildBookingSlots(input: {
 
   if (!specialHour && !daySchedule) {
     return {
-      message: 'Agenda ainda não configurada pela barbearia.',
+      description:
+        'Configure os dias e horários de funcionamento para liberar agendamentos.',
+      message: 'Sua agenda ainda não foi configurada.',
       slots: [],
-      status: 'not_configured',
+      status: 'agenda_not_configured',
     } satisfies BookingSlotResult
   }
 
@@ -107,9 +123,11 @@ export function buildBookingSlots(input: {
 
   if (!openTime || !closeTime) {
     return {
-      message: 'Agenda ainda não configurada pela barbearia.',
+      description:
+        'Configure os dias e horários de funcionamento para liberar agendamentos.',
+      message: 'Sua agenda ainda não foi configurada.',
       slots: [],
-      status: 'not_configured',
+      status: 'agenda_not_configured',
     } satisfies BookingSlotResult
   }
 

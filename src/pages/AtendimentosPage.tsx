@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import {
   Badge,
@@ -1855,6 +1855,23 @@ export function AtendimentosPage() {
               <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
                 Não foi possível carregar os horários disponíveis.
               </p>
+            ) : internalSlotResult?.status === 'agenda_not_configured' ? (
+              <div className="rounded-xl border border-brand-100 bg-brand-50 px-3 py-3 dark:border-brand-500/20 dark:bg-brand-500/10">
+                <p className="text-sm font-black text-slate-950 dark:text-slate-50">
+                  Sua agenda ainda não foi configurada.
+                </p>
+                <p className="mt-1 text-sm leading-5 text-slate-600 dark:text-slate-300">
+                  Configure os dias e horários de funcionamento para liberar agendamentos.
+                </p>
+                {!isBarbeiroUser && (
+                  <Link
+                    className="mt-3 inline-flex min-h-10 items-center justify-center rounded-xl bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+                    to="/app/configuracoes#horarios-funcionamento"
+                  >
+                    Configurar agenda
+                  </Link>
+                )}
+              </div>
             ) : internalSlotResult?.message ? (
               <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
                 {internalSlotResult.message}

@@ -124,14 +124,14 @@ type CompactTimeInputProps = {
 
 function CompactTimeInput({ disabled, label, onChange, value }: CompactTimeInputProps) {
   return (
-    <label className="block">
+    <label className="block w-full max-w-full min-w-0 overflow-hidden">
       {label && (
         <span className="mb-0.5 block text-[0.65rem] font-semibold uppercase tracking-wide text-slate-400">
           {label}
         </span>
       )}
       <input
-        className="h-9 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-2 text-base tabular-nums text-slate-950 outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100/80 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 sm:h-8 sm:text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50 dark:disabled:bg-slate-800/50"
+        className="bw-time-input block h-9 w-full max-w-full min-w-0 [inline-size:100%] rounded-lg border border-slate-200 bg-white px-2 text-base tabular-nums text-slate-950 outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100/80 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 sm:h-8 sm:text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50 dark:disabled:bg-slate-800/50"
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         type="time"
@@ -183,6 +183,20 @@ export function ConfiguracoesPage() {
   const [businessHoursError, setBusinessHoursError] = useState<string | null>(
     null,
   )
+
+  useEffect(() => {
+    if (window.location.hash !== '#horarios-funcionamento') {
+      return
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      document
+        .getElementById('horarios-funcionamento')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+
+    return () => window.cancelAnimationFrame(frameId)
+  }, [])
   const [appointmentAutomation, setAppointmentAutomation] =
     useState<AppointmentAutomationSettings>({
       after_minutes: 60,
@@ -940,7 +954,7 @@ export function ConfiguracoesPage() {
         </div>
       )}
 
-      <Card>
+      <Card id="horarios-funcionamento">
         <CardHeader>
           <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -1061,7 +1075,7 @@ export function ConfiguracoesPage() {
                 {hour.is_open && (
                   <div className="border-t border-slate-100 px-3 pb-3 pt-2.5 dark:border-slate-800">
                     {/* Mobile */}
-                    <div className="grid grid-cols-2 gap-2 sm:hidden">
+                    <div className="grid min-w-0 grid-cols-[repeat(2,minmax(0,1fr))] gap-2 overflow-hidden sm:hidden">
                       <CompactTimeInput
                         label="Abertura"
                         value={hour.open_time ?? ''}
@@ -1084,7 +1098,7 @@ export function ConfiguracoesPage() {
                       />
                     </div>
                     {/* Desktop */}
-                    <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-x-2 sm:grid">
+                    <div className="hidden min-w-0 grid-cols-[repeat(4,minmax(0,1fr))] gap-x-2 overflow-hidden sm:grid">
                       <CompactTimeInput
                         label="Abertura"
                         value={hour.open_time ?? ''}

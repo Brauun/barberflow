@@ -53,7 +53,7 @@ export function DateInput({
         </span>
         <input
           {...props}
-          className="absolute inset-0 h-full w-full min-w-0 max-w-full cursor-pointer opacity-0"
+          className="bw-date-input absolute inset-0 block h-full w-full max-w-full min-w-0 [inline-size:100%] cursor-pointer overflow-hidden opacity-0"
           id={inputId}
           onChange={(event) => onChange(event.target.value)}
           type="date"

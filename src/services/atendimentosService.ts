@@ -11,7 +11,11 @@ import {
 import type { AtendimentoFormData } from '../types/atendimentos'
 import type { Database } from '../types/database'
 import { createAuditLog } from './observabilityService'
-import type { BusinessHour, SpecialBusinessHour } from './businessHoursService'
+import {
+  hasConfiguredBusinessHours,
+  type BusinessHour,
+  type SpecialBusinessHour,
+} from './businessHoursService'
 
 export type Atendimento = Database['public']['Tables']['atendimentos']['Row']
 
@@ -945,19 +949,34 @@ export async function listInternalAppointmentSlotData(
 
   const { endIso, startIso } = dateRangeBounds(date, date)
 
+  const businessHoursResponse = await supabase
+    .from('barbershop_business_hours')
+    .select('*')
+    .eq('empresa_id', empresaId)
+    .order('day_of_week', { ascending: true })
+
+  if (businessHoursResponse.error) {
+    throw new Error(businessHoursResponse.error.message)
+  }
+
+  const businessHours = (businessHoursResponse.data ?? []) as BusinessHour[]
+
+  if (!hasConfiguredBusinessHours(businessHours)) {
+    return {
+      appointments: [],
+      businessHours,
+      specialHour: null,
+      unavailability: [],
+    }
+  }
+
   const [
-    businessHoursResponse,
     specialHourResponse,
     unavailabilityResponse,
     appointmentsResponse,
     legacyAppointmentsResponse,
     legacyServicesResponse,
   ] = await Promise.all([
-    supabase
-      .from('barbershop_business_hours')
-      .select('*')
-      .eq('empresa_id', empresaId)
-      .order('day_of_week', { ascending: true }),
     supabase
       .from('barbershop_special_hours')
       .select('*')
@@ -991,10 +1010,6 @@ export async function listInternalAppointmentSlotData(
       .select('id,duration_minutes,duracao_minutos')
       .eq('empresa_id', empresaId),
   ])
-
-  if (businessHoursResponse.error) {
-    throw new Error(businessHoursResponse.error.message)
-  }
 
   if (specialHourResponse.error) {
     throw new Error(specialHourResponse.error.message)
@@ -1044,7 +1059,7 @@ export async function listInternalAppointmentSlotData(
       }>),
       ...legacyAppointments,
     ],
-    businessHours: (businessHoursResponse.data ?? []) as BusinessHour[],
+    businessHours,
     specialHour: specialHourResponse.data as SpecialBusinessHour | null,
     unavailability: (unavailabilityResponse.data ?? []) as BookingUnavailability[],
   }

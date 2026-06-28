@@ -3,7 +3,7 @@ import { CalendarPlus, Gift } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { Badge, Button, Card, CardContent, CardHeader, Select } from '../components/ui'
+import { Badge, Button, Card, CardContent, CardHeader, DateInput, Select } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import {
   createWaitlistEntry,
@@ -15,6 +15,7 @@ import {
   listBookingServices,
 } from '../services/clientService'
 import {
+  hasConfiguredBusinessHours,
   listBusinessHours,
   listSpecialBusinessHoursForDate,
 } from '../services/businessHoursService'
@@ -77,8 +78,17 @@ export function ClientBookingPage() {
   const selectedBarber = barbersQuery.data?.find((barber) => barber.id === barberId)
   const duration = selectedService?.duration_minutes ?? selectedService?.duracao_minutos ?? 30
 
+  const businessHoursQuery = useQuery({
+    enabled: Boolean(barbershop?.empresa_id),
+    queryFn: () => listBusinessHours(barbershop?.empresa_id as string),
+    queryKey: ['business-hours', barbershop?.empresa_id],
+  })
+  const isAgendaConfigured = hasConfiguredBusinessHours(
+    businessHoursQuery.data ?? [],
+  )
+
   const busyQuery = useQuery({
-    enabled: Boolean(barbershop?.id && barberId && date),
+    enabled: Boolean(barbershop?.id && barberId && date && isAgendaConfigured),
     queryFn: () =>
       listBarberAppointments(
         barbershop?.id as string,
@@ -90,7 +100,9 @@ export function ClientBookingPage() {
   })
 
   const unavailabilityQuery = useQuery({
-    enabled: Boolean(barbershop?.empresa_id && barberId && date),
+    enabled: Boolean(
+      barbershop?.empresa_id && barberId && date && isAgendaConfigured,
+    ),
     queryFn: () =>
       listBarberUnavailabilityForDate(
         barbershop?.empresa_id as string,
@@ -100,14 +112,8 @@ export function ClientBookingPage() {
     queryKey: ['booking-unavailability', barbershop?.empresa_id, barberId, date],
   })
 
-  const businessHoursQuery = useQuery({
-    enabled: Boolean(barbershop?.empresa_id),
-    queryFn: () => listBusinessHours(barbershop?.empresa_id as string),
-    queryKey: ['business-hours', barbershop?.empresa_id],
-  })
-
   const specialHoursQuery = useQuery({
-    enabled: Boolean(barbershop?.empresa_id && date),
+    enabled: Boolean(barbershop?.empresa_id && date && isAgendaConfigured),
     queryFn: () =>
       listSpecialBusinessHoursForDate(barbershop?.empresa_id as string, date),
     queryKey: ['special-business-hours', barbershop?.empresa_id, date],
@@ -130,25 +136,28 @@ export function ClientBookingPage() {
     [benefitsQuery.data],
   )
 
-  const slotResult = useMemo(
-    () =>
-      buildBookingSlots({
+  const slotResult = useMemo(() => {
+    if (!businessHoursQuery.isFetched) {
+      return { slots: [], status: 'available' as const }
+    }
+
+    return buildBookingSlots({
         appointments: busyQuery.data ?? [],
         businessHours: businessHoursQuery.data ?? [],
         date,
         durationMinutes: duration,
         specialHour: specialHoursQuery.data,
         unavailability: unavailabilityQuery.data ?? [],
-      }),
-    [
+      })
+    }, [
       busyQuery.data,
       businessHoursQuery.data,
+      businessHoursQuery.isFetched,
       date,
       duration,
       specialHoursQuery.data,
       unavailabilityQuery.data,
-    ],
-  )
+    ])
   const slots = slotResult.slots
   const isAllDayUnavailable = Boolean(
     barberId && unavailabilityQuery.data?.some((block) => block.all_day),
@@ -353,27 +362,30 @@ export function ClientBookingPage() {
               Este profissional ainda não possui serviços vinculados pela administração.
             </p>
           )}
-          <label className="block min-w-0 max-w-full">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Data
-            </span>
-            <input
-              className="mt-2 h-11 w-full max-w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition duration-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100/80"
-              min={todayInputValue()}
-              onChange={(event) => {
-                setDate(event.target.value)
-                setSlot('')
-              }}
-              type="date"
-              value={date}
-            />
-          </label>
+          <DateInput
+            label="Data"
+            min={todayInputValue()}
+            onChange={(value) => {
+              setDate(value)
+              setSlot('')
+            }}
+            value={date}
+          />
 
           <div>
             <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Horário
             </p>
-            {slotResult.message && (
+            {slotResult.status === 'agenda_not_configured' ? (
+              <div className="mt-3 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 dark:border-brand-500/20 dark:bg-brand-500/10">
+                <p className="text-sm font-black text-slate-950 dark:text-slate-50">
+                  Sua agenda ainda não foi configurada.
+                </p>
+                <p className="mt-1 text-sm leading-5 text-slate-600 dark:text-slate-300">
+                  Configure os dias e horários de funcionamento para liberar agendamentos.
+                </p>
+              </div>
+            ) : slotResult.message ? (
               <p
                 className={`mt-3 rounded-2xl border px-4 py-3 text-sm font-medium ${
                   slotResult.status === 'closed'
@@ -383,7 +395,7 @@ export function ClientBookingPage() {
               >
                 {slotResult.message}
               </p>
-            )}
+            ) : null}
             <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
               {slots.map((item) => (
                 <button
@@ -408,7 +420,10 @@ export function ClientBookingPage() {
                 Este profissional não está disponível neste dia.
               </p>
             )}
-            {serviceId && date && !hasAvailableSlots && (
+            {serviceId &&
+              date &&
+              !hasAvailableSlots &&
+              slotResult.status !== 'agenda_not_configured' && (
               <div className="mt-4 rounded-[1.35rem] border border-slate-200 bg-slate-50/80 p-4">
                 <p className="text-sm font-semibold text-slate-950">
                   Nenhum horário disponível para essa combinação.

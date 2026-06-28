@@ -7,6 +7,12 @@ export type BusinessHour =
 export type SpecialBusinessHour =
   Database['public']['Tables']['barbershop_special_hours']['Row']
 
+export function hasConfiguredBusinessHours(hours: BusinessHour[]) {
+  return hours.some(
+    (hour) => hour.is_open && Boolean(hour.open_time) && Boolean(hour.close_time),
+  )
+}
+
 export function defaultBusinessHours(): BusinessHourFormData[] {
   return [0, 1, 2, 3, 4, 5, 6].map((day) => ({
     break_end: day === 0 ? '' : '13:30',
