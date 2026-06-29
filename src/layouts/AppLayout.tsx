@@ -138,9 +138,10 @@ export function AppLayout() {
 
         <main
           className={cn(
-            'w-full max-w-full min-w-0 overflow-x-hidden px-3 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-6 sm:py-8 sm:pb-[calc(env(safe-area-inset-bottom)+2rem)] md:px-8 lg:px-10 lg:py-9 xl:px-12',
-            profile?.papel === 'barbeiro' &&
-              'pb-[calc(env(safe-area-inset-bottom)+4.8rem)] md:pb-[calc(env(safe-area-inset-bottom)+2rem)]',
+            'w-full max-w-full min-w-0 overflow-x-hidden px-3 py-4 sm:px-6 sm:py-8 md:px-8 lg:px-10 lg:py-9 xl:px-12',
+            profile?.papel === 'barbeiro'
+              ? 'pb-[calc(env(safe-area-inset-bottom)+8rem)] md:pb-[calc(env(safe-area-inset-bottom)+2rem)]'
+              : 'pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:pb-[calc(env(safe-area-inset-bottom)+2rem)]',
           )}
         >
           <SubscriptionBanner
