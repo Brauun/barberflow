@@ -59,7 +59,6 @@ function localAppointmentLabels(startsAt: string) {
     day: '2-digit',
     month: '2-digit',
     timeZone: 'America/Sao_Paulo',
-    year: 'numeric',
   }).format(date)
   const timeLabel = new Intl.DateTimeFormat('pt-BR', {
     hour: '2-digit',
@@ -199,7 +198,7 @@ Deno.serve(async (request) => {
 
   const { data: ownerProfile } = await adminClient
     .from('profiles')
-    .select('id')
+    .select('id,nome')
     .eq('id', appointment.client_profile_id)
     .eq('auth_user_id', user.id)
     .eq('role', 'cliente')
@@ -208,6 +207,13 @@ Deno.serve(async (request) => {
   if (!ownerProfile) {
     return jsonResponse({ error: 'Sem permissão para notificar este agendamento.' }, 403)
   }
+
+  const { data: appointmentItem } = await adminClient
+    .from('appointment_items')
+    .select('nome')
+    .eq('appointment_id', appointment.id)
+    .limit(1)
+    .maybeSingle()
 
   const { data: barber } = await adminClient
     .from('barbeiros')
@@ -261,15 +267,20 @@ Deno.serve(async (request) => {
   }
 
   const labels = localAppointmentLabels(appointment.starts_at)
+  const clientName = ownerProfile.nome?.trim() || 'Novo cliente'
+  const serviceName = appointmentItem?.nome?.trim()
+  const pushBody = serviceName
+    ? `${clientName} agendou ${serviceName} para ${labels.dateLabel} às ${labels.timeLabel}.`
+    : `${clientName} criou um novo agendamento para ${labels.dateLabel} às ${labels.timeLabel}.`
   const notificationPayload = JSON.stringify({
-    body: `Você recebeu um novo agendamento para ${labels.dateLabel} às ${labels.timeLabel}.`,
+    body: pushBody,
     metadata: {
       appointment_id: appointment.id,
       barber_id: appointment.barbeiro_id,
       event: 'appointment_created',
       starts_at: appointment.starts_at,
     },
-    title: 'Novo agendamento',
+    title: 'Novo agendamento confirmado',
     url: `/app/atendimentos?appointmentId=${appointment.id}&barberId=${appointment.barbeiro_id}&date=${labels.dateInput}`,
   })
   let sent = 0
