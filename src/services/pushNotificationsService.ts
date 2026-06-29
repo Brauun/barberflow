@@ -231,3 +231,18 @@ export async function sendAppointmentCreatedPushNotification(input: {
     throw new Error(error.message)
   }
 }
+
+export async function sendAppointmentCancelledPushNotification(input: {
+  appointmentId: string
+}) {
+  const { error } = await supabase.functions.invoke('send-push-notification', {
+    body: {
+      appointment_id: input.appointmentId,
+      event: 'appointment_cancelled',
+    },
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}

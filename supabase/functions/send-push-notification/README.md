@@ -18,6 +18,7 @@ O endpoint aceita:
 
 - envio de teste para o próprio usuário autenticado;
 - evento `appointment_created`, recebendo somente `appointment_id`.
+- evento `appointment_cancelled`, recebendo somente `appointment_id`.
 
 No evento de agendamento, destinatários, mensagem e empresa são derivados no
 backend. O cliente não pode escolher usuários arbitrários e a chave

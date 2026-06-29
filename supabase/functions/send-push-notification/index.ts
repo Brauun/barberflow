@@ -9,12 +9,14 @@ type SelfPushRequest = {
   user_id: string
 }
 
-type AppointmentCreatedPushRequest = {
+type AppointmentEvent = 'appointment_created' | 'appointment_cancelled'
+
+type AppointmentEventPushRequest = {
   appointment_id: string
-  event: 'appointment_created'
+  event: AppointmentEvent
 }
 
-type PushRequest = SelfPushRequest | AppointmentCreatedPushRequest
+type PushRequest = SelfPushRequest | AppointmentEventPushRequest
 
 type PushSubscriptionRow = {
   auth: string
@@ -37,10 +39,13 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
   })
 }
 
-function isAppointmentCreatedRequest(
+function isAppointmentEventRequest(
   payload: PushRequest,
-): payload is AppointmentCreatedPushRequest {
-  return 'event' in payload && payload.event === 'appointment_created'
+): payload is AppointmentEventPushRequest {
+  return (
+    'event' in payload &&
+    ['appointment_created', 'appointment_cancelled'].includes(payload.event)
+  )
 }
 
 function errorStatusCode(error: unknown) {
@@ -130,7 +135,7 @@ Deno.serve(async (request) => {
   webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey)
   const adminClient = createClient(supabaseUrl, serviceRoleKey)
 
-  if (!isAppointmentCreatedRequest(payload)) {
+  if (!isAppointmentEventRequest(payload)) {
     if (!payload.user_id || payload.user_id !== user.id || !payload.title || !payload.body) {
       return jsonResponse({ error: 'Solicitação de push inválida.' }, 403)
     }
@@ -188,7 +193,7 @@ Deno.serve(async (request) => {
 
   const { data: appointment, error: appointmentError } = await adminClient
     .from('appointments')
-    .select('id,empresa_id,barbeiro_id,client_profile_id,starts_at')
+    .select('id,empresa_id,barbeiro_id,client_profile_id,starts_at,status,cancelled_by')
     .eq('id', payload.appointment_id)
     .maybeSingle()
 
@@ -196,17 +201,15 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: 'Agendamento não encontrado.' }, 404)
   }
 
-  const { data: ownerProfile } = await adminClient
-    .from('profiles')
-    .select('id,nome')
-    .eq('id', appointment.client_profile_id)
-    .eq('auth_user_id', user.id)
-    .eq('role', 'cliente')
-    .maybeSingle()
-
-  if (!ownerProfile) {
-    return jsonResponse({ error: 'Sem permissão para notificar este agendamento.' }, 403)
-  }
+  const ownerProfileResponse = appointment.client_profile_id
+    ? await adminClient
+        .from('profiles')
+        .select('id,nome,auth_user_id')
+        .eq('id', appointment.client_profile_id)
+        .eq('role', 'cliente')
+        .maybeSingle()
+    : { data: null, error: null }
+  const ownerProfile = ownerProfileResponse.data
 
   const { data: appointmentItem } = await adminClient
     .from('appointment_items')
@@ -232,14 +235,44 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: 'Não foi possível localizar os destinatários.' }, 500)
   }
 
+  const currentCompanyUser = (companyUsers ?? []).find(
+    (companyUser) => companyUser.auth_user_id === user.id,
+  )
+  const cancelledByClient = ownerProfile?.auth_user_id === user.id
+  const isActiveCompanyActor =
+    currentCompanyUser?.papel === 'administrador' || currentCompanyUser?.papel === 'barbeiro'
+
+  if (payload.event === 'appointment_created' && !cancelledByClient) {
+    return jsonResponse({ error: 'Sem permissão para notificar este agendamento.' }, 403)
+  }
+
+  if (
+    payload.event === 'appointment_cancelled' &&
+    (
+      appointment.status !== 'cancelado' ||
+      appointment.cancelled_by !== user.id ||
+      (!cancelledByClient && !isActiveCompanyActor)
+    )
+  ) {
+    return jsonResponse({ error: 'Sem permissão para notificar este cancelamento.' }, 403)
+  }
+
+  const adminAuthUserIds = (companyUsers ?? [])
+    .filter((companyUser) => companyUser.papel === 'administrador')
+    .map((companyUser) => companyUser.auth_user_id)
+  const barberAuthUserId = (companyUsers ?? []).find(
+    (companyUser) => companyUser.id === barber?.usuario_id,
+  )?.auth_user_id
+  const recipientCandidates =
+    payload.event === 'appointment_created' || cancelledByClient
+      ? [...adminAuthUserIds, barberAuthUserId]
+      : currentCompanyUser?.papel === 'administrador'
+        ? [ownerProfile?.auth_user_id, barberAuthUserId]
+        : [ownerProfile?.auth_user_id, ...adminAuthUserIds]
+
   const recipientAuthUserIds = [
     ...new Set(
-      (companyUsers ?? [])
-        .filter(
-          (companyUser) =>
-            companyUser.papel === 'administrador' || companyUser.id === barber?.usuario_id,
-        )
-        .map((companyUser) => companyUser.auth_user_id)
+      recipientCandidates
         .filter((authUserId): authUserId is string => Boolean(authUserId && authUserId !== user.id)),
     ),
   ]
@@ -267,20 +300,31 @@ Deno.serve(async (request) => {
   }
 
   const labels = localAppointmentLabels(appointment.starts_at)
-  const clientName = ownerProfile.nome?.trim() || 'Novo cliente'
+  const clientName = ownerProfile?.nome?.trim()
   const serviceName = appointmentItem?.nome?.trim()
-  const pushBody = serviceName
-    ? `${clientName} agendou ${serviceName} para ${labels.dateLabel} às ${labels.timeLabel}.`
-    : `${clientName} criou um novo agendamento para ${labels.dateLabel} às ${labels.timeLabel}.`
+  const pushTitle =
+    payload.event === 'appointment_cancelled'
+      ? 'Agendamento cancelado'
+      : 'Novo agendamento confirmado'
+  const pushBody =
+    payload.event === 'appointment_cancelled'
+      ? cancelledByClient && clientName && serviceName
+        ? `${clientName} cancelou ${serviceName} de ${labels.dateLabel} às ${labels.timeLabel}.`
+        : !cancelledByClient && serviceName
+          ? `Sua barbearia cancelou ${serviceName} de ${labels.dateLabel} às ${labels.timeLabel}.`
+          : `Um agendamento foi cancelado para ${labels.dateLabel} às ${labels.timeLabel}.`
+      : serviceName
+        ? `${clientName || 'Novo cliente'} agendou ${serviceName} para ${labels.dateLabel} às ${labels.timeLabel}.`
+        : `${clientName || 'Novo cliente'} criou um novo agendamento para ${labels.dateLabel} às ${labels.timeLabel}.`
   const notificationPayload = JSON.stringify({
     body: pushBody,
     metadata: {
       appointment_id: appointment.id,
       barber_id: appointment.barbeiro_id,
-      event: 'appointment_created',
+      event: payload.event,
       starts_at: appointment.starts_at,
     },
-    title: 'Novo agendamento confirmado',
+    title: pushTitle,
     url: `/app/atendimentos?appointmentId=${appointment.id}&barberId=${appointment.barbeiro_id}&date=${labels.dateInput}`,
   })
   let sent = 0
@@ -300,7 +344,7 @@ Deno.serve(async (request) => {
         .insert({
           appointment_id: appointment.id,
           empresa_id: appointment.empresa_id,
-          event_type: 'appointment_created',
+          event_type: payload.event,
           recipient_auth_user_id: recipientAuthUserId,
           status: 'processando',
         })

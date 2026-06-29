@@ -2,7 +2,10 @@ import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
 import type { Database } from '../types/database'
 import { createInternalNotification } from './notificationsService'
-import { sendAppointmentCreatedPushNotification } from './pushNotificationsService'
+import {
+  sendAppointmentCancelledPushNotification,
+  sendAppointmentCreatedPushNotification,
+} from './pushNotificationsService'
 
 export type Barbershop = Database['public']['Tables']['barbershops']['Row']
 export type ClientProfile = Database['public']['Tables']['profiles']['Row']
@@ -149,6 +152,21 @@ async function trySendAppointmentCreatedPush(appointmentId: string, empresaId: s
       empresaId,
       error,
       message: 'O agendamento foi criado, mas o push não pôde ser enviado.',
+      metadata: { appointmentId },
+    })
+  }
+}
+
+async function trySendAppointmentCancelledPush(appointmentId: string, empresaId: string) {
+  try {
+    await sendAppointmentCancelledPushNotification({ appointmentId })
+  } catch (error) {
+    logger.warn({
+      action: 'appointment_cancelled_push_failed',
+      area: 'notifications',
+      empresaId,
+      error,
+      message: 'O agendamento foi cancelado, mas o push não pôde ser enviado.',
       metadata: { appointmentId },
     })
   }
@@ -707,6 +725,11 @@ export async function cancelClientAppointment(input: {
       title: 'Agendamento cancelado',
       type: 'appointment_cancelled',
     })
+
+    void trySendAppointmentCancelledPush(
+      input.appointment.id,
+      input.appointment.empresa_id,
+    )
 
     await notifyWaitlistForVacancy({
       barberId: input.appointment.barbeiro_id,

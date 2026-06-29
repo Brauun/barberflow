@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { logger } from '../lib/logger'
 import {
   listBarberAppointments,
   notifyWaitlistForVacancy,
@@ -16,6 +17,7 @@ import {
   type BusinessHour,
   type SpecialBusinessHour,
 } from './businessHoursService'
+import { sendAppointmentCancelledPushNotification } from './pushNotificationsService'
 
 export type Atendimento = Database['public']['Tables']['atendimentos']['Row']
 
@@ -665,6 +667,21 @@ export async function updateDailyAppointmentStatus(input: {
       )
 
     if (input.status === 'cancelado' && current) {
+      if (input.source === 'appointment') {
+        void sendAppointmentCancelledPushNotification({ appointmentId: input.id }).catch(
+          (pushError) => {
+            logger.warn({
+              action: 'appointment_cancelled_push_failed',
+              area: 'notifications',
+              empresaId: input.empresaId,
+              error: pushError,
+              message: 'O agendamento foi cancelado, mas o push não pôde ser enviado.',
+              metadata: { appointmentId: input.id },
+            })
+          },
+        )
+      }
+
       await notifyWaitlistForVacancy({
         barberId: current.barbeiro_id,
         barbershopName: current.barbershop?.nome,
