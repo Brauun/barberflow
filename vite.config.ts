@@ -1,6 +1,39 @@
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { readFile, writeFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import { defineConfig, type Plugin, type ResolvedConfig } from 'vite'
+
+function versionServiceWorker(): Plugin {
+  let resolvedConfig: ResolvedConfig
+
+  return {
+    apply: 'build',
+    configResolved(config) {
+      resolvedConfig = config
+    },
+    async closeBundle() {
+      const serviceWorkerPath = resolve(
+        resolvedConfig.root,
+        resolvedConfig.build.outDir,
+        'sw.js',
+      )
+      const buildId = (
+        process.env.CF_PAGES_COMMIT_SHA ??
+        process.env.GITHUB_SHA ??
+        Date.now().toString(36)
+      ).slice(0, 16)
+      const serviceWorker = await readFile(serviceWorkerPath, 'utf8')
+
+      await writeFile(
+        serviceWorkerPath,
+        serviceWorker.replaceAll('__BW_BUILD_ID__', buildId),
+        'utf8',
+      )
+    },
+    name: 'bw-barber-service-worker-version',
+  }
+}
 
 export default defineConfig({
   server: {
@@ -46,5 +79,5 @@ export default defineConfig({
     },
   },
 
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), versionServiceWorker()],
 })

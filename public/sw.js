@@ -1,4 +1,5 @@
-const CACHE_VERSION = 'push-foundation-20260626'
+const BUILD_ID = '__BW_BUILD_ID__'
+const CACHE_VERSION = `bw-build-${BUILD_ID}`
 const STATIC_CACHE = `bw-barber-static-${CACHE_VERSION}`
 const ASSET_CACHE = `bw-barber-assets-${CACHE_VERSION}`
 const OFFLINE_URL = '/offline.html'
