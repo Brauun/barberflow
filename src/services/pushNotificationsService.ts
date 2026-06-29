@@ -216,3 +216,18 @@ export async function sendTestPushNotification(input: { userId: string }) {
     throw new Error(error.message)
   }
 }
+
+export async function sendAppointmentCreatedPushNotification(input: {
+  appointmentId: string
+}) {
+  const { error } = await supabase.functions.invoke('send-push-notification', {
+    body: {
+      appointment_id: input.appointmentId,
+      event: 'appointment_created',
+    },
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}

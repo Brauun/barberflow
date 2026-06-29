@@ -14,6 +14,11 @@ O frontend também precisa da chave pública:
 VITE_VAPID_PUBLIC_KEY=
 ```
 
-O endpoint atual aceita apenas envios de teste para o próprio usuário autenticado.
-Eventos automáticos devem chamar esta função por uma camada confiável do backend,
-nunca expondo a chave `SUPABASE_SERVICE_ROLE_KEY` no frontend.
+O endpoint aceita:
+
+- envio de teste para o próprio usuário autenticado;
+- evento `appointment_created`, recebendo somente `appointment_id`.
+
+No evento de agendamento, destinatários, mensagem e empresa são derivados no
+backend. O cliente não pode escolher usuários arbitrários e a chave
+`SUPABASE_SERVICE_ROLE_KEY` nunca é exposta no frontend.

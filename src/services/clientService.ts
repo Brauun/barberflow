@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
 import type { Database } from '../types/database'
 import { createInternalNotification } from './notificationsService'
+import { sendAppointmentCreatedPushNotification } from './pushNotificationsService'
 
 export type Barbershop = Database['public']['Tables']['barbershops']['Row']
 export type ClientProfile = Database['public']['Tables']['profiles']['Row']
@@ -134,6 +135,21 @@ async function tryCreateInternalNotification(
         notificationType: input.type,
       },
       empresaId: input.empresaId,
+    })
+  }
+}
+
+async function trySendAppointmentCreatedPush(appointmentId: string, empresaId: string) {
+  try {
+    await sendAppointmentCreatedPushNotification({ appointmentId })
+  } catch (error) {
+    logger.warn({
+      action: 'appointment_created_push_failed',
+      area: 'notifications',
+      empresaId,
+      error,
+      message: 'O agendamento foi criado, mas o push não pôde ser enviado.',
+      metadata: { appointmentId },
     })
   }
 }
@@ -626,6 +642,8 @@ export async function createClientAppointment(input: {
     title: 'Novo agendamento',
     type: 'appointment_created',
   })
+
+  void trySendAppointmentCreatedPush(appointment.id, input.barbershop.empresa_id)
 
   return appointment
 }

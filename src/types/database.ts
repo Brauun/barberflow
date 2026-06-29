@@ -947,6 +947,28 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['push_subscriptions']['Insert']>
         Relationships: []
       }
+      push_delivery_logs: {
+        Row: {
+          id: string
+          empresa_id: string
+          appointment_id: string
+          recipient_auth_user_id: string
+          event_type: string
+          status: 'processando' | 'enviado' | 'falhou'
+          sent_devices: number
+          error_message: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['push_delivery_logs']['Row']> & {
+          empresa_id: string
+          appointment_id: string
+          recipient_auth_user_id: string
+          event_type: string
+        }
+        Update: Partial<Database['public']['Tables']['push_delivery_logs']['Insert']>
+        Relationships: []
+      }
       discount_logs: {
         Row: {
           id: string
