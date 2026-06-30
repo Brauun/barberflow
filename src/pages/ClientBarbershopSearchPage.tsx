@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Heart, MapPin, Navigation, Route, Search, Star, Timer } from 'lucide-react'
+import { Heart, MapPin, Navigation, Route, Scissors, Search, Timer } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -40,9 +40,9 @@ function distanceInKm(origin: Coordinates | null, barbershop: Barbershop) {
   return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
-function formatDistance(distance: number | null) {
+function formatLocation(distance: number | null, barbershop: Barbershop) {
   if (distance === null) {
-    return 'Cidade'
+    return barbershop.cidade || 'Localização não informada'
   }
 
   if (distance < 1) {
@@ -58,7 +58,7 @@ export function ClientBarbershopSearchPage() {
   const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState<
-    'nearby' | 'rating' | 'booked' | 'waiting'
+    'nearby' | 'services' | 'duration' | 'name'
   >('nearby')
   const [position, setPosition] = useState<Coordinates | null>(null)
 
@@ -116,16 +116,19 @@ export function ClientBarbershopSearchPage() {
         return firstFavorite ? -1 : 1
       }
 
-      if (filter === 'rating') {
-        return Number(second.rating) - Number(first.rating)
+      if (filter === 'services') {
+        return (second.active_services_count ?? 0) - (first.active_services_count ?? 0)
       }
 
-      if (filter === 'booked') {
-        return second.total_appointments - first.total_appointments
+      if (filter === 'duration') {
+        return (
+          (first.average_service_minutes ?? Number.MAX_SAFE_INTEGER) -
+          (second.average_service_minutes ?? Number.MAX_SAFE_INTEGER)
+        )
       }
 
-      if (filter === 'waiting') {
-        return first.average_wait_minutes - second.average_wait_minutes
+      if (filter === 'name') {
+        return first.nome.localeCompare(second.nome, 'pt-BR')
       }
 
       return (
@@ -158,9 +161,9 @@ export function ClientBarbershopSearchPage() {
 
   const filters = [
     { label: 'Mais proximas', value: 'nearby' },
-    { label: 'Melhor avaliação', value: 'rating' },
-    { label: 'Mais agendadas', value: 'booked' },
-    { label: 'Menor espera', value: 'waiting' },
+    { label: 'Mais serviços', value: 'services' },
+    { label: 'Menor duração', value: 'duration' },
+    { label: 'Nome A-Z', value: 'name' },
   ] as const
 
   const favoriteMutation = useMutation({
@@ -259,13 +262,19 @@ export function ClientBarbershopSearchPage() {
                       </p>
                       <div className="mt-2 flex flex-wrap gap-1.5 sm:mt-3 sm:gap-2">
                         <Badge>
-                          <Navigation size={13} /> {formatDistance(distance)}
-                        </Badge>
-                        <Badge variant="warning">
-                          <Star size={13} /> {barbershop.rating}
+                          <Navigation size={13} /> {formatLocation(distance, barbershop)}
                         </Badge>
                         <Badge>
-                          <Timer size={13} /> {barbershop.average_wait_minutes}min
+                          <Scissors size={13} />{' '}
+                          {barbershop.active_services_count
+                            ? `${barbershop.active_services_count} serviço(s)`
+                            : 'Sem serviços'}
+                        </Badge>
+                        <Badge>
+                          <Timer size={13} />{' '}
+                          {barbershop.average_service_minutes
+                            ? `${barbershop.average_service_minutes} min em média`
+                            : 'Duração não informada'}
                         </Badge>
                       </div>
                     </div>

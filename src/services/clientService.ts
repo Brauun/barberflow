@@ -7,7 +7,10 @@ import {
   sendAppointmentCreatedPushNotification,
 } from './pushNotificationsService'
 
-export type Barbershop = Database['public']['Tables']['barbershops']['Row']
+export type Barbershop = Database['public']['Tables']['barbershops']['Row'] & {
+  active_services_count?: number
+  average_service_minutes?: number | null
+}
 export type ClientProfile = Database['public']['Tables']['profiles']['Row']
 export type ClientFavoriteBarbershop =
   Database['public']['Tables']['client_favorite_barbershops']['Row']
@@ -86,37 +89,65 @@ async function hydrateBarbershopLogos(
     return normalized
   }
 
-  const { data, error } = await supabase
-    .from('empresas')
-    .select('id,logo_url,nome')
-    .in('id', empresaIds)
+  const [empresasResponse, servicesResponse] = await Promise.all([
+    supabase.from('empresas').select('id,logo_url,nome').in('id', empresaIds),
+    supabase
+      .from('servicos')
+      .select('empresa_id,duration_minutes,duracao_minutos,ativo,status')
+      .in('empresa_id', empresaIds),
+  ])
 
-  if (error) {
+  if (empresasResponse.error) {
     logger.warn({
       action: 'client_barbershop_logo_fallback_failed',
       area: 'client',
-      error,
+      error: empresasResponse.error,
       message: 'Não foi possível carregar logo da empresa para o cliente.',
       metadata: { totalEmpresas: empresaIds.length },
     })
-
-    return normalized
   }
 
   const empresaById = new Map(
-    ((data ?? []) as EmpresaLogoFallback[]).map((empresa) => [
+    ((empresasResponse.data ?? []) as EmpresaLogoFallback[]).map((empresa) => [
       empresa.id,
       empresa,
     ]),
   )
+  const metricsByEmpresa = new Map<
+    string,
+    { activeServicesCount: number; totalMinutes: number }
+  >()
+
+  for (const service of servicesResponse.data ?? []) {
+    if (!service.empresa_id || service.ativo === false || service.status === 'inativo') {
+      continue
+    }
+
+    const current = metricsByEmpresa.get(service.empresa_id) ?? {
+      activeServicesCount: 0,
+      totalMinutes: 0,
+    }
+    current.activeServicesCount += 1
+    current.totalMinutes += Number(
+      service.duration_minutes ?? service.duracao_minutos ?? 0,
+    )
+    metricsByEmpresa.set(service.empresa_id, current)
+  }
 
   return normalized.map((barbershop) => {
     const empresa = barbershop.empresa_id
       ? empresaById.get(barbershop.empresa_id)
       : null
+    const metrics = barbershop.empresa_id
+      ? metricsByEmpresa.get(barbershop.empresa_id)
+      : null
 
     return {
       ...barbershop,
+      active_services_count: metrics?.activeServicesCount ?? 0,
+      average_service_minutes: metrics?.activeServicesCount
+        ? Math.round(metrics.totalMinutes / metrics.activeServicesCount)
+        : null,
       logo_url: empresa?.logo_url || barbershop.logo_url || null,
       nome: barbershop.nome || empresa?.nome || barbershop.nome,
     }
@@ -177,7 +208,7 @@ export async function listBarbershops(search: string) {
     .from('barbershops')
     .select('*,empresa:empresas(id,logo_url,nome)')
     .eq('status', 'ativa')
-    .order('rating', { ascending: false })
+    .order('nome', { ascending: true })
 
   const normalizedSearch = search.trim()
 

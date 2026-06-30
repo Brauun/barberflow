@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { CalendarPlus, MapPin, RefreshCcw, Route, Star } from 'lucide-react'
+import { CalendarPlus, MapPin, RefreshCcw, Route, Scissors, Timer } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { BarbershopLogo } from '../components/BarbershopLogo'
@@ -65,10 +65,18 @@ export function ClientBarbershopPage() {
                 </p>
                 {barbershop && (
                   <div className="mt-3 flex gap-2">
-                    <Badge variant="warning">
-                      <Star size={13} /> {barbershop.rating}
+                    <Badge>
+                      <Scissors size={13} />{' '}
+                      {barbershop.active_services_count
+                        ? `${barbershop.active_services_count} serviço(s)`
+                        : 'Sem serviços'}
                     </Badge>
-                    <Badge>{barbershop.average_wait_minutes}min espera</Badge>
+                    <Badge>
+                      <Timer size={13} />{' '}
+                      {barbershop.average_service_minutes
+                        ? `${barbershop.average_service_minutes} min em média`
+                        : 'Duração não informada'}
+                    </Badge>
                   </div>
                 )}
               </div>
