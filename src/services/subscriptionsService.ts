@@ -364,16 +364,16 @@ export async function fetchSubscriptionData(
 export async function selectSubscriptionPlan(input: {
   empresaId: string
   planId: string
-  subscriptionId: string
 }) {
-  const { error } = await supabase
-    .from('subscriptions')
-    .update({ plan_id: input.planId })
-    .eq('empresa_id', input.empresaId)
-    .eq('id', input.subscriptionId)
+  const { error } = await supabase.functions.invoke('select-subscription-plan', {
+    body: {
+      empresa_id: input.empresaId,
+      plan_id: input.planId,
+    },
+  })
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error('Não foi possível alterar o plano. Tente novamente.')
   }
 }
 

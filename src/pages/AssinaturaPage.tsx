@@ -187,7 +187,6 @@ export function AssinaturaPage() {
       await selectSubscriptionPlan({
         empresaId,
         planId: plan.id,
-        subscriptionId: subscription.id,
       })
     },
     onSuccess: async () => {
