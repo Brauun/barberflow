@@ -5,10 +5,6 @@ import {
   notifyWaitlistForVacancy,
   type BookingUnavailability,
 } from './clientService'
-import {
-  applyLoyaltyProgressForAppointment,
-  redeemClientBenefit,
-} from './benefitsService'
 import type { AtendimentoFormData } from '../types/atendimentos'
 import type { Database } from '../types/database'
 import { createAuditLog } from './observabilityService'
@@ -593,21 +589,6 @@ export async function updateDailyAppointmentStatus(input: {
     throw new Error(error.message)
   }
 
-  if (
-    input.source === 'appointment' &&
-    (input.status === 'concluido' || input.status === 'concluido_automatico')
-  ) {
-    try {
-      await applyLoyaltyProgressForAppointment(input.empresaId, input.id)
-    } catch (loyaltyError) {
-      console.warn('[benefits] Não foi possível aplicar progresso de fidelidade.', {
-        appointmentId: input.id,
-        empresaId: input.empresaId,
-        error: loyaltyError instanceof Error ? loyaltyError.message : loyaltyError,
-      })
-    }
-  }
-
   const { error: logError } = await supabase
     .from('appointment_status_logs')
     .insert({
@@ -1110,8 +1091,11 @@ export async function registrarAtendimento(
       : Number(data.valor_desconto)
   const valorFinal = Math.max(0, valorOriginal - valorDesconto)
 
-  const { data: appointment, error } = await supabase.rpc('create_internal_appointment', {
+  const { data: appointment, error } = await supabase.rpc(
+    'create_internal_appointment_with_benefit',
+    {
     p_barbeiro_id: data.barbeiro_id,
+    p_client_benefit_id: data.benefit_id || null,
     p_cliente_id: data.atendimento_tipo === 'cadastrado' ? data.cliente_id ?? null : null,
     p_ends_at: dataHoraFim.toISOString(),
     p_empresa_id: empresaId,
@@ -1125,7 +1109,8 @@ export async function registrarAtendimento(
     p_walk_in_customer_name: data.cliente_avulso_nome ?? null,
     p_walk_in_customer_phone: data.cliente_avulso_telefone ?? null,
     p_walk_in_notes: data.cliente_avulso_observacao ?? null,
-  })
+    },
+  )
 
   if (error) {
     throw new Error(error.message)
@@ -1133,10 +1118,6 @@ export async function registrarAtendimento(
 
   if (!appointment) {
     return
-  }
-
-  if (data.benefit_id) {
-    await redeemClientBenefit(data.benefit_id, appointment.id)
   }
 
   if (valorDesconto > 0) {

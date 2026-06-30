@@ -622,13 +622,14 @@ export async function createClientAppointment(input: {
   barber: BookingBarber
   startsAt: string
   endsAt: string
+  clientBenefitId?: string | null
 }) {
   if (!input.barbershop.empresa_id) {
     throw new Error('Barbearia sem empresa vinculada.')
   }
 
   const { data: appointment, error: appointmentError } = await supabase.rpc(
-    'create_client_appointment',
+    'create_client_appointment_with_benefit',
     {
       p_barbeiro_id: input.barber.id,
       p_barbershop_id: input.barbershop.id,
@@ -636,6 +637,7 @@ export async function createClientAppointment(input: {
       p_ends_at: input.endsAt,
       p_servico_id: input.service.id,
       p_starts_at: input.startsAt,
+      p_client_benefit_id: input.clientBenefitId ?? null,
     },
   )
 

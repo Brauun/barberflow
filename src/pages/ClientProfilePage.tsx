@@ -126,7 +126,7 @@ export function ClientProfilePage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-5 pb-[calc(env(safe-area-inset-bottom)+9rem)] sm:space-y-8 md:pb-0">
       <section>
         <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600">
           Perfil
@@ -238,7 +238,12 @@ export function ClientProfilePage() {
         </CardContent>
       </Card>
 
-      <PushNotificationControl />
+      <div
+        id="notificacoes-push"
+        className="min-w-0 scroll-mb-[calc(env(safe-area-inset-bottom)+6rem)]"
+      >
+        <PushNotificationControl />
+      </div>
     </div>
   )
 }

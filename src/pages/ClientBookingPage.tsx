@@ -25,7 +25,7 @@ import {
   fetchSubscriptionData,
   getSubscriptionAccessState,
 } from '../services/subscriptionsService'
-import { listMyClientBenefits, redeemClientBenefit } from '../services/benefitsService'
+import { listMyClientBenefits } from '../services/benefitsService'
 import { buildBookingSlots } from '../utils/bookingSlots'
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
@@ -204,18 +204,15 @@ export function ClientBookingPage() {
       const startsAt = new Date(slot)
       const endsAt = new Date(startsAt.getTime() + duration * 60 * 1000)
 
-      const appointment = await createClientAppointment({
+      await createClientAppointment({
         barber: selectedBarber,
         barbershop,
         clientProfile,
         endsAt: endsAt.toISOString(),
         service: selectedService,
         startsAt: startsAt.toISOString(),
+        clientBenefitId: selectedBenefitId || null,
       })
-
-      if (selectedBenefitId) {
-        await redeemClientBenefit(selectedBenefitId, appointment.id)
-      }
     },
     onSuccess: async () => {
       await Promise.all([

@@ -159,33 +159,16 @@ export async function createBenefitProgram(
   empresaId: string,
   data: BenefitProgramFormData,
 ) {
-  const { data: program, error: programError } = await supabase
-    .from('benefit_programs')
-    .insert(normalizeProgramInput(data, empresaId))
-    .select()
-    .single()
+  const placeholderId = '00000000-0000-0000-0000-000000000000'
+  const { error } = await supabase.rpc('save_benefit_program_bundle', {
+    p_empresa_id: empresaId,
+    p_program_id: null,
+    p_program: normalizeProgramInput(data, empresaId),
+    p_rule: normalizeRuleInput(data, empresaId, placeholderId),
+    p_reward: normalizeRewardInput(data, empresaId, placeholderId),
+  })
 
-  if (programError) {
-    throw new Error(programError.message)
-  }
-
-  const programId = (program as BenefitProgram).id
-
-  const { error: ruleError } = await supabase
-    .from('benefit_rules')
-    .insert(normalizeRuleInput(data, empresaId, programId))
-
-  if (ruleError) {
-    throw new Error(ruleError.message)
-  }
-
-  const { error: rewardError } = await supabase
-    .from('benefit_rewards')
-    .insert(normalizeRewardInput(data, empresaId, programId))
-
-  if (rewardError) {
-    throw new Error(rewardError.message)
-  }
+  if (error) throw new Error(error.message)
 }
 
 export async function updateBenefitProgram(
@@ -193,42 +176,15 @@ export async function updateBenefitProgram(
   programId: string,
   data: BenefitProgramFormData,
 ) {
-  const { error: programError } = await supabase
-    .from('benefit_programs')
-    .update(normalizeProgramInput(data, empresaId))
-    .eq('empresa_id', empresaId)
-    .eq('id', programId)
+  const { error } = await supabase.rpc('save_benefit_program_bundle', {
+    p_empresa_id: empresaId,
+    p_program_id: programId,
+    p_program: normalizeProgramInput(data, empresaId),
+    p_rule: normalizeRuleInput(data, empresaId, programId),
+    p_reward: normalizeRewardInput(data, empresaId, programId),
+  })
 
-  if (programError) {
-    throw new Error(programError.message)
-  }
-
-  await supabase
-    .from('benefit_rules')
-    .delete()
-    .eq('empresa_id', empresaId)
-    .eq('program_id', programId)
-  await supabase
-    .from('benefit_rewards')
-    .delete()
-    .eq('empresa_id', empresaId)
-    .eq('program_id', programId)
-
-  const { error: ruleError } = await supabase
-    .from('benefit_rules')
-    .insert(normalizeRuleInput(data, empresaId, programId))
-
-  if (ruleError) {
-    throw new Error(ruleError.message)
-  }
-
-  const { error: rewardError } = await supabase
-    .from('benefit_rewards')
-    .insert(normalizeRewardInput(data, empresaId, programId))
-
-  if (rewardError) {
-    throw new Error(rewardError.message)
-  }
+  if (error) throw new Error(error.message)
 }
 
 export async function listClientBenefits(empresaId: string) {

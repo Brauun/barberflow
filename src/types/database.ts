@@ -1405,6 +1405,18 @@ export type Database = {
         }
         Returns: Database['public']['Tables']['appointments']['Row']
       }
+      create_client_appointment_with_benefit: {
+        Args: {
+          p_barbershop_id: string
+          p_client_profile_id: string
+          p_barbeiro_id: string
+          p_servico_id: string
+          p_starts_at: string
+          p_ends_at: string
+          p_client_benefit_id?: string | null
+        }
+        Returns: Database['public']['Tables']['appointments']['Row']
+      }
       create_internal_appointment: {
         Args: {
           p_empresa_id: string
@@ -1423,6 +1435,36 @@ export type Database = {
           p_motivo_desconto?: string | null
         }
         Returns: Database['public']['Tables']['appointments']['Row']
+      }
+      create_internal_appointment_with_benefit: {
+        Args: {
+          p_empresa_id: string
+          p_cliente_id: string | null
+          p_is_walk_in: boolean
+          p_walk_in_customer_name: string | null
+          p_walk_in_customer_phone: string | null
+          p_walk_in_notes: string | null
+          p_barbeiro_id: string
+          p_servico_id: string
+          p_starts_at: string
+          p_ends_at: string
+          p_valor_original: number
+          p_valor_desconto?: number
+          p_valor_final?: number | null
+          p_motivo_desconto?: string | null
+          p_client_benefit_id?: string | null
+        }
+        Returns: Database['public']['Tables']['appointments']['Row']
+      }
+      save_benefit_program_bundle: {
+        Args: {
+          p_empresa_id: string
+          p_program_id: string | null
+          p_program: Json
+          p_rule: Json
+          p_reward: Json
+        }
+        Returns: string
       }
       set_current_admin_barber_participation: {
         Args: {
