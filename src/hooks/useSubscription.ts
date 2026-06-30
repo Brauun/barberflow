@@ -4,10 +4,12 @@ import { useAuth } from './useAuth'
 import { queryKeys } from '../lib/queryKeys'
 import {
   canUseFeature,
+  canWriteData,
+  fetchSubscriptionData,
   getFeatureLimit,
-  getSubscriptionState,
+  getGraceDaysRemaining,
+  getSubscriptionAccessState,
   getTrialDaysRemaining,
-  isSubscriptionExpired,
   type FeatureKey,
 } from '../services/subscriptionsService'
 
@@ -17,16 +19,23 @@ export function useSubscription() {
 
   const query = useQuery({
     enabled: Boolean(empresaId),
-    queryFn: () => getSubscriptionState(empresaId as string),
+    queryFn: () => fetchSubscriptionData(empresaId as string),
     queryKey: queryKeys.assinatura.detail(empresaId),
+    refetchInterval: 60_000,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
   })
 
   const subscription = query.data?.subscription ?? null
+  const state = query.isSuccess ? getSubscriptionAccessState(subscription) : null
 
   return {
     ...query,
+    canWrite: state ? canWriteData(state) : true,
     daysRemaining: getTrialDaysRemaining(subscription),
-    isExpired: isSubscriptionExpired(subscription),
+    graceDaysRemaining: getGraceDaysRemaining(subscription),
+    isBlocked: state ? !canWriteData(state) : false,
+    state,
     subscription,
   }
 }

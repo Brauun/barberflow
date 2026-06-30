@@ -1054,6 +1054,7 @@ export function AtendimentosPage() {
 
         <Button
           className="w-full sm:w-auto"
+          data-subscription-write="true"
           leftIcon={<Plus size={18} />}
           onClick={() => {
             reset(emptyFormValues())
@@ -1186,6 +1187,7 @@ export function AtendimentosPage() {
                   <div className="flex min-w-0 flex-wrap items-center gap-2 lg:justify-end">
                     <Select
                       className="w-full min-w-0 sm:w-44"
+                      data-subscription-write="true"
                       onChange={(event) =>
                         updateStatusMutation.mutate({
                           appointment,
@@ -1198,6 +1200,7 @@ export function AtendimentosPage() {
                     {appointment.status === 'aguardando_finalizacao' && (
                       <>
                         <Button
+                          data-subscription-write="true"
                           disabled={updateStatusMutation.isPending}
                           onClick={() =>
                             updateStatusMutation.mutate({
@@ -1211,6 +1214,7 @@ export function AtendimentosPage() {
                           Concluído
                         </Button>
                         <Button
+                          data-subscription-write="true"
                           disabled={updateStatusMutation.isPending}
                           onClick={() =>
                             updateStatusMutation.mutate({
@@ -1229,6 +1233,7 @@ export function AtendimentosPage() {
                     {appointment.status === 'concluido_automatico' &&
                       appointment.source === 'appointment' && (
                         <Button
+                          data-subscription-write="true"
                           disabled={reverseAutoMutation.isPending}
                           onClick={() => {
                             const markNoShow = window.confirm(
@@ -1261,6 +1266,7 @@ export function AtendimentosPage() {
                       <>
                         <Button
                           aria-label="Remarcar"
+                          data-subscription-write="true"
                           onClick={() => {
                             setRescheduleAppointment(appointment)
                             setRescheduleDate(appointment.starts_at.slice(0, 10))
@@ -1281,6 +1287,7 @@ export function AtendimentosPage() {
                         </Button>
                         <Button
                           aria-label="Cancelar"
+                          data-subscription-write="true"
                           disabled={updateStatusMutation.isPending}
                           onClick={() => {
                             if (
@@ -1303,6 +1310,7 @@ export function AtendimentosPage() {
                         </Button>
                         <Button
                           aria-label="Concluir"
+                          data-subscription-write="true"
                           disabled={updateStatusMutation.isPending}
                           onClick={() =>
                             updateStatusMutation.mutate({
@@ -1469,6 +1477,7 @@ export function AtendimentosPage() {
             <div className="flex flex-col gap-2 sm:flex-row">
                 <Button
                   className="w-full sm:w-auto"
+                  data-subscription-premium="true"
                   disabled={atendimentosQuery.isLoading}
                   leftIcon={<FileText size={16} />}
                   onClick={exportAtendimentosPdf}
@@ -1479,6 +1488,7 @@ export function AtendimentosPage() {
               </Button>
               <Button
                 className="w-full sm:w-auto"
+                data-subscription-premium="true"
                 disabled={!atendimentosQuery.data?.items.length}
                 leftIcon={<FileSpreadsheet size={16} />}
                 onClick={exportAtendimentosCsv}
@@ -2070,6 +2080,7 @@ export function AtendimentosPage() {
                 </p>
                 <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                   <Button
+                    data-subscription-write="true"
                     disabled={updateStatusMutation.isPending}
                     onClick={() => {
                       updateStatusMutation.mutate({
@@ -2083,6 +2094,7 @@ export function AtendimentosPage() {
                     Concluir
                   </Button>
                   <Button
+                    data-subscription-write="true"
                     disabled={updateStatusMutation.isPending}
                     onClick={() => {
                       updateStatusMutation.mutate({

@@ -193,6 +193,7 @@ export function FluxoCaixaPage() {
         </div>
 
         <Button
+          data-subscription-write="true"
           leftIcon={<Plus size={18} />}
           onClick={() => {
             reset(emptyFormValues())
@@ -424,7 +425,7 @@ export function FluxoCaixaPage() {
             >
               Cancelar
             </Button>
-            <Button disabled={isSubmitting || saveMutation.isPending} type="submit">
+            <Button data-subscription-write="true" disabled={isSubmitting || saveMutation.isPending} type="submit">
               {saveMutation.isPending ? 'Salvando...' : 'Salvar movimentação'}
             </Button>
           </div>

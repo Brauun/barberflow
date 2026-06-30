@@ -640,10 +640,10 @@ export default function RelatoriosPage() {
             <Button className="w-full min-w-0 md:w-auto" leftIcon={<RotateCcw size={16} />} onClick={clearFilters} variant="ghost">
               Limpar
             </Button>
-            <Button className="w-full min-w-0 md:w-auto" disabled={!builtReport} leftIcon={<Download size={16} />} onClick={exportPdf}>
+            <Button className="w-full min-w-0 md:w-auto" data-subscription-premium="true" disabled={!builtReport} leftIcon={<Download size={16} />} onClick={exportPdf}>
               Exportar PDF
             </Button>
-            <Button className="w-full min-w-0 md:w-auto" disabled={!builtReport} leftIcon={<FileSpreadsheet size={16} />} onClick={exportCsv}>
+            <Button className="w-full min-w-0 md:w-auto" data-subscription-premium="true" disabled={!builtReport} leftIcon={<FileSpreadsheet size={16} />} onClick={exportCsv}>
               Exportar Excel
             </Button>
           </div>

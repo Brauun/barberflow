@@ -310,7 +310,7 @@ export function ProdutosPage() {
           </p>
         </div>
 
-        <Button leftIcon={<Plus size={18} />} onClick={openCreateModal}>
+        <Button data-subscription-write="true" leftIcon={<Plus size={18} />} onClick={openCreateModal}>
           Novo produto
         </Button>
       </section>
@@ -429,6 +429,7 @@ export function ProdutosPage() {
                         </Button>
                         <Button
                           aria-label="Editar produto"
+                          data-subscription-write="true"
                           size="icon-sm"
                           onClick={() => openEditModal(produto)}
                           variant="ghost"
@@ -437,6 +438,7 @@ export function ProdutosPage() {
                         </Button>
                         <Button
                           aria-label="Excluir produto"
+                          data-subscription-write="true"
                           size="icon-sm"
                           disabled={deleteMutation.isPending}
                           onClick={() => void handleDelete(produto)}
@@ -532,6 +534,7 @@ export function ProdutosPage() {
               disabled={
                 produtoForm.formState.isSubmitting || saveMutation.isPending
               }
+              data-subscription-write="true"
               type="submit"
             >
               {saveMutation.isPending ? 'Salvando...' : 'Salvar produto'}

@@ -213,7 +213,7 @@ export function ClientesPage() {
           </p>
         </div>
 
-        <Button className="h-10 max-w-full text-sm md:h-auto md:text-base" leftIcon={<Plus size={18} />} onClick={openCreateModal}>
+        <Button className="h-10 max-w-full text-sm md:h-auto md:text-base" data-subscription-write="true" leftIcon={<Plus size={18} />} onClick={openCreateModal}>
           Novo cliente
         </Button>
       </section>
@@ -343,6 +343,7 @@ export function ClientesPage() {
                             </Button>
                             <Button
                               aria-label="Editar cliente"
+                              data-subscription-write="true"
                               size="icon-sm"
                               onClick={() => openEditModal(cliente)}
                               variant="ghost"
@@ -351,6 +352,7 @@ export function ClientesPage() {
                             </Button>
                             <Button
                               aria-label="Excluir cliente"
+                              data-subscription-write="true"
                               size="icon-sm"
                               disabled={deleteClienteMutation.isPending}
                               onClick={() => void handleDelete(cliente)}
@@ -425,7 +427,7 @@ export function ClientesPage() {
             >
               Cancelar
             </Button>
-            <Button disabled={isSubmitting || saveClienteMutation.isPending} type="submit">
+            <Button data-subscription-write="true" disabled={isSubmitting || saveClienteMutation.isPending} type="submit">
               {saveClienteMutation.isPending ? 'Salvando...' : 'Salvar cliente'}
             </Button>
           </div>

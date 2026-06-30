@@ -462,7 +462,7 @@ export function PlanosFidelidadePage() {
           </p>
         </div>
 
-        <Button leftIcon={<Plus size={18} />} onClick={openCreateModal}>
+        <Button data-subscription-write="true" leftIcon={<Plus size={18} />} onClick={openCreateModal}>
           Novo benefício
         </Button>
       </section>
@@ -564,6 +564,7 @@ export function PlanosFidelidadePage() {
                       <div className="grid grid-cols-[1fr_auto] gap-2 sm:flex sm:items-center">
                         <Button
                           className="w-full justify-center sm:w-auto"
+                          data-subscription-write="true"
                           onClick={() =>
                             statusMutation.mutate({
                               programId: program.id,
@@ -577,6 +578,7 @@ export function PlanosFidelidadePage() {
                         </Button>
                         <Button
                           aria-label="Editar programa"
+                          data-subscription-write="true"
                           className="shrink-0"
                           onClick={() => openEditModal(program)}
                           size="icon-sm"
@@ -1079,6 +1081,7 @@ export function PlanosFidelidadePage() {
             <Button
               className="h-10 px-4"
               disabled={isSubmitting || saveMutation.isPending}
+              data-subscription-write="true"
               type="submit"
             >
               {saveMutation.isPending ? 'Publicando...' : 'Publicar benefício'}

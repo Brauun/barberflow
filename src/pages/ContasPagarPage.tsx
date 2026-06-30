@@ -224,7 +224,7 @@ export function ContasPagarPage() {
           </p>
         </div>
 
-        <Button leftIcon={<Plus size={18} />} onClick={openCreateModal}>
+        <Button data-subscription-write="true" leftIcon={<Plus size={18} />} onClick={openCreateModal}>
           Nova conta
         </Button>
       </section>
@@ -339,6 +339,7 @@ export function ContasPagarPage() {
                         )}
                         <Button
                           aria-label="Editar conta"
+                          data-subscription-write="true"
                           size="icon-sm"
                           onClick={() => openEditModal(conta)}
                           variant="ghost"
@@ -347,6 +348,7 @@ export function ContasPagarPage() {
                         </Button>
                         <Button
                           aria-label="Excluir conta"
+                          data-subscription-write="true"
                           size="icon-sm"
                           disabled={deleteContaMutation.isPending}
                           onClick={() => void handleDelete(conta)}
@@ -424,7 +426,7 @@ export function ContasPagarPage() {
             >
               Cancelar
             </Button>
-            <Button disabled={isSubmitting || saveContaMutation.isPending} type="submit">
+            <Button data-subscription-write="true" disabled={isSubmitting || saveContaMutation.isPending} type="submit">
               {saveContaMutation.isPending ? 'Salvando...' : 'Salvar conta'}
             </Button>
           </div>

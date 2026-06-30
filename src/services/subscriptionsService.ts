@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { logger } from '../lib/logger'
 import type { Database, Json } from '../types/database'
 
 export type Plan = Database['public']['Tables']['plans']['Row']
@@ -28,15 +29,35 @@ export type SubscriptionStatus =
   | 'CANCELED'
   | 'EXPIRED'
 
+export type ComputedSubscriptionState =
+  | 'TRIAL_ACTIVE'
+  | 'TRIAL_ENDING'
+  | 'TRIAL_EXPIRED_GRACE'
+  | 'ACTIVE'
+  | 'PAST_DUE'
+  | 'BLOCKED'
+  | 'CANCELLED'
+
+export type SubscriptionAccessState =
+  | 'TRIAL_ACTIVE'
+  | 'TRIAL_ENDING'
+  | 'TRIAL_EXPIRED_GRACE'
+  | 'BLOCKED'
+  | 'ACTIVE'
+
 export type FeatureValue = boolean | number | 'unlimited'
 
-export type SubscriptionState = {
+export type SubscriptionData = {
   features: Record<string, FeatureValue>
   plans: Plan[]
   schemaReady: boolean
   subscription: (Subscription & { plan?: Plan | null }) | null
   usage: SubscriptionUsage[]
 }
+
+export const SUBSCRIPTION_GRACE_DAYS = 3
+export const SUBSCRIPTION_ENDING_DAYS = 3
+const DAY_IN_MS = 1000 * 60 * 60 * 24
 
 const fallbackPlans: Plan[] = [
   {
@@ -117,28 +138,143 @@ export function getTrialDaysRemaining(subscription?: Subscription | null) {
 
   const diff = new Date(subscription.trial_ends_at).getTime() - Date.now()
 
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+  return Math.max(0, Math.ceil(diff / DAY_IN_MS))
 }
 
-export function isSubscriptionExpired(subscription?: Subscription | null) {
+export function getSubscriptionState(
+  subscription?: Subscription | null,
+  now = new Date(),
+): ComputedSubscriptionState {
   if (!subscription) {
-    return false
+    return 'BLOCKED'
+  }
+
+  if (subscription.status === 'CANCELED') {
+    return 'CANCELLED'
+  }
+
+  if (subscription.status === 'EXPIRED') {
+    return 'BLOCKED'
+  }
+
+  if (subscription.status === 'PAST_DUE') {
+    return 'PAST_DUE'
   }
 
   if (subscription.status === 'ACTIVE') {
-    return false
+    if (!subscription.expires_at) {
+      return 'BLOCKED'
+    }
+
+    if (new Date(subscription.expires_at).getTime() <= now.getTime()) {
+      return 'PAST_DUE'
+    }
+
+    return 'ACTIVE'
   }
 
-  if (subscription.status !== 'TRIAL') {
-    return ['PAST_DUE', 'CANCELED', 'EXPIRED'].includes(subscription.status)
+  if (!subscription.trial_ends_at) {
+    return 'BLOCKED'
   }
 
-  return Boolean(subscription.trial_ends_at && new Date(subscription.trial_ends_at) < new Date())
+  const trialEndsAt = new Date(subscription.trial_ends_at).getTime()
+
+  if (!Number.isFinite(trialEndsAt)) {
+    return 'BLOCKED'
+  }
+
+  const diff = trialEndsAt - now.getTime()
+
+  if (diff > SUBSCRIPTION_ENDING_DAYS * DAY_IN_MS) {
+    return 'TRIAL_ACTIVE'
+  }
+
+  if (diff > 0) {
+    return 'TRIAL_ENDING'
+  }
+
+  if (Math.abs(diff) <= SUBSCRIPTION_GRACE_DAYS * DAY_IN_MS) {
+    return 'TRIAL_EXPIRED_GRACE'
+  }
+
+  return 'BLOCKED'
 }
 
-export async function getSubscriptionState(
+export function getSubscriptionAccessState(
+  subscription?: Subscription | null,
+  now = new Date(),
+): SubscriptionAccessState {
+  const state = getSubscriptionState(subscription, now)
+
+  if (state === 'PAST_DUE' || state === 'CANCELLED') {
+    return 'BLOCKED'
+  }
+
+  return state
+}
+
+export function isTrialEnding(state: SubscriptionAccessState) {
+  return state === 'TRIAL_ENDING'
+}
+
+export function isInGracePeriod(state: SubscriptionAccessState) {
+  return state === 'TRIAL_EXPIRED_GRACE'
+}
+
+export function canReadData(_state: SubscriptionAccessState) {
+  return true
+}
+
+export function canWriteData(state: SubscriptionAccessState) {
+  return state !== 'BLOCKED'
+}
+
+export function canUsePremiumFeature(state: SubscriptionAccessState) {
+  return state !== 'BLOCKED'
+}
+
+export function getGraceDaysRemaining(
+  subscription?: Subscription | null,
+  now = new Date(),
+) {
+  if (!subscription?.trial_ends_at) {
+    return null
+  }
+
+  const graceEndsAt =
+    new Date(subscription.trial_ends_at).getTime() + SUBSCRIPTION_GRACE_DAYS * DAY_IN_MS
+  const diff = graceEndsAt - now.getTime()
+
+  return Math.max(0, Math.ceil(diff / DAY_IN_MS))
+}
+
+function logSubscriptionState(
   empresaId: string,
-): Promise<SubscriptionState> {
+  subscription: Subscription | null,
+  computedState: ComputedSubscriptionState,
+) {
+  if (!import.meta.env.DEV) {
+    return
+  }
+
+  logger.info({
+    action: 'subscription_state_calculated',
+    area: 'subscription',
+    empresaId,
+    message: 'Estado da assinatura calculado.',
+    metadata: {
+      computedState,
+      currentPeriodEnd: subscription?.expires_at ?? null,
+      databaseStatus: subscription?.status ?? null,
+      now: new Date().toISOString(),
+      trialEndsAt: subscription?.trial_ends_at ?? null,
+    },
+  })
+}
+
+export async function fetchSubscriptionData(
+  empresaId: string,
+): Promise<SubscriptionData> {
   const [plansResponse, subscriptionResponse, usageResponse] = await Promise.all([
     supabase.from('plans').select('*').eq('is_active', true).order('monthly_price'),
     supabase
@@ -194,6 +330,9 @@ export async function getSubscriptionState(
   const subscription =
     (subscriptionResponse.data as (Subscription & { plan?: Plan | null }) | null) ??
     null
+  const computedState = getSubscriptionState(subscription)
+
+  logSubscriptionState(empresaId, subscription, computedState)
   const planId = subscription?.plan_id
   const featuresResponse = planId
     ? await supabase.from('subscription_features').select('*').eq('plan_id', planId)
@@ -225,24 +364,13 @@ export async function getSubscriptionState(
 export async function selectSubscriptionPlan(input: {
   empresaId: string
   planId: string
-  status: SubscriptionStatus
-  subscriptionId?: string
+  subscriptionId: string
 }) {
-  const { error } = input.subscriptionId
-    ? await supabase
-        .from('subscriptions')
-        .update({
-          plan_id: input.planId,
-          status: input.status,
-        })
-        .eq('empresa_id', input.empresaId)
-        .eq('id', input.subscriptionId)
-    : await supabase.from('subscriptions').insert({
-        empresa_id: input.empresaId,
-        plan_id: input.planId,
-        status: input.status,
-        started_at: new Date().toISOString(),
-      })
+  const { error } = await supabase
+    .from('subscriptions')
+    .update({ plan_id: input.planId })
+    .eq('empresa_id', input.empresaId)
+    .eq('id', input.subscriptionId)
 
   if (error) {
     throw new Error(error.message)
@@ -250,18 +378,32 @@ export async function selectSubscriptionPlan(input: {
 }
 
 export function canUseFeature(
-  state: SubscriptionState | undefined,
+  state: SubscriptionData | undefined,
   featureKey: FeatureKey,
 ) {
+  if (
+    !state ||
+    !canUsePremiumFeature(getSubscriptionAccessState(state.subscription))
+  ) {
+    return false
+  }
+
   const value = state?.features[featureKey]
 
   return value === true || value === 'unlimited' || typeof value === 'number'
 }
 
 export function getFeatureLimit(
-  state: SubscriptionState | undefined,
+  state: SubscriptionData | undefined,
   featureKey: FeatureKey,
 ) {
+  if (
+    !state ||
+    !canUsePremiumFeature(getSubscriptionAccessState(state.subscription))
+  ) {
+    return null
+  }
+
   const value = state?.features[featureKey]
 
   return typeof value === 'number' || value === 'unlimited' ? value : null

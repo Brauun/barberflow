@@ -1,10 +1,11 @@
 import { CalendarDays, LayoutDashboard, UserRound } from 'lucide-react'
-import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Navigate, NavLink, Outlet } from 'react-router-dom'
 
 import { Sidebar } from '../components/layout/Sidebar'
 import { TopBar } from '../components/layout/TopBar'
 import { SubscriptionBanner } from '../components/layout/SubscriptionBanner'
-import { allowedExpiredPaths, useAppLayout } from '../hooks/useAppLayout'
+import { SubscriptionAccessBoundary } from '../contexts/SubscriptionAccessContext'
+import { useAppLayout } from '../hooks/useAppLayout'
 import { cn } from '../utils/cn'
 
 const barberMobileNavigation = [
@@ -14,7 +15,6 @@ const barberMobileNavigation = [
 ]
 
 export function AppLayout() {
-  const location = useLocation()
   const {
     // Auth
     isLoading,
@@ -24,9 +24,9 @@ export function AppLayout() {
     defaultAppPath,
 
     // Subscription
-    isSubscriptionExpired,
+    graceDaysRemaining,
     trialDaysRemaining,
-    subscriptionStatus,
+    subscriptionState,
 
     // Company / User
     avatarSrc,
@@ -73,13 +73,6 @@ export function AppLayout() {
 
   if (!isLoading && !canAccessCurrentAppRoute) {
     return <Navigate replace to={defaultAppPath} />
-  }
-
-  if (
-    isSubscriptionExpired &&
-    !allowedExpiredPaths.some((path) => location.pathname.startsWith(path))
-  ) {
-    return <Navigate replace to="/app/assinatura" />
   }
 
   return (
@@ -144,12 +137,14 @@ export function AppLayout() {
               : 'pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:pb-[calc(env(safe-area-inset-bottom)+2rem)]',
           )}
         >
-          <SubscriptionBanner
-            isExpired={isSubscriptionExpired}
-            isTrialing={subscriptionStatus === 'TRIAL'}
-            trialDaysRemaining={trialDaysRemaining}
-          />
-          <Outlet />
+          <SubscriptionAccessBoundary state={subscriptionState}>
+            <SubscriptionBanner
+              graceDaysRemaining={graceDaysRemaining}
+              state={subscriptionState}
+              trialDaysRemaining={trialDaysRemaining}
+            />
+            <Outlet />
+          </SubscriptionAccessBoundary>
         </main>
       </div>
 

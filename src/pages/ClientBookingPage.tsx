@@ -20,8 +20,10 @@ import {
   listSpecialBusinessHoursForDate,
 } from '../services/businessHoursService'
 import {
+  canWriteData,
   canUseFeature,
-  getSubscriptionState,
+  fetchSubscriptionData,
+  getSubscriptionAccessState,
 } from '../services/subscriptionsService'
 import { listMyClientBenefits, redeemClientBenefit } from '../services/benefitsService'
 import { buildBookingSlots } from '../utils/bookingSlots'
@@ -58,7 +60,7 @@ export function ClientBookingPage() {
   const barbershop = primaryQuery.data
   const subscriptionQuery = useQuery({
     enabled: Boolean(barbershop?.empresa_id),
-    queryFn: () => getSubscriptionState(barbershop?.empresa_id as string),
+    queryFn: () => fetchSubscriptionData(barbershop?.empresa_id as string),
     queryKey: ['subscription', barbershop?.empresa_id],
   })
   const canUseWaitlist = canUseFeature(subscriptionQuery.data, 'HAS_WAITLIST')
@@ -180,6 +182,15 @@ export function ClientBookingPage() {
 
   const bookingMutation = useMutation({
     mutationFn: async () => {
+      if (
+        subscriptionQuery.data &&
+        !canWriteData(getSubscriptionAccessState(subscriptionQuery.data.subscription))
+      ) {
+        throw new Error(
+          'Esta barbearia está com o acesso limitado e não pode receber novos agendamentos no momento.',
+        )
+      }
+
       if (!clientProfile || !barbershop || !selectedService || !selectedBarber || !slot) {
         throw new Error('Selecione barbearia, serviço, profissional, data e horário.')
       }
@@ -218,6 +229,15 @@ export function ClientBookingPage() {
 
   const waitlistMutation = useMutation({
     mutationFn: async () => {
+      if (
+        subscriptionQuery.data &&
+        !canWriteData(getSubscriptionAccessState(subscriptionQuery.data.subscription))
+      ) {
+        throw new Error(
+          'Esta barbearia está com o acesso limitado e não pode receber novas solicitações no momento.',
+        )
+      }
+
       if (!clientProfile || !barbershop || !selectedService) {
         throw new Error('Selecione barbearia, serviço e data para entrar na lista.')
       }

@@ -239,7 +239,7 @@ export function ServicosPage() {
         </div>
 
         {canManageServices && (
-          <Button leftIcon={<Plus size={18} />} onClick={openCreateModal}>
+          <Button data-subscription-write="true" leftIcon={<Plus size={18} />} onClick={openCreateModal}>
             Novo serviço
           </Button>
         )}
@@ -333,6 +333,7 @@ export function ServicosPage() {
                         <div className="flex justify-end gap-2">
                           <Button
                             aria-label="Editar serviço"
+                            data-subscription-write="true"
                             size="icon-sm"
                             onClick={() => openEditModal(servico)}
                             variant="ghost"
@@ -341,6 +342,7 @@ export function ServicosPage() {
                           </Button>
                           <Button
                             aria-label="Inativar serviço"
+                            data-subscription-write="true"
                             size="icon-sm"
                             disabled={deleteServicoMutation.isPending}
                             onClick={() => void handleDelete(servico)}
@@ -495,6 +497,7 @@ export function ServicosPage() {
               <Button
                 className="h-10 px-4"
                 disabled={isSubmitting || saveServicoMutation.isPending}
+                data-subscription-write="true"
                 type="submit"
               >
                 {saveServicoMutation.isPending ? 'Salvando...' : 'Salvar serviço'}

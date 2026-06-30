@@ -468,10 +468,10 @@ export default function RelatorioExecutivosPage() {
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap">
-            <Button disabled={!data} leftIcon={<Download size={16} />} onClick={exportPdf}>
+            <Button data-subscription-premium="true" disabled={!data} leftIcon={<Download size={16} />} onClick={exportPdf}>
               Exportar PDF
             </Button>
-            <Button disabled={!data} leftIcon={<FileSpreadsheet size={16} />} onClick={exportCsv}>
+            <Button data-subscription-premium="true" disabled={!data} leftIcon={<FileSpreadsheet size={16} />} onClick={exportCsv}>
               Exportar Excel
             </Button>
           </div>

@@ -26,13 +26,6 @@ const roleLabels: Record<string, string> = {
   barbeiro: 'Barbeiro',
 }
 
-export const allowedExpiredPaths = [
-  '/app/dashboard',
-  '/app/assinatura',
-  '/app/configuracoes',
-  '/app/perfil',
-]
-
 function notificationMetadata(value: Json): Record<string, unknown> {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     return value as Record<string, unknown>
@@ -170,8 +163,8 @@ export function useAppLayout() {
 
   const userRole = profile?.papel
   const subscriptionQuery = useSubscription()
-  const isSubscriptionExpired = subscriptionQuery.isExpired
   const trialDaysRemaining = subscriptionQuery.daysRemaining
+  const graceDaysRemaining = subscriptionQuery.graceDaysRemaining
 
   const empresaId = profile?.empresa_id
   const companyName = profile?.empresa?.nome ?? user?.user_metadata.empresa ?? 'BW Barber'
@@ -374,9 +367,9 @@ export function useAppLayout() {
     defaultAppPath,
 
     // Subscription
-    isSubscriptionExpired,
+    graceDaysRemaining,
     trialDaysRemaining,
-    subscriptionStatus: subscriptionQuery.subscription?.status,
+    subscriptionState: subscriptionQuery.state,
 
     // Company / User
     avatarSrc,

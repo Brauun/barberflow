@@ -16,7 +16,7 @@ import { queryKeys } from '../lib/queryKeys'
 import {
   selectSubscriptionPlan,
   type Plan,
-  type SubscriptionStatus,
+  type SubscriptionAccessState,
 } from '../services/subscriptionsService'
 import { cn } from '../utils/cn'
 
@@ -109,20 +109,20 @@ function planDisplayDescription(plan?: Plan | null) {
   return planDisplayDescriptions[normalizePlanSlug(plan.slug)] ?? plan.description
 }
 
-const statusVariant: Record<SubscriptionStatus, 'default' | 'danger' | 'success' | 'warning'> = {
+const statusVariant: Record<SubscriptionAccessState, 'default' | 'danger' | 'success' | 'warning'> = {
   ACTIVE: 'success',
-  CANCELED: 'default',
-  EXPIRED: 'danger',
-  PAST_DUE: 'warning',
-  TRIAL: 'default',
+  BLOCKED: 'danger',
+  TRIAL_ACTIVE: 'default',
+  TRIAL_ENDING: 'warning',
+  TRIAL_EXPIRED_GRACE: 'warning',
 }
 
-const statusLabels: Record<SubscriptionStatus, string> = {
+const statusLabels: Record<SubscriptionAccessState, string> = {
   ACTIVE: 'Ativa',
-  CANCELED: 'Cancelada',
-  EXPIRED: 'Expirada',
-  PAST_DUE: 'Em atraso',
-  TRIAL: 'Trial',
+  BLOCKED: 'Bloqueada',
+  TRIAL_ACTIVE: 'Teste ativo',
+  TRIAL_ENDING: 'Teste terminando',
+  TRIAL_EXPIRED_GRACE: 'Período de tolerância',
 }
 
 function planIcon(slug: Plan['slug']) {
@@ -172,6 +172,7 @@ export function AssinaturaPage() {
   const currentPlan = subscription?.plan
   const empresaId = profile?.empresa_id
   const schemaReady = state?.schemaReady ?? true
+  const computedState = subscriptionQuery.state ?? 'BLOCKED'
 
   const selectPlanMutation = useMutation({
     mutationFn: async (plan: Plan) => {
@@ -179,16 +180,14 @@ export function AssinaturaPage() {
         throw new Error('Empresa não encontrada.')
       }
 
-      const nextStatus =
-        subscription?.status === 'TRIAL' && (subscriptionQuery.daysRemaining ?? 0) > 0
-          ? 'TRIAL'
-          : 'ACTIVE'
+      if (!subscription?.id) {
+        throw new Error('Assinatura não encontrada.')
+      }
 
       await selectSubscriptionPlan({
         empresaId,
         planId: plan.id,
-        status: nextStatus,
-        subscriptionId: subscription?.id,
+        subscriptionId: subscription.id,
       })
     },
     onSuccess: async () => {
@@ -246,16 +245,12 @@ export function AssinaturaPage() {
           variant={
             !schemaReady
               ? 'warning'
-              : subscription?.status
-                ? statusVariant[subscription.status]
-                : 'warning'
+              : statusVariant[computedState]
           }
         >
           {!schemaReady
             ? 'Estrutura pendente'
-            : subscription?.status
-              ? statusLabels[subscription.status]
-              : 'Sem assinatura'}
+            : statusLabels[computedState]}
         </Badge>
       </section>
 
@@ -296,16 +291,19 @@ export function AssinaturaPage() {
                   <p className="text-sm font-black text-slate-950 dark:text-white">
                     {!schemaReady
                       ? 'Migration pendente para ativar trial e planos reais.'
-                      : subscription?.status === 'TRIAL'
+                      : computedState === 'TRIAL_ACTIVE' || computedState === 'TRIAL_ENDING'
                       ? `Seu teste grátis termina em ${subscriptionQuery.daysRemaining ?? 0} dias.`
-                      : 'Assinatura fora do período de teste.'}
+                      : computedState === 'TRIAL_EXPIRED_GRACE'
+                        ? 'Seu teste terminou e está no período de tolerância.'
+                        : 'Assinatura fora do período de teste.'}
                   </p>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     Durante o trial, os recursos do BW Pro ficam liberados.
                   </p>
                 </div>
               </div>
-              {schemaReady && subscription?.status === 'TRIAL' && (
+              {schemaReady &&
+                (computedState === 'TRIAL_ACTIVE' || computedState === 'TRIAL_ENDING') && (
                 <div className="mt-4 h-2 rounded-full bg-white/80 dark:bg-slate-900">
                   <div
                     className="h-2 rounded-full bg-brand-500"

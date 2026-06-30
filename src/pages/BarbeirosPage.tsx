@@ -677,6 +677,7 @@ export function BarbeirosPage() {
           {canInviteEmployees && (
             <Button
               className="h-10 max-w-full text-sm md:h-auto md:text-base"
+              data-subscription-write="true"
               leftIcon={<Plus size={18} />}
               onClick={openInviteModal}
             >
@@ -882,6 +883,7 @@ export function BarbeirosPage() {
                       <div className="flex justify-end gap-2">
                         <Button
                           aria-label="Editar funcionário"
+                          data-subscription-write="true"
                           size="icon-sm"
                           onClick={() => openEditModal(barbeiro)}
                           variant="ghost"
@@ -1031,6 +1033,7 @@ export function BarbeirosPage() {
                       {canInviteEmployees &&
                         status === 'pendente' && (
                           <Button
+                            data-subscription-write="true"
                             disabled={cancelInvitationMutation.isPending}
                             onClick={() => void handleCancelInvitation(invitation)}
                             size="sm"
@@ -1082,6 +1085,7 @@ export function BarbeirosPage() {
                         )}
                         {canRegenerate && (
                           <Button
+                            data-subscription-write="true"
                             disabled={regenerateInvitationMutation.isPending}
                             leftIcon={<RefreshCw size={15} />}
                             onClick={() => void handleRegenerateInvitation(invitation)}
@@ -1121,6 +1125,7 @@ export function BarbeirosPage() {
             {canManageUnavailability && (
               <Button
                 className="h-10 max-w-full text-sm md:h-auto md:text-base"
+                data-subscription-write="true"
                 leftIcon={<CalendarOff size={18} />}
                 onClick={openCreateUnavailabilityModal}
                 variant="secondary"
@@ -1192,6 +1197,7 @@ export function BarbeirosPage() {
                         <div className="flex justify-end gap-2">
                           <Button
                             aria-label="Editar bloqueio"
+                            data-subscription-write="true"
                             onClick={() => openEditUnavailabilityModal(block)}
                             size="icon-sm"
                             variant="ghost"
@@ -1200,6 +1206,7 @@ export function BarbeirosPage() {
                           </Button>
                           <Button
                             aria-label="Excluir bloqueio"
+                            data-subscription-write="true"
                             disabled={deleteUnavailabilityMutation.isPending}
                             onClick={() => void handleDeleteUnavailability(block)}
                             size="icon-sm"
@@ -1266,7 +1273,7 @@ export function BarbeirosPage() {
             >
               Cancelar
             </Button>
-            <Button disabled={isSubmitting || saveMutation.isPending} type="submit">
+            <Button data-subscription-write="true" disabled={isSubmitting || saveMutation.isPending} type="submit">
               {saveMutation.isPending ? 'Salvando...' : 'Salvar funcionário'}
             </Button>
           </div>
@@ -1377,6 +1384,7 @@ export function BarbeirosPage() {
               Fechar
             </Button>
             <Button
+              data-subscription-write="true"
               disabled={
                 invitationForm.formState.isSubmitting ||
                 createInvitationMutation.isPending
@@ -1476,6 +1484,7 @@ export function BarbeirosPage() {
               Cancelar
             </Button>
             <Button
+              data-subscription-write="true"
               disabled={
                 unavailabilityForm.formState.isSubmitting ||
                 saveUnavailabilityMutation.isPending
