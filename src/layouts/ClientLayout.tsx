@@ -58,8 +58,8 @@ export function ClientLayout() {
   }
 
   return (
-    <div className="bw-mobile-compact flex h-[100dvh] w-full max-w-full flex-col overflow-hidden bg-surface text-slate-950 dark:text-slate-50">
-      <header className="relative z-40 shrink-0 border-b border-slate-200 bg-white/82 pt-[env(safe-area-inset-top)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/88">
+    <div className="bw-mobile-compact min-h-[100dvh] w-full max-w-full overflow-x-hidden bg-surface text-slate-950 dark:text-slate-50">
+      <header className="fixed inset-x-0 top-0 z-40 border-b border-slate-200 bg-white/92 pt-[env(safe-area-inset-top)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/92">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-2.5 px-3 sm:h-20 sm:gap-4 sm:px-5">
           <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-brand-600 ring-1 ring-brand-100 dark:bg-[var(--bf-surface-muted)] dark:text-slate-100 dark:ring-[var(--bf-border)] sm:h-11 sm:w-11">
             {avatarSrc ? (
@@ -125,7 +125,7 @@ export function ClientLayout() {
         </div>
       </header>
 
-      <main className="mx-auto grid min-h-0 w-full min-w-0 max-w-7xl flex-1 gap-4 overflow-x-hidden overflow-y-auto overscroll-y-contain px-3 py-4 pb-[calc(env(safe-area-inset-bottom)+9rem)] [-webkit-overflow-scrolling:touch] sm:gap-6 sm:px-5 sm:py-8 md:pb-[calc(env(safe-area-inset-bottom)+2rem)] xl:grid-cols-[14rem_minmax(0,1fr)]">
+      <main className="mx-auto grid w-full min-w-0 max-w-7xl gap-4 overflow-x-hidden px-3 pb-[calc(env(safe-area-inset-bottom)+9rem)] pt-[calc(env(safe-area-inset-top)+4.5rem)] sm:gap-6 sm:px-5 sm:pb-[calc(env(safe-area-inset-bottom)+9rem)] sm:pt-[calc(env(safe-area-inset-top)+7rem)] md:pb-[calc(env(safe-area-inset-bottom)+2rem)] xl:grid-cols-[14rem_minmax(0,1fr)]">
         <aside className="hidden self-start rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-[0_18px_70px_rgb(15_23_42/0.05)] dark:border-slate-800 dark:bg-slate-950 xl:block">
           <div className="mb-3 flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
             <MapPin size={14} />

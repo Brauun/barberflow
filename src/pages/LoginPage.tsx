@@ -123,7 +123,6 @@ export function LoginPage() {
             <input
               className="h-12 w-full rounded-2xl border border-[var(--bf-border)] bg-[var(--bf-surface-muted)] pl-11 pr-4 text-base font-medium text-white outline-none transition duration-200 placeholder:text-[#A5B4CB]/60 hover:border-[#12C6F3]/30 focus:border-[#12C6F3] focus:bg-[var(--bf-surface-muted)] focus:ring-4 focus:ring-[#12C6F3]/10 sm:h-14 sm:rounded-[18px] sm:text-sm"
               placeholder="Email ou telefone"
-              type="text"
               {...register('email')}
             />
           </div>
