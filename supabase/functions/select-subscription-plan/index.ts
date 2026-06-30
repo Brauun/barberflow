@@ -1,4 +1,5 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { BillingService } from '../_shared/billingService.ts'
 
 type SelectPlanRequest = {
   empresa_id?: unknown
@@ -113,21 +114,24 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: 'Plano não encontrado ou inativo.' }, 404)
   }
 
-  const { data, error } = await adminClient.rpc('apply_subscription_plan_change', {
-    p_changed_by: user.id,
-    p_empresa_id: payload.empresa_id,
-    p_plan_id: payload.plan_id,
-  })
+  try {
+    const billingService = new BillingService(adminClient)
+    const data = await billingService.changePlan(
+      {
+        actorUserId: user.id,
+        empresaId: payload.empresa_id,
+        origin: 'ADMIN',
+        reason: 'Troca manual de plano',
+      },
+      payload.plan_id,
+    )
 
-  if (error) {
+    return jsonResponse({ data })
+  } catch {
     console.error('select-subscription-plan update failed', {
-      code: error.code,
       empresaId: payload.empresa_id,
       userId: user.id,
     })
-    const status = error.code === 'P0002' ? 404 : 500
-    return jsonResponse({ error: 'Não foi possível alterar o plano.' }, status)
+    return jsonResponse({ error: 'Não foi possível alterar o plano.' }, 500)
   }
-
-  return jsonResponse({ data })
 })
