@@ -59,7 +59,7 @@ export function ClientLayout() {
 
   return (
     <div className="bw-mobile-compact min-h-[100dvh] w-full max-w-full overflow-x-hidden bg-surface text-slate-950 dark:text-slate-50">
-      <header className="fixed inset-x-0 top-0 z-40 border-b border-slate-200 bg-white/92 pt-[env(safe-area-inset-top)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/92">
+      <header className="fixed inset-x-0 top-0 z-40 border-b border-[var(--bf-border)] bg-[var(--bf-surface)] pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-2.5 px-3 sm:h-20 sm:gap-4 sm:px-5">
           <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-brand-600 ring-1 ring-brand-100 dark:bg-[var(--bf-surface-muted)] dark:text-slate-100 dark:ring-[var(--bf-border)] sm:h-11 sm:w-11">
             {avatarSrc ? (
