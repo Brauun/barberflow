@@ -189,7 +189,7 @@ export function ClientBarbershopSearchPage() {
   })
 
   return (
-    <div className="w-full max-w-full space-y-5 overflow-x-hidden pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:space-y-8 md:pb-6">
+    <div className="w-full max-w-full min-w-0 space-y-5 overflow-x-hidden sm:space-y-8 md:pb-6">
       <section>
         <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600">
           Encontrar Barbearias

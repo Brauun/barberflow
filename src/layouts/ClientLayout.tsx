@@ -125,7 +125,7 @@ export function ClientLayout() {
         </div>
       </header>
 
-      <main className="mx-auto grid w-full min-w-0 max-w-7xl gap-4 overflow-x-hidden px-3 py-4 pb-[calc(env(safe-area-inset-bottom)+8rem)] sm:gap-6 sm:px-5 sm:py-8 sm:pb-[calc(env(safe-area-inset-bottom)+9rem)] md:pb-[calc(env(safe-area-inset-bottom)+2rem)] xl:grid-cols-[14rem_minmax(0,1fr)]">
+      <main className="mx-auto grid w-full min-w-0 max-w-7xl gap-4 overflow-x-hidden px-3 py-4 pb-[calc(env(safe-area-inset-bottom)+9rem)] sm:gap-6 sm:px-5 sm:py-8 md:pb-[calc(env(safe-area-inset-bottom)+2rem)] xl:grid-cols-[14rem_minmax(0,1fr)]">
         <aside className="hidden self-start rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-[0_18px_70px_rgb(15_23_42/0.05)] dark:border-slate-800 dark:bg-slate-950 xl:block">
           <div className="mb-3 flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
             <MapPin size={14} />
@@ -157,7 +157,7 @@ export function ClientLayout() {
           </div>
         </aside>
 
-        <div className="min-w-0 overflow-x-hidden">
+        <div className="min-w-0 max-w-full overflow-x-hidden">
           <Outlet />
         </div>
       </main>

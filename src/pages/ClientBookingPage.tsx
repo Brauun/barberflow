@@ -255,7 +255,7 @@ export function ClientBookingPage() {
   })
 
   return (
-    <div className="space-y-6 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] md:space-y-8 md:pb-0">
+    <div className="min-w-0 max-w-full space-y-6 md:space-y-8">
       <section>
         <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600">
           Agendar

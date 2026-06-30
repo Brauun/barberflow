@@ -126,7 +126,7 @@ export function ClientProfilePage() {
   }
 
   return (
-    <div className="min-w-0 space-y-5 pb-[calc(env(safe-area-inset-bottom)+9rem)] sm:space-y-8 md:pb-0">
+    <div className="min-w-0 max-w-full space-y-5 sm:space-y-8">
       <section>
         <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-600">
           Perfil
