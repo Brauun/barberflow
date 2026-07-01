@@ -20,6 +20,11 @@ const AssinaturaPage = lazy(lazyWithRetry(() =>
     default: AssinaturaPage,
   })),
 ))
+const SubscriptionReturnPage = lazy(lazyWithRetry(() =>
+  import('../pages/SubscriptionReturnPage').then(({ SubscriptionReturnPage }) => ({
+    default: SubscriptionReturnPage,
+  })),
+))
 const BarbeirosPage = lazy(lazyWithRetry(() =>
   import('../pages/BarbeirosPage').then(({ BarbeirosPage }) => ({
     default: BarbeirosPage,
@@ -292,6 +297,10 @@ const router = createBrowserRouter([
               {
                 path: 'assinatura',
                 element: withSuspense(<AssinaturaPage />),
+              },
+              {
+                path: 'assinatura/retorno',
+                element: withSuspense(<SubscriptionReturnPage />),
               },
               {
                 path: 'perfil',

@@ -377,6 +377,53 @@ export async function selectSubscriptionPlan(input: {
   }
 }
 
+export async function createMercadoPagoCheckout(input: {
+  empresaId: string
+  planId: string
+}) {
+  const { data, error } = await supabase.functions.invoke(
+    'create-mercadopago-checkout',
+    {
+      body: {
+        empresa_id: input.empresaId,
+        plan_id: input.planId,
+      },
+    },
+  )
+
+  if (error) {
+    logger.error({
+      action: 'mercadopago_checkout_create_failed',
+      area: 'subscription',
+      empresaId: input.empresaId,
+      error,
+      message: 'Não foi possível iniciar o checkout do Mercado Pago.',
+      metadata: { planId: input.planId },
+    })
+    throw new Error('Não foi possível iniciar o pagamento. Tente novamente.')
+  }
+
+  const checkoutUrl =
+    data && typeof data.checkout_url === 'string' ? data.checkout_url : null
+
+  if (!checkoutUrl) {
+    throw new Error('O Mercado Pago não retornou uma URL de pagamento válida.')
+  }
+
+  const url = new URL(checkoutUrl)
+  const isMercadoPagoUrl =
+    url.protocol === 'https:' &&
+    (url.hostname.endsWith('.mercadopago.com.br') ||
+      url.hostname === 'mercadopago.com.br' ||
+      url.hostname.endsWith('.mercadopago.com'))
+
+  if (!isMercadoPagoUrl) {
+    throw new Error('A URL de pagamento recebida não é válida.')
+  }
+
+  return checkoutUrl
+}
+
 export function canUseFeature(
   state: SubscriptionData | undefined,
   featureKey: FeatureKey,

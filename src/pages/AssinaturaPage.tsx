@@ -1,20 +1,21 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import {
-  BadgeCheck,
   CalendarClock,
   Check,
+  CreditCard,
   Crown,
+  Loader2,
   ShieldCheck,
   Sparkles,
+  X,
 } from 'lucide-react'
 
 import { canManageFinance } from '../auth/permissions'
 import { Badge, Button, Card, CardContent, CardHeader } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
-import { queryKeys } from '../lib/queryKeys'
 import {
-  selectSubscriptionPlan,
+  createMercadoPagoCheckout,
   type Plan,
   type SubscriptionAccessState,
 } from '../services/subscriptionsService'
@@ -165,7 +166,6 @@ function featureValue(value: unknown) {
 
 export function AssinaturaPage() {
   const { profile } = useAuth()
-  const queryClient = useQueryClient()
   const subscriptionQuery = useSubscription()
   const state = subscriptionQuery.data
   const subscription = state?.subscription
@@ -174,7 +174,7 @@ export function AssinaturaPage() {
   const schemaReady = state?.schemaReady ?? true
   const computedState = subscriptionQuery.state ?? 'BLOCKED'
 
-  const selectPlanMutation = useMutation({
+  const checkoutMutation = useMutation({
     mutationFn: async (plan: Plan) => {
       if (!empresaId) {
         throw new Error('Empresa não encontrada.')
@@ -184,13 +184,13 @@ export function AssinaturaPage() {
         throw new Error('Assinatura não encontrada.')
       }
 
-      await selectSubscriptionPlan({
+      return createMercadoPagoCheckout({
         empresaId,
         planId: plan.id,
       })
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.assinatura.detail(empresaId) })
+    onSuccess: (checkoutUrl) => {
+      window.location.href = checkoutUrl
     },
   })
 
@@ -236,8 +236,8 @@ export function AssinaturaPage() {
             Planos do BW Barber
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400">
-            Controle trial, plano atual e limites do sistema. Pagamento será
-            integrado em uma proxima etapa.
+            Controle seu plano e siga para o ambiente seguro do Mercado Pago.
+            A assinatura só será liberada após a confirmação do pagamento.
           </p>
         </div>
         <Badge
@@ -275,7 +275,9 @@ export function AssinaturaPage() {
         <CardContent>
           <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
-              <p className="text-sm text-slate-500">Plano atual</p>
+              <p className="text-sm text-slate-500">
+                {computedState === 'ACTIVE' ? 'Plano atual' : 'Plano durante o período de teste'}
+              </p>
               <h3 className="mt-1.5 text-xl font-black text-slate-950 md:mt-2 md:text-2xl dark:text-white">
                 {planDisplayName(currentPlan)}
               </h3>
@@ -322,14 +324,16 @@ export function AssinaturaPage() {
 
       <section className="grid gap-5 xl:grid-cols-3">
         {state?.plans.map((plan) => {
-          const isCurrent = plan.id === subscription?.plan_id
+          const isSubscriptionPlan = plan.id === subscription?.plan_id
           const planSlug = normalizePlanSlug(plan.slug)
-          const isLocked = planSlug === 'premium' && !isCurrent
+          const hasActiveCurrentPlan =
+            isSubscriptionPlan && computedState === 'ACTIVE'
+          const isLocked = planSlug === 'premium' && !hasActiveCurrentPlan
 
           return (
             <Card
               className={cn(
-                isCurrent ? 'ring-2 ring-brand-300' : '',
+                hasActiveCurrentPlan ? 'ring-2 ring-brand-300' : '',
                 isLocked && 'relative opacity-80',
               )}
               key={plan.id}
@@ -339,7 +343,11 @@ export function AssinaturaPage() {
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-400/10 dark:text-brand-300">
                     {planIcon(plan.slug)}
                   </span>
-                  {isCurrent ? <Badge>Atual</Badge> : isLocked ? <Badge>Em breve</Badge> : null}
+                  {hasActiveCurrentPlan ? (
+                    <Badge>Plano atual</Badge>
+                  ) : isLocked ? (
+                    <Badge>Em breve</Badge>
+                  ) : null}
                 </div>
                 <h3 className="mt-3 text-xl font-black text-slate-950 md:mt-5 md:text-2xl dark:text-white">
                   {planDisplayName(plan)}
@@ -371,23 +379,57 @@ export function AssinaturaPage() {
                 </div>
                 <Button
                   className="mt-6 w-full"
-                  disabled={!schemaReady || selectPlanMutation.isPending || isCurrent || isLocked}
-                  leftIcon={<BadgeCheck size={18} />}
-                  onClick={() => selectPlanMutation.mutate(plan)}
+                  disabled={
+                    !schemaReady ||
+                    checkoutMutation.isPending ||
+                    hasActiveCurrentPlan ||
+                    isLocked ||
+                    Number(plan.monthly_price) <= 0
+                  }
+                  leftIcon={
+                    checkoutMutation.isPending && checkoutMutation.variables?.id === plan.id ? (
+                      <Loader2 className="animate-spin" size={18} />
+                    ) : (
+                      <CreditCard size={18} />
+                    )
+                  }
+                  onClick={() => checkoutMutation.mutate(plan)}
                 >
                   {!schemaReady
                     ? 'Migration pendente'
                     : isLocked
                       ? 'Em breve'
-                      : isCurrent
-                        ? 'Plano atual'
-                        : 'Selecionar plano'}
+                      : hasActiveCurrentPlan
+                        ? 'Plano ativo'
+                        : checkoutMutation.isPending && checkoutMutation.variables?.id === plan.id
+                          ? 'Abrindo checkout...'
+                          : 'Assinar agora'}
                 </Button>
               </CardContent>
             </Card>
           )
         })}
       </section>
+
+      {checkoutMutation.isError && (
+        <div
+          aria-live="assertive"
+          className="fixed bottom-5 left-3 right-3 z-[70] mx-auto flex max-w-md items-center gap-3 rounded-xl border border-red-200 bg-white p-3 text-sm font-semibold text-red-700 shadow-[0_18px_60px_rgb(15_23_42/0.2)] dark:border-red-500/30 dark:bg-[var(--bf-surface)] dark:text-red-300 sm:left-auto sm:right-5"
+          role="alert"
+        >
+          <span className="min-w-0 flex-1">
+            Não foi possível abrir o pagamento agora.
+          </span>
+          <button
+            aria-label="Fechar aviso"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-current hover:bg-red-50 dark:hover:bg-red-500/10"
+            onClick={() => checkoutMutation.reset()}
+            type="button"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
     </div>
   )
 }
