@@ -4,6 +4,8 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { defineConfig, type Plugin, type ResolvedConfig } from 'vite'
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 function versionServiceWorker(): Plugin {
   let resolvedConfig: ResolvedConfig
 
@@ -79,5 +81,5 @@ export default defineConfig({
     },
   },
 
-  plugins: [react(), tailwindcss(), versionServiceWorker()],
+  plugins: [react(), tailwindcss(), versionServiceWorker(), cloudflare()],
 })
