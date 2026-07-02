@@ -147,20 +147,63 @@ export class BillingService {
   }
 
   async processWebhook(event: BillingWebhookEvent) {
-    const result = await this.execute(
-      'PROCESS_WEBHOOK',
+    const startedAt = Date.now()
+    const payload = event.payload
+    console.info(JSON.stringify({
+      action: 'PROCESS_PAYMENT_WEBHOOK',
+      area: 'billing',
+      empresaId: event.empresaId,
+      eventType: event.eventType,
+      provider: event.provider,
+    }))
+
+    const { data: result, error } = await this.client.rpc(
+      'billing_process_payment_webhook',
       {
-        empresaId: event.empresaId,
-        origin: 'WEBHOOK',
-        reason: event.eventType,
-      },
-      {
-        ...event.payload,
-        event_type: event.eventType,
-        provider: event.provider,
-        provider_event_id: event.providerEventId,
+        p_amount: payload.amount,
+        p_currency: payload.currency,
+        p_current_period_end: payload.current_period_end,
+        p_current_period_start: payload.current_period_start,
+        p_due_at: payload.due_at ?? null,
+        p_empresa_id: event.empresaId,
+        p_event_type: event.eventType,
+        p_external_reference: payload.external_reference ?? null,
+        p_next_payment_at: payload.next_payment_at ?? null,
+        p_paid_at: payload.paid_at ?? null,
+        p_payment_method: payload.payment_method ?? null,
+        p_payment_status: payload.payment_status,
+        p_payload: payload.event_payload ?? {},
+        p_plan_id: payload.plan_id,
+        p_provider: event.provider,
+        p_provider_event_id: event.providerEventId,
+        p_provider_invoice_id: payload.provider_invoice_id ?? null,
+        p_provider_payment_id: payload.provider_payment_id,
+        p_subscription_id: payload.subscription_id,
       },
     )
+
+    if (error) {
+      console.error(JSON.stringify({
+        action: 'PROCESS_PAYMENT_WEBHOOK',
+        area: 'billing',
+        code: error.code,
+        durationMs: Date.now() - startedAt,
+        empresaId: event.empresaId,
+        eventType: event.eventType,
+        provider: event.provider,
+      }))
+      throw new Error('Billing payment webhook command failed.')
+    }
+
+    console.info(JSON.stringify({
+      action: 'PROCESS_PAYMENT_WEBHOOK',
+      area: 'billing',
+      durationMs: Date.now() - startedAt,
+      empresaId: event.empresaId,
+      eventType: event.eventType,
+      provider: event.provider,
+      success: true,
+    }))
 
     if (event.eventType === 'PAYMENT_APPROVED') {
       await billingEvents.onPaymentApproved(result)
