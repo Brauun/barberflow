@@ -121,15 +121,42 @@ async function hmacSha256Hex(secret: string, value: string) {
     .join('')
 }
 
+async function sha256Hex(value: string) {
+  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))
+  return Array.from(new Uint8Array(bytes))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
+
 async function validateWebhookSignature(input: {
   dataId: string | null
   requestId: string | null
   secret: string
   signature: string | null
 }) {
-  if (!input.signature) return false
-  const parts = parseSignature(input.signature)
-  if (!parts.ts || !parts.v1) return false
+  const parts = input.signature ? parseSignature(input.signature) : {}
+  const secret = input.secret.trim()
+  const signatureVersion = parts.v1 ? 'v1' : null
+
+  if (!input.signature || !parts.ts || !parts.v1) {
+    return {
+      algorithm: 'HMAC-SHA256',
+      calculatedSignature: null,
+      encoding: 'UTF-8/hex',
+      manifest: null,
+      receivedManifest: {
+        dataId: input.dataId,
+        requestId: input.requestId,
+        timestamp: parts.ts ?? null,
+      },
+      receivedSignature: parts.v1 ?? null,
+      secretFingerprint: (await sha256Hex(secret)).slice(0, 12),
+      secretLength: secret.length,
+      signatureHeader: input.signature,
+      signatureVersion,
+      valid: false,
+    }
+  }
 
   // Mercado Pago signs URL/header values, not the JSON body. Missing optional
   // values must be omitted from the manifest, as prescribed by its webhook spec.
@@ -138,8 +165,25 @@ async function validateWebhookSignature(input: {
     input.requestId ? `request-id:${input.requestId};` : '',
     `ts:${parts.ts};`,
   ].join('')
-  const expectedSignature = await hmacSha256Hex(input.secret.trim(), manifest)
-  return constantTimeEqual(expectedSignature, parts.v1.toLowerCase())
+  const calculatedSignature = await hmacSha256Hex(secret, manifest)
+
+  return {
+    algorithm: 'HMAC-SHA256',
+    calculatedSignature,
+    encoding: 'UTF-8/hex',
+    manifest,
+    receivedManifest: {
+      dataId: input.dataId,
+      requestId: input.requestId,
+      timestamp: parts.ts,
+    },
+    receivedSignature: parts.v1,
+    secretFingerprint: (await sha256Hex(secret)).slice(0, 12),
+    secretLength: secret.length,
+    signatureHeader: input.signature,
+    signatureVersion,
+    valid: constantTimeEqual(calculatedSignature, parts.v1.toLowerCase()),
+  }
 }
 
 function safeEventPayload(
@@ -204,20 +248,30 @@ Deno.serve(async (request) => {
   const paymentId = signedDataId ?? String(notification.data?.id ?? '')
   const requestId = request.headers.get('x-request-id')
   const signature = request.headers.get('x-signature')
-  const signatureIsValid = await validateWebhookSignature({
+  const signatureValidation = await validateWebhookSignature({
     dataId: signedDataId,
     requestId,
     secret: webhookSecret,
     signature,
   })
 
-  if (!signatureIsValid) {
+  if (!signatureValidation.valid) {
     console.warn(JSON.stringify({
       action: 'MERCADOPAGO_WEBHOOK_SIGNATURE_REJECTED',
+      algorithm: signatureValidation.algorithm,
       area: 'billing',
+      calculatedSignature: signatureValidation.calculatedSignature,
+      encoding: signatureValidation.encoding,
       hasDataId: Boolean(signedDataId),
       hasRequestId: Boolean(requestId),
       hasSignature: Boolean(signature),
+      manifest: signatureValidation.manifest,
+      receivedManifest: signatureValidation.receivedManifest,
+      receivedSignature: signatureValidation.receivedSignature,
+      secretFingerprint: signatureValidation.secretFingerprint,
+      secretLength: signatureValidation.secretLength,
+      signatureHeader: signatureValidation.signatureHeader,
+      signatureVersion: signatureValidation.signatureVersion,
     }))
     return jsonResponse({ error: 'Assinatura inválida.' }, 401)
   }

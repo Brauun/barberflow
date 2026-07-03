@@ -167,7 +167,7 @@ Deno.serve(async (request) => {
   const timestamp = Date.now()
   const externalReference = `${payload.empresa_id}_${subscription.id}_${plan.id}_${timestamp}`
   const returnUrl = `${appBaseUrl}/app/assinatura/retorno`
-  const notificationUrl = `${supabaseUrl}/functions/v1/mercadopago-webhook`
+  const notificationUrl = `${supabaseUrl}/functions/v1/mercadopago-webhook?source_news=webhooks`
 
   const mercadoPagoResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
     body: JSON.stringify({
