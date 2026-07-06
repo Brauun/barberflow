@@ -650,6 +650,19 @@ export type Database = {
           expires_at: string | null
           trial_ends_at: string | null
           canceled_at: string | null
+          provider: string | null
+          provider_customer_id: string | null
+          provider_subscription_id: string | null
+          provider_plan_id: string | null
+          current_period_start: string | null
+          current_period_end: string | null
+          grace_ends_at: string | null
+          last_payment_at: string | null
+          next_payment_at: string | null
+          cancel_at_period_end: boolean
+          paused_at: string | null
+          resumed_at: string | null
+          metadata: Json
           created_at: string
           updated_at: string
         }
@@ -1393,6 +1406,12 @@ export type Database = {
           p_barber_name?: string | null
         }
         Returns: undefined
+      }
+      can_barbershop_accept_appointments: {
+        Args: {
+          p_empresa_id: string
+        }
+        Returns: boolean
       }
       create_client_appointment: {
         Args: {

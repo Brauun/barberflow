@@ -154,20 +154,46 @@ export function getSubscriptionState(
   }
 
   if (subscription.status === 'EXPIRED') {
-    return 'BLOCKED'
+    const graceEndsAt = subscription.grace_ends_at
+      ? new Date(subscription.grace_ends_at).getTime()
+      : Number.NaN
+
+    return Number.isFinite(graceEndsAt) && graceEndsAt > now.getTime()
+      ? 'TRIAL_EXPIRED_GRACE'
+      : 'BLOCKED'
   }
 
   if (subscription.status === 'PAST_DUE') {
-    return 'PAST_DUE'
+    const graceEndsAt = subscription.grace_ends_at
+      ? new Date(subscription.grace_ends_at).getTime()
+      : Number.NaN
+
+    return Number.isFinite(graceEndsAt) && graceEndsAt > now.getTime()
+      ? 'TRIAL_EXPIRED_GRACE'
+      : 'PAST_DUE'
   }
 
   if (subscription.status === 'ACTIVE') {
-    if (!subscription.expires_at) {
+    const paidPeriodEnd = subscription.current_period_end ?? subscription.expires_at
+
+    if (!paidPeriodEnd) {
       return 'BLOCKED'
     }
 
-    if (new Date(subscription.expires_at).getTime() <= now.getTime()) {
-      return 'PAST_DUE'
+    const paidPeriodEndsAt = new Date(paidPeriodEnd).getTime()
+
+    if (!Number.isFinite(paidPeriodEndsAt)) {
+      return 'BLOCKED'
+    }
+
+    if (paidPeriodEndsAt <= now.getTime()) {
+      const graceEndsAt = subscription.grace_ends_at
+        ? new Date(subscription.grace_ends_at).getTime()
+        : Number.NaN
+
+      return Number.isFinite(graceEndsAt) && graceEndsAt > now.getTime()
+        ? 'TRIAL_EXPIRED_GRACE'
+        : 'PAST_DUE'
     }
 
     return 'ACTIVE'
@@ -264,7 +290,8 @@ function logSubscriptionState(
     message: 'Estado da assinatura calculado.',
     metadata: {
       computedState,
-      currentPeriodEnd: subscription?.expires_at ?? null,
+      currentPeriodEnd:
+        subscription?.current_period_end ?? subscription?.expires_at ?? null,
       databaseStatus: subscription?.status ?? null,
       now: new Date().toISOString(),
       trialEndsAt: subscription?.trial_ends_at ?? null,
@@ -359,6 +386,26 @@ export async function fetchSubscriptionData(
     subscription,
     usage: (usageResponse.data ?? []) as SubscriptionUsage[],
   }
+}
+
+export async function canBarbershopAcceptAppointments(empresaId: string) {
+  const { data, error } = await supabase.rpc(
+    'can_barbershop_accept_appointments',
+    { p_empresa_id: empresaId },
+  )
+
+  if (error) {
+    logger.error({
+      action: 'barbershop_appointment_access_failed',
+      area: 'subscription',
+      empresaId,
+      message: 'Não foi possível validar a disponibilidade da barbearia.',
+      metadata: { code: error.code },
+    })
+    throw new Error('Não foi possível validar a disponibilidade da barbearia.')
+  }
+
+  return data === true
 }
 
 export async function selectSubscriptionPlan(input: {

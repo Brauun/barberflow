@@ -20,10 +20,9 @@ import {
   listSpecialBusinessHoursForDate,
 } from '../services/businessHoursService'
 import {
-  canWriteData,
+  canBarbershopAcceptAppointments,
   canUseFeature,
   fetchSubscriptionData,
-  getSubscriptionAccessState,
 } from '../services/subscriptionsService'
 import { listMyClientBenefits } from '../services/benefitsService'
 import { buildBookingSlots } from '../utils/bookingSlots'
@@ -183,16 +182,23 @@ export function ClientBookingPage() {
   const bookingMutation = useMutation({
     mutationFn: async () => {
       if (
-        subscriptionQuery.data &&
-        !canWriteData(getSubscriptionAccessState(subscriptionQuery.data.subscription))
+        !clientProfile ||
+        !barbershop?.empresa_id ||
+        !selectedService ||
+        !selectedBarber ||
+        !slot
       ) {
-        throw new Error(
-          'Esta barbearia está com o acesso limitado e não pode receber novos agendamentos no momento.',
-        )
+        throw new Error('Selecione barbearia, serviço, profissional, data e horário.')
       }
 
-      if (!clientProfile || !barbershop || !selectedService || !selectedBarber || !slot) {
-        throw new Error('Selecione barbearia, serviço, profissional, data e horário.')
+      const canAcceptAppointments = await canBarbershopAcceptAppointments(
+        barbershop.empresa_id,
+      )
+
+      if (!canAcceptAppointments) {
+        throw new Error(
+          'Esta barbearia está temporariamente indisponível para novos agendamentos.',
+        )
       }
 
       const selectedSlot = slots.find((item) => item.value === slot)
@@ -226,17 +232,18 @@ export function ClientBookingPage() {
 
   const waitlistMutation = useMutation({
     mutationFn: async () => {
-      if (
-        subscriptionQuery.data &&
-        !canWriteData(getSubscriptionAccessState(subscriptionQuery.data.subscription))
-      ) {
-        throw new Error(
-          'Esta barbearia está com o acesso limitado e não pode receber novas solicitações no momento.',
-        )
+      if (!clientProfile || !barbershop?.empresa_id || !selectedService) {
+        throw new Error('Selecione barbearia, serviço e data para entrar na lista.')
       }
 
-      if (!clientProfile || !barbershop || !selectedService) {
-        throw new Error('Selecione barbearia, serviço e data para entrar na lista.')
+      const canAcceptAppointments = await canBarbershopAcceptAppointments(
+        barbershop.empresa_id,
+      )
+
+      if (!canAcceptAppointments) {
+        throw new Error(
+          'Esta barbearia está temporariamente indisponível para novos agendamentos.',
+        )
       }
 
       await createWaitlistEntry({
