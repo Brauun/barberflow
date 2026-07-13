@@ -114,6 +114,48 @@ export class BillingService {
     return data
   }
 
+  private async executeCancellationManagement(
+    action: 'CANCEL_AT_PERIOD_END' | 'REACTIVATE_AT_PERIOD_END',
+    context: BillingCommandContext,
+    payload: Record<string, unknown> = {},
+  ) {
+    const startedAt = Date.now()
+    console.info(JSON.stringify({ action, area: 'billing', empresaId: context.empresaId }))
+
+    const { data, error } = await this.client.rpc('billing_manage_subscription_cancellation', {
+      p_action: action,
+      p_actor_user_id: context.actorUserId ?? null,
+      p_empresa_id: context.empresaId,
+      p_origin: context.origin,
+      p_payload: payload,
+      p_reason: context.reason,
+    })
+
+    if (error) {
+      console.error(
+        JSON.stringify({
+          action,
+          area: 'billing',
+          code: error.code,
+          durationMs: Date.now() - startedAt,
+          empresaId: context.empresaId,
+        }),
+      )
+      throw new Error(`Billing cancellation command failed: ${action}`)
+    }
+
+    console.info(
+      JSON.stringify({
+        action,
+        area: 'billing',
+        durationMs: Date.now() - startedAt,
+        empresaId: context.empresaId,
+        success: true,
+      }),
+    )
+    return data
+  }
+
   activateSubscription(context: BillingCommandContext, payload: Record<string, unknown>) {
     return this.execute('ACTIVATE_SUBSCRIPTION', context, payload)
   }
@@ -123,7 +165,15 @@ export class BillingService {
   }
 
   cancelSubscription(context: BillingCommandContext, payload: Record<string, unknown> = {}) {
+    if (payload.at_period_end === true) {
+      return this.executeCancellationManagement('CANCEL_AT_PERIOD_END', context, payload)
+    }
+
     return this.execute('CANCEL_SUBSCRIPTION', context, payload)
+  }
+
+  reactivateSubscription(context: BillingCommandContext, payload: Record<string, unknown> = {}) {
+    return this.executeCancellationManagement('REACTIVATE_AT_PERIOD_END', context, payload)
   }
 
   pauseSubscription(context: BillingCommandContext) {

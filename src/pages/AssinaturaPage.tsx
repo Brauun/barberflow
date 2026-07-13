@@ -1,21 +1,25 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   CalendarClock,
   Check,
   CreditCard,
   Crown,
   Loader2,
+  RotateCcw,
   ShieldCheck,
   Sparkles,
   X,
 } from 'lucide-react'
+import { useState } from 'react'
 
 import { canManageFinance } from '../auth/permissions'
-import { Badge, Button, Card, CardContent, CardHeader } from '../components/ui'
+import { Badge, Button, Card, CardContent, CardHeader, Modal } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
+import { queryKeys } from '../lib/queryKeys'
 import {
   createMercadoPagoCheckout,
+  manageSubscriptionCancellation,
   type Plan,
   type SubscriptionAccessState,
 } from '../services/subscriptionsService'
@@ -26,6 +30,12 @@ type DisplayPlanSlug = 'starter' | 'professional' | 'premium'
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
   style: 'currency',
+})
+
+const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
 })
 
 const featureLabels: Record<string, string> = {
@@ -164,8 +174,24 @@ function featureValue(value: unknown) {
   return String(value)
 }
 
+function formatDate(value?: string | null) {
+  if (!value) {
+    return 'Não informado'
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Não informado'
+  }
+
+  return dateFormatter.format(date)
+}
+
 export function AssinaturaPage() {
   const { profile } = useAuth()
+  const queryClient = useQueryClient()
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
   const subscriptionQuery = useSubscription()
   const state = subscriptionQuery.data
   const subscription = state?.subscription
@@ -173,6 +199,9 @@ export function AssinaturaPage() {
   const empresaId = profile?.empresa_id
   const schemaReady = state?.schemaReady ?? true
   const computedState = subscriptionQuery.state ?? 'BLOCKED'
+  const currentPeriodEnd = subscription?.current_period_end ?? subscription?.expires_at
+  const hasActivePaidSubscription = computedState === 'ACTIVE' && Boolean(subscription)
+  const isCancellationScheduled = Boolean(subscription?.cancel_at_period_end)
 
   const checkoutMutation = useMutation({
     mutationFn: async (plan: Plan) => {
@@ -191,6 +220,25 @@ export function AssinaturaPage() {
     },
     onSuccess: (checkoutUrl) => {
       window.location.href = checkoutUrl
+    },
+  })
+
+  const cancellationMutation = useMutation({
+    mutationFn: (action: 'cancel' | 'reactivate') => {
+      if (!empresaId) {
+        throw new Error('Empresa não encontrada.')
+      }
+
+      return manageSubscriptionCancellation({
+        action,
+        empresaId,
+      })
+    },
+    onSuccess: async () => {
+      setIsCancelModalOpen(false)
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.assinatura.detail(empresaId),
+      })
     },
   })
 
@@ -322,6 +370,102 @@ export function AssinaturaPage() {
         </CardContent>
       </Card>
 
+      {hasActivePaidSubscription && (
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <p className="text-sm font-black text-slate-950 dark:text-white">
+                  Gerenciar assinatura
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                  Acompanhe o ciclo atual e cancele a renovação sem perder o período já pago.
+                </p>
+              </div>
+              {isCancellationScheduled ? (
+                <Badge variant="warning">Cancelamento agendado</Badge>
+              ) : (
+                <Badge variant="success">Ativa</Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-4">
+              <div className="rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  Plano atual
+                </p>
+                <p className="mt-1 text-sm font-black text-slate-950 dark:text-white">
+                  {planDisplayName(currentPlan)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  Status
+                </p>
+                <p className="mt-1 text-sm font-black text-slate-950 dark:text-white">
+                  {isCancellationScheduled ? 'Ativa até o fim do período' : 'Ativa'}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  {isCancellationScheduled ? 'Acesso até' : 'Fim do período'}
+                </p>
+                <p className="mt-1 text-sm font-black text-slate-950 dark:text-white">
+                  {formatDate(currentPeriodEnd)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  Cobrança
+                </p>
+                <p className="mt-1 text-sm font-black text-slate-950 dark:text-white">
+                  {subscription?.provider === 'mercadopago'
+                    ? 'Mercado Pago'
+                    : 'Não informado'}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 rounded-2xl bg-slate-50 p-3 dark:bg-slate-900/60 md:flex-row md:items-center md:justify-between">
+              <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
+                {isCancellationScheduled
+                  ? `Sua assinatura está programada para encerrar em ${formatDate(currentPeriodEnd)}. Você pode reativar antes dessa data sem ganhar dias adicionais.`
+                  : `Se cancelar, você continuará usando o BW Barber até ${formatDate(currentPeriodEnd)}.`}
+              </p>
+              {isCancellationScheduled ? (
+                <Button
+                  className="shrink-0"
+                  disabled={cancellationMutation.isPending}
+                  leftIcon={
+                    cancellationMutation.isPending && cancellationMutation.variables === 'reactivate' ? (
+                      <Loader2 className="animate-spin" size={18} />
+                    ) : (
+                      <RotateCcw size={18} />
+                    )
+                  }
+                  onClick={() => cancellationMutation.mutate('reactivate')}
+                  variant="secondary"
+                >
+                  {cancellationMutation.isPending && cancellationMutation.variables === 'reactivate'
+                    ? 'Reativando...'
+                    : 'Reativar assinatura'}
+                </Button>
+              ) : (
+                <Button
+                  className="shrink-0"
+                  disabled={cancellationMutation.isPending}
+                  onClick={() => setIsCancelModalOpen(true)}
+                  variant="danger"
+                >
+                  Cancelar assinatura
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <section className="grid gap-5 xl:grid-cols-3">
         {state?.plans.map((plan) => {
           const isSubscriptionPlan = plan.id === subscription?.plan_id
@@ -411,6 +555,52 @@ export function AssinaturaPage() {
         })}
       </section>
 
+      <Modal
+        isOpen={isCancelModalOpen}
+        onClose={() => {
+          if (!cancellationMutation.isPending) {
+            setIsCancelModalOpen(false)
+          }
+        }}
+        title="Cancelar assinatura"
+      >
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-400/20 dark:bg-amber-400/10">
+            <p className="text-sm font-black text-amber-900 dark:text-amber-100">
+              Tem certeza que deseja cancelar sua assinatura?
+            </p>
+            <p className="mt-2 text-sm leading-6 text-amber-800/90 dark:text-amber-100/80">
+              Você continuará com acesso ao BW Barber até{' '}
+              <strong>{formatDate(currentPeriodEnd)}</strong>. Após essa data, sua assinatura não será renovada.
+            </p>
+          </div>
+
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <Button
+              disabled={cancellationMutation.isPending}
+              onClick={() => setIsCancelModalOpen(false)}
+              variant="secondary"
+            >
+              Continuar com meu plano
+            </Button>
+            <Button
+              disabled={cancellationMutation.isPending}
+              leftIcon={
+                cancellationMutation.isPending && cancellationMutation.variables === 'cancel' ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : null
+              }
+              onClick={() => cancellationMutation.mutate('cancel')}
+              variant="danger"
+            >
+              {cancellationMutation.isPending && cancellationMutation.variables === 'cancel'
+                ? 'Cancelando...'
+                : 'Cancelar assinatura'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       {checkoutMutation.isError && (
         <div
           aria-live="assertive"
@@ -424,6 +614,26 @@ export function AssinaturaPage() {
             aria-label="Fechar aviso"
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-current hover:bg-red-50 dark:hover:bg-red-500/10"
             onClick={() => checkoutMutation.reset()}
+            type="button"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {cancellationMutation.isError && (
+        <div
+          aria-live="assertive"
+          className="fixed bottom-5 left-3 right-3 z-[70] mx-auto flex max-w-md items-center gap-3 rounded-xl border border-red-200 bg-white p-3 text-sm font-semibold text-red-700 shadow-[0_18px_60px_rgb(15_23_42/0.2)] dark:border-red-500/30 dark:bg-[var(--bf-surface)] dark:text-red-300 sm:left-auto sm:right-5"
+          role="alert"
+        >
+          <span className="min-w-0 flex-1">
+            Não foi possível atualizar a assinatura agora.
+          </span>
+          <button
+            aria-label="Fechar aviso"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-current hover:bg-red-50 dark:hover:bg-red-500/10"
+            onClick={() => cancellationMutation.reset()}
             type="button"
           >
             <X size={16} />

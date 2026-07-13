@@ -471,6 +471,34 @@ export async function createMercadoPagoCheckout(input: {
   return checkoutUrl
 }
 
+export async function manageSubscriptionCancellation(input: {
+  action: 'cancel' | 'reactivate'
+  empresaId: string
+  reason?: string
+}) {
+  const { data, error } = await supabase.functions.invoke('cancel-subscription', {
+    body: {
+      action: input.action,
+      empresa_id: input.empresaId,
+      reason: input.reason,
+    },
+  })
+
+  if (error) {
+    logger.error({
+      action: 'subscription_cancellation_manage_failed',
+      area: 'subscription',
+      empresaId: input.empresaId,
+      error,
+      message: 'Não foi possível gerenciar o cancelamento da assinatura.',
+      metadata: { cancellationAction: input.action },
+    })
+    throw new Error('Não foi possível atualizar a assinatura. Tente novamente.')
+  }
+
+  return data
+}
+
 export function canUseFeature(
   state: SubscriptionData | undefined,
   featureKey: FeatureKey,
