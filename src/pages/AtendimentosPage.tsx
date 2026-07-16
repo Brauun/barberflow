@@ -541,8 +541,11 @@ export function AtendimentosPage() {
     handledDeepLinkRef.current = deepLinkAppointmentId
 
     if (appointment) {
-      setSelectedDailyAppointment(appointment)
-      return
+      const timeout = window.setTimeout(() => {
+        setSelectedDailyAppointment(appointment)
+      }, 0)
+
+      return () => window.clearTimeout(timeout)
     }
 
     window.alert('Registro não encontrado.')
@@ -633,9 +636,13 @@ export function AtendimentosPage() {
 
   useEffect(() => {
     if (atendimentoTipo === 'avulso') {
-      setFormClient(null)
-      setValue('cliente_id', '', { shouldDirty: true, shouldValidate: true })
-      setValue('benefit_id', '', { shouldDirty: true })
+      const timeout = window.setTimeout(() => {
+        setFormClient(null)
+        setValue('cliente_id', '', { shouldDirty: true, shouldValidate: true })
+        setValue('benefit_id', '', { shouldDirty: true })
+      }, 0)
+
+      return () => window.clearTimeout(timeout)
     }
   }, [atendimentoTipo, setValue])
 
@@ -644,12 +651,16 @@ export function AtendimentosPage() {
       return
     }
 
-    setDailyBarberId(currentBarbeiroId)
-    setRecordBarberId(currentBarbeiroId)
-    setValue('barbeiro_id', currentBarbeiroId, {
-      shouldDirty: true,
-      shouldValidate: true,
-    })
+    const timeout = window.setTimeout(() => {
+      setDailyBarberId(currentBarbeiroId)
+      setRecordBarberId(currentBarbeiroId)
+      setValue('barbeiro_id', currentBarbeiroId, {
+        shouldDirty: true,
+        shouldValidate: true,
+      })
+    }, 0)
+
+    return () => window.clearTimeout(timeout)
   }, [currentBarbeiroId, isBarbeiroUser, setValue])
 
   const saveMutation = useMutation({

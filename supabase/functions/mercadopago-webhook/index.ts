@@ -26,6 +26,11 @@ type PaymentMapping = {
   paymentStatus: string
 }
 
+type SignatureValidationResult = {
+  signatureVersion: string | null
+  valid: boolean
+}
+
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
     headers: { 'Content-Type': 'application/json' },
@@ -69,7 +74,7 @@ function mapPaymentStatus(status: string): PaymentMapping {
     case 'refunded':
       return { eventType: 'PAYMENT_REFUNDED', paymentStatus: 'REFUNDED' }
     case 'charged_back':
-      return { eventType: 'PAYMENT_REFUNDED', paymentStatus: 'CHARGEBACK' }
+      return { eventType: 'PAYMENT_CHARGEBACK', paymentStatus: 'CHARGEBACK' }
     case 'in_process':
     case 'authorized':
     case 'in_mediation':
@@ -121,38 +126,18 @@ async function hmacSha256Hex(secret: string, value: string) {
     .join('')
 }
 
-async function sha256Hex(value: string) {
-  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))
-  return Array.from(new Uint8Array(bytes))
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('')
-}
-
 async function validateWebhookSignature(input: {
   dataId: string | null
   requestId: string | null
   secret: string
   signature: string | null
-}) {
+}): Promise<SignatureValidationResult> {
   const parts = input.signature ? parseSignature(input.signature) : {}
   const secret = input.secret.trim()
   const signatureVersion = parts.v1 ? 'v1' : null
 
   if (!input.signature || !parts.ts || !parts.v1) {
     return {
-      algorithm: 'HMAC-SHA256',
-      calculatedSignature: null,
-      encoding: 'UTF-8/hex',
-      manifest: null,
-      receivedManifest: {
-        dataId: input.dataId,
-        requestId: input.requestId,
-        timestamp: parts.ts ?? null,
-      },
-      receivedSignature: parts.v1 ?? null,
-      secretFingerprint: (await sha256Hex(secret)).slice(0, 12),
-      secretLength: secret.length,
-      signatureHeader: input.signature,
       signatureVersion,
       valid: false,
     }
@@ -168,19 +153,6 @@ async function validateWebhookSignature(input: {
   const calculatedSignature = await hmacSha256Hex(secret, manifest)
 
   return {
-    algorithm: 'HMAC-SHA256',
-    calculatedSignature,
-    encoding: 'UTF-8/hex',
-    manifest,
-    receivedManifest: {
-      dataId: input.dataId,
-      requestId: input.requestId,
-      timestamp: parts.ts,
-    },
-    receivedSignature: parts.v1,
-    secretFingerprint: (await sha256Hex(secret)).slice(0, 12),
-    secretLength: secret.length,
-    signatureHeader: input.signature,
     signatureVersion,
     valid: constantTimeEqual(calculatedSignature, parts.v1.toLowerCase()),
   }
@@ -258,19 +230,11 @@ Deno.serve(async (request) => {
   if (!signatureValidation.valid) {
     console.warn(JSON.stringify({
       action: 'MERCADOPAGO_WEBHOOK_SIGNATURE_REJECTED',
-      algorithm: signatureValidation.algorithm,
       area: 'billing',
-      calculatedSignature: signatureValidation.calculatedSignature,
-      encoding: signatureValidation.encoding,
       hasDataId: Boolean(signedDataId),
       hasRequestId: Boolean(requestId),
       hasSignature: Boolean(signature),
-      manifest: signatureValidation.manifest,
-      receivedManifest: signatureValidation.receivedManifest,
-      receivedSignature: signatureValidation.receivedSignature,
-      secretFingerprint: signatureValidation.secretFingerprint,
-      secretLength: signatureValidation.secretLength,
-      signatureHeader: signatureValidation.signatureHeader,
+      requestId,
       signatureVersion: signatureValidation.signatureVersion,
     }))
     return jsonResponse({ error: 'Assinatura inválida.' }, 401)

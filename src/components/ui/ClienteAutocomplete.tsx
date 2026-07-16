@@ -47,7 +47,11 @@ export function ClienteAutocomplete({
   useClickOutside(rootRef, () => setIsOpen(false), { enabled: isOpen })
 
   useEffect(() => {
-    setInputValue(selectedLabel)
+    const timeout = window.setTimeout(() => {
+      setInputValue(selectedLabel)
+    }, 0)
+
+    return () => window.clearTimeout(timeout)
   }, [selectedLabel, value])
 
   useEffect(() => {

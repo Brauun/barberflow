@@ -47,7 +47,7 @@ export function exportHtmlReport(input: {
     return
   }
 
-  let printWindow: Window | null = null
+  let printWindow: Window | null
 
   try {
     printWindow = window.open(

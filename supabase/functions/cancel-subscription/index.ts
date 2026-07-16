@@ -142,8 +142,11 @@ Deno.serve(async (request) => {
       typeof payload.reason === 'string' && payload.reason.trim()
         ? payload.reason.trim()
         : payload.action === 'cancel'
-          ? 'Cancelamento solicitado pelo administrador'
-          : 'Reativacao solicitada pelo administrador'
+        ? 'Cancelamento solicitado pelo administrador'
+        : 'Reativacao solicitada pelo administrador'
+    const idempotencyAction =
+      payload.action === 'cancel' ? 'cancel-subscription' : 'reactivate-subscription'
+    const idempotencyKey = `${idempotencyAction}:${subscription.id}:${periodEnd}`
     const data =
       payload.action === 'cancel'
         ? await billingService.cancelSubscription(
@@ -155,6 +158,7 @@ Deno.serve(async (request) => {
             },
             {
               at_period_end: true,
+              idempotency_key: idempotencyKey,
             },
           )
         : await billingService.reactivateSubscription(
@@ -164,7 +168,9 @@ Deno.serve(async (request) => {
               origin: 'REATIVACAO',
               reason,
             },
-            {},
+            {
+              idempotency_key: idempotencyKey,
+            },
           )
 
     return jsonResponse({ data })

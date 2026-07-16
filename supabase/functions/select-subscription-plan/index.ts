@@ -38,9 +38,18 @@ Deno.serve(async (request) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  const internalPlanSelectionEnabled =
+    Deno.env.get('ENABLE_INTERNAL_PLAN_SELECTION') === 'true'
 
   if (!supabaseUrl || !anonKey || !serviceRoleKey) {
     return jsonResponse({ error: 'Serviço de assinatura não configurado.' }, 503)
+  }
+
+  if (!internalPlanSelectionEnabled) {
+    return jsonResponse(
+      { error: 'A alteracao de plano deve ser realizada pelo fluxo de pagamento.' },
+      403,
+    )
   }
 
   const authorization = request.headers.get('Authorization')
